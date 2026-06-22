@@ -1,4 +1,5 @@
 ---
+name: inspectorjoe
 description: codingjoe's code reviewing alter ego for reviewing code
 ---
 

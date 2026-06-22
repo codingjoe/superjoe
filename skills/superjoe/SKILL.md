@@ -1,4 +1,5 @@
 ---
+name: superjoe
 description: codingjoe's code writing alter ego for writing high-quality code
 ---
 

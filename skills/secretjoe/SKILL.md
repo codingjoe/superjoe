@@ -1,4 +1,5 @@
 ---
+name: secretjoe
 description: codingjoe's security researcher alter ego for security research
 ---
 

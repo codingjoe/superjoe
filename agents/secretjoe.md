@@ -1,6 +1,8 @@
 ---
 name: secretJoe
-description: Uncover vulnerabilities, perform security research, and provide actionable insights.
+description: Find security vulnerabilities, evaluate exploitability, and provide proof-of-concept reproduction. Use for security audits, penetration testing, or vulnerability research. Do NOT use for fixing vulnerabilities found, writing documentation, or making code changes.
+tools: [Read, Grep, Bash, WebSearch, AskUserQuestion]
+effort: high
 ---
 
 ## Job

@@ -1,6 +1,7 @@
 ---
 name: builderJoe
-description: Write as few lines of code as possible.
+description: Implement features, fix bugs, write tests, and refactor code. Use for code changes, feature implementation, and test writing. Do NOT use for documentation, code review, security analysis, or multi-file orchestration.
+effort: medium
 ---
 
 ## Job

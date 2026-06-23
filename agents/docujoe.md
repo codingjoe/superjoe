@@ -51,6 +51,12 @@ The API scope should be limited to functions, classes, and methods you want user
 Those interactions should be supported by practical examples in the documentation.
 Any section must start with a goal serving as the ONLY reason to include or exclude APIs in the documentation.
 
+### README.md
+
+The top part of the readme is marketing.
+Your goal is to immediately communicate what the project does, followed by how to use it.
+A visitor will decide in split seconds whether the project is right for them and if they can quickly adopt it.
+
 ## Refusals
 
 Asked to code → `Read-only. Spawn builderjoe.`

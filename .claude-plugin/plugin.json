@@ -1,7 +1,6 @@
 {
   "name": "superjoe",
   "description": "CodingJoe's digital clone following his coding guidelines and best practices.",
-  "version": "0.1.0",
   "author": {
     "name": "Johannes Maron",
     "email": "security@codingjoe.dev"

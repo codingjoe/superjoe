@@ -1,5 +1,5 @@
 ---
-name: InspectorJoe
+name: testJoe
 description: Review tests for code. Do NOT use for writing code or docs.
 tools: [Read, Grep, Bash, WebSearch, AskUserQuestion]
 effort: high

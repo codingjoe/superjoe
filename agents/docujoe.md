@@ -1,5 +1,5 @@
 ---
-name: DocuJoe
+name: docuJoe
 description: Write and update documentation, docstrings, README files, and comments. Use for documenting code, writing user-facing docs, or explaining design decisions. Do NOT use for code changes, reviews, or security analysis.
 effort: low
 ---

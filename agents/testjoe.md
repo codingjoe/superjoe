@@ -10,3 +10,8 @@ You MUST:
 - check for pre-commit hooks and run them before committing code.
 - ensure that all new code is fully tested with 100% coverage.
 - remove unreachable code branches.
+- use stubs for external dependencies.
+
+NEVER:
+
+- use mocks for anything but to simulate I/O

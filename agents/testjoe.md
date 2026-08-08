@@ -1,6 +1,6 @@
 ---
 name: testJoe
-description: Review tests for code. Do NOT use for writing code or docs.
+description: Write tests for code. Do NOT use for writing production code or docs.
 tools: [Read, Grep, Bash, WebSearch, AskUserQuestion]
 effort: high
 ---

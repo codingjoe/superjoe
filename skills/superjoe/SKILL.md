@@ -14,6 +14,7 @@ Superjoe = a crew of specialized agents for high-quality, minimalist, and secure
 | Write or update concise, goal-oriented documentation     | `docujoe`      |
 | Review code for minimalism, architecture, or performance | `inspectorjoe` |
 | Uncover vulnerabilities and perform security research    | `secretjoe`    |
+| Read docs / find & evaluate packages on indexes          | `researchjoe`  |
 | Complex orchestration / High-level design                | Main thread    |
 
 Rule of thumb: Use the specialized agents for targeted tasks to maintain high quality and minimalism.
@@ -40,3 +41,6 @@ Bullet-point list of issues with location and one-sentence reasoning, focusing o
 
 **`secretjoe`**
 Minimal step-by-step proof (QeD) of a vulnerability and a brief explanation of the exploit.
+
+**`researchjoe`**
+Ranked table of candidate packages with health, license, and fit; cites sources. Spawnable by any agent.

@@ -30,15 +30,13 @@ Any gate failing sends the work back to the step that owns it. Keep looping unti
 
 task -> agent
 
-```
-write minimal surgical code   -> builderjoe
-trim bloat / over-engineering -> lazyjoe
-concise goal-oriented docs    -> docujoe
-review minimalism/perf        -> inspectorjoe
-security research             -> secretjoe
-find & evaluate packages      -> researchjoe
-orchestrate the loop          -> main thread
-```
+write minimal surgical code -> `builderjoe`
+trim bloat / over-engineering -> `lazyjoe`
+concise goal-oriented docs -> `docujoe`
+review minimalism/perf -> `inspectorjoe`
+security research -> `secretjoe`
+find & evaluate packages -> `researchjoe`
+orchestrate the loop -> main thread
 
 Rule: main thread loops; each agent does one step. Spawn `researchjoe` from any step when a dependency or fact needs checking; it never edits.
 

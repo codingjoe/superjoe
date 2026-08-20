@@ -82,10 +82,7 @@ Missing a framework? Find its awesome list on the meta-index, or search GitHub f
 ```bash
 gh search repos "<topic>" language:<lang> --sort stars --order desc      # most-starred for a topic
 gh search repos "topic:<topic> pushed:>2026-01-01"                       # recently active
-gh api 'search/repositories?q=<topic>+language:<lang>&sort=stars&order=desc&per_page=20' \
-    --jq '.items[].full_name'
-gh api 'search/repositories?q=topic:awesome+<framework>&sort=stars&order=desc' \
-    --jq '.items[].full_name'
+gh search repos "topic:awesome <framework>" --sort stars --order desc    # awesome list for a framework
 ```
 
 ### Index-native search

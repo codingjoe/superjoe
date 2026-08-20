@@ -26,16 +26,45 @@ Ship only when ALL pass:
 
 Any gate failing sends the work back to the step that owns it. Keep looping until all three are green.
 
-## When to use
+## Agents
 
-| Task                                             | Agent          |
-| ------------------------------------------------ | -------------- |
-| Write minimal, surgical code / edits             | `builderjoe`   |
-| Trim bloat / guard over-engineering              | `lazyjoe`      |
-| Concise, goal-oriented docs                      | `docujoe`      |
-| Review for minimalism, architecture, performance | `inspectorjoe` |
-| Uncover vulnerabilities / security research      | `secretjoe`    |
-| Read docs / find & evaluate packages             | `researchjoe`  |
-| Orchestrate the loop / high-level design         | Main thread    |
+task -> agent
 
-Rule: main thread loops; each agent does one step. Spawn `researchjoe` from any step when a dependency or fact needs checking — it never edits.
+```
+write minimal surgical code   -> builderjoe
+trim bloat / over-engineering -> lazyjoe
+concise goal-oriented docs    -> docujoe
+review minimalism/perf        -> inspectorjoe
+security research             -> secretjoe
+find & evaluate packages      -> researchjoe
+orchestrate the loop          -> main thread
+```
+
+Rule: main thread loops; each agent does one step. Spawn `researchjoe` from any step when a dependency or fact needs checking; it never edits.
+
+## Flow
+
+```mermaid
+sequenceDiagram
+    participant Main as main thread
+    participant B as builderjoe
+    participant L as lazyjoe
+    participant D as docujoe
+    participant T as testjoe
+    participant I as inspectorjoe
+    participant S as secretjoe
+
+    Main->>B: build
+    Main->>L: simplify
+    L-->>Main: flags bloat (cut or route back)
+    Main->>D: document
+    Main->>T: test
+    Main->>I: review
+    alt issues found
+        Main->>B: fix and re-run
+        I-->>Main: re-review
+    end
+    Main->>S: harden
+    S-->>Main: exploits (or none)
+    Note over Main: loop until I reports 0, T 100%, S clear
+```

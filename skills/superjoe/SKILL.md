@@ -26,6 +26,25 @@ Ship only when ALL pass:
 
 Any gate failing sends the work back to the step that owns it. Keep looping until all three are green.
 
+## Prompting agents
+
+Prompt = work reference + user story + explicit user instructions for the task. Nothing else. No task lists, no step-by-step, no output contracts.
+
+Include what grounds the agent:
+
+- Files: `src/auth.ts`
+- Prior review: `see review on PR #12` or `see <branch> diff: git diff main...branch`
+- Goal: one user story sentence.
+- Explicit user instructions for the task, verbatim.
+
+Prompt shape:
+
+```text
+Work: <file(s)> or <PR/branch diff reference>
+Goal: As a <role>, I want <capability>, so that <benefit>.
+User said: <explicit instruction, verbatim>
+```
+
 ## Agents
 
 task -> agent

@@ -52,6 +52,48 @@ gh api repos/<owner>/<repo> --jq '{stars:.stargazers_count, archived:.archived, 
 gh api repos/<owner>/<repo>/releases/latest --jq '.published_at'
 ```
 
+## Discover: find candidates
+
+Find candidates first, then evaluate them. Three routes, cheapest first.
+
+### Awesome lists
+
+Curated, maintained lists per platform and framework. Fetch the README and grep.
+
+- Meta-index of every list: `curl -sSL https://raw.githubusercontent.com/sindresorhus/awesome/main/readme.md`
+- Python: `curl -sSL https://raw.githubusercontent.com/vinta/awesome-python/master/README.md`
+- Django: `curl -sSL https://raw.githubusercontent.com/wsvincent/awesome-django/master/README.md`
+- FastAPI: `curl -sSL https://raw.githubusercontent.com/mjhea0/awesome-fastapi/master/README.md`
+- Node.js: `curl -sSL https://raw.githubusercontent.com/sindresorhus/awesome-nodejs/master/readme.md`
+- Go: `curl -sSL https://raw.githubusercontent.com/avelino/awesome-go/master/README.md`
+- Rust: `curl -sSL https://raw.githubusercontent.com/rust-unofficial/awesome-rust/master/README.md`
+
+Grep a list for a topic, or extract candidate repo links:
+
+```bash
+curl -sSL <list-url> | grep -iA3 '<topic>'
+curl -sSL <list-url> | grep -oE 'https://github.com/[^ )]+' | grep -i '<topic>'
+```
+
+Missing a framework? Find its awesome list on the meta-index, or search GitHub for `awesome <framework>`.
+
+### GitHub
+
+```bash
+gh search repos "<topic>" language:<lang> --sort stars --order desc      # most-starred for a topic
+gh search repos "topic:<topic> pushed:>2026-01-01"                       # recently active
+gh api 'search/repositories?q=<topic>+language:<lang>&sort=stars&order=desc&per_page=20' \
+    --jq '.items[].full_name'
+gh api 'search/repositories?q=topic:awesome+<framework>&sort=stars&order=desc' \
+    --jq '.items[].full_name'
+```
+
+### Index-native search
+
+- npm: `npm search <query> --json` (already above; the built-in discoverer)
+- crates.io: `curl -s "https://crates.io/api/v1/crates?q=<query>&page_size=20&sort=downloads" | jq -r '.crates[] | "\(.name)\t\(.max_version)\t\(.downloads)"'`
+- PyPI removed keyword search from its JSON API; discover via awesome lists or GitHub, then confirm with `pip index versions <pkg>`.
+
 ## WebSearch
 
 Use when the index alone is not enough: security advisories, deprecation notices, migration guides, or "is X maintained in 2026" questions.

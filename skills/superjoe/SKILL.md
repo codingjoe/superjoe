@@ -3,36 +3,69 @@ name: superJoe
 description: Orchestration for joe's agent crew.
 ---
 
-Superjoe = a crew of specialized agents for high-quality, minimalist, and secure code.
+Superjoe = a crew. Use it as an **iterative loop**, not a one-shot dispatch. The main thread runs the loop; agents do one step each.
 
-## When to use superjoe vs alternatives
+## The loop
 
-| Task                                                     | Use            |
-| -------------------------------------------------------- | -------------- |
-| Write minimal, high-quality code / Surgical edits        | `builderjoe`   |
-| Write or update concise, goal-oriented documentation     | `docujoe`      |
-| Review code for minimalism, architecture, or performance | `inspectorjoe` |
-| Uncover vulnerabilities and perform security research    | `secretjoe`    |
-| Complex orchestration / High-level design                | Main thread    |
+Run in order. Restart at step 1 whenever a later step fails.
 
-Rule of thumb: Use the specialized agents for targeted tasks to maintain high quality and minimalism.
+1. **Build** — `builderjoe` produces minimal, working code.
+1. **Simplify** — `lazyjoe` flags over-engineering and bloat. Cut it, or route back to `builderjoe`.
+1. **Document** — `docujoe` documents the public surface.
+1. **Test** — `testjoe` covers every branch, 100%, no unreachable code.
+1. **Review** — `inspectorjoe` lists issues with location + one-line reason. Fix each, then re-run.
+1. **Harden** — `secretjoe` hunts vulnerabilities. Fix or route to `builderjoe`.
 
-## Why this exists (the real win)
+## Exit gates
 
-By delegating to specialized "joe" agents, the main thread ensures that every piece of code is written by a minimalist (`builderjoe`), documented precisely (`docujoe`), reviewed for architecture and performance (`inspectorjoe`), and vetted for security (`secretjoe`). This prevents bloat and security regressions.
+Ship only when ALL pass:
 
-## Output contracts
+- `inspectorjoe` reports zero issues
+- `testjoe` reports 100% coverage
+- `secretjoe` finds nothing exploitable
 
-What main thread can rely on per agent:
+Any gate failing sends the work back to the step that owns it. Keep looping until all three are green.
 
-**`builderjoe`**
-Minimalist implementation, following `naming-things` guidelines, with 100% test coverage.
+## Agents
 
-**`docujoe`**
-Concise, imperative documentation in present tense, focused on the user's goals.
+task -> agent
 
-**`inspectorjoe`**
-Bullet-point list of issues with location and one-sentence reasoning, focusing on minimalism and security.
+write minimal surgical code -> `builderjoe`
+trim bloat / over-engineering -> `lazyjoe`
+concise goal-oriented docs -> `docujoe`
+review minimalism/perf -> `inspectorjoe`
+security research -> `secretjoe`
+find & evaluate packages -> `researchjoe`
+orchestrate the loop -> main thread
 
-**`secretjoe`**
-Minimal step-by-step proof (QeD) of a vulnerability and a brief explanation of the exploit.
+Rule: main thread loops; each agent does one step. Spawn `researchjoe` from any step when a dependency or fact needs checking; it never edits.
+
+## Flow
+
+```mermaid
+sequenceDiagram
+    participant Main as main thread
+    participant B as builderjoe
+    participant L as lazyjoe
+    participant D as docujoe
+    participant T as testjoe
+    participant I as inspectorjoe
+    participant S as secretjoe
+
+    Main->>B: build
+    Main->>L: simplify
+    L-->>Main: flags bloat (cut or route back)
+    Main->>D: document
+    loop until test 100%, review 0 issues, no exploits
+        Main->>T: test
+        Main->>I: review
+        alt issues found
+            Main->>B: fix
+            Main->>T: re-test
+            Main->>I: re-review
+        end
+        Main->>S: harden
+        S-->>Main: exploits (or none)
+    end
+    Note over Main: ship only when all gates pass
+```

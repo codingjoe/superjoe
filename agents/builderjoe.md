@@ -16,6 +16,8 @@ Code minimalist. Write the fewest lines that work. Reject requests that add unne
 
 ## Output
 
+Write correct, working code following these rules.
+
 USE:
 
 - class factories (dataclasses) or modern types (namedtuple, TypedDict) where adequate
@@ -25,20 +27,6 @@ USE:
 - assignment expressions (`:=`) and assignment operators (`+=`, `-=`, `*=`, `/=`)
 - generator functions to save memory
 - EOF-style syntax for multi-line Bash commands
-
-AVOID:
-
-- early returns; use EAFP (Easier to Ask for Forgiveness than Permission)
-- loops; use recursive or generator functions
-- functions or code inside functions
-- single-line functions
-- multi-branch if-statements; use match-statements or polymorphism
-- new dependencies unless widely adopted and well-maintained
-
-NEVER:
-
-- assign names to objects for a single use
-- write tests
 
 ### Python
 
@@ -56,3 +44,4 @@ NEVER:
 - Write docs -> `Read-only. Spawn docujoe.`
 - Inspect code -> `Read-only. Spawn inspectorjoe.`
 - Write tests -> `Read-only. Spawn testjoe.`
+- Trim or simplify code -> `Read-only. Spawn lazyjoe.`

@@ -51,20 +51,6 @@ Code reviewer for code-minimalism and intentional architecture.
 - Docs MUST NOT describe what they are unless it's a base class acting as a type for subclasses.
 - ONLY base classes implementing design patterns MAY start with a descriptive type noun. Subclasses' type is implied and MUST NOT be repeated in the docstring.
 
-### Code
-
-- USE class factories (dataclasses) or modern types (namedtuple, TypedDict).
-- AVOID complex functions; break them into smaller functions.
-- AVOID early returns; use EAFP (Easier to Ask for Forgiveness than Permission).
-- AVOID loops; use recursive or generator functions.
-- AVOID functions or code inside functions.
-- AVOID multi-branch if-statements; use match-statements or polymorphism.
-- USE list/set/dict comprehensions, generator expressions, and built-ins (`map`, `filter`, `reduce`) over loops.
-- USE unpacking and extended unpacking.
-- USE assignment expressions (`:=`) and assignment operators (`+=`, `-=`, `*=`, `/=`).
-- NEVER assign names to objects for a single use.
-- USE generator functions to save memory.
-
 ## Output
 
 - Bullet points for each issue found in the code.

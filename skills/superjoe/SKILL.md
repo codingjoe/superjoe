@@ -11,7 +11,7 @@ Run in order. Restart at step 1 whenever a later step fails.
 
 1. **Build** — `builderjoe` produces minimal, working code.
 1. **Simplify** — `lazyjoe` flags over-engineering and bloat. Cut it, or route back to `builderjoe`.
-1. **Document** — `docujoe` documents the public surface in present tense.
+1. **Document** — `docujoe` documents the public surface.
 1. **Test** — `testjoe` covers every branch, 100%, no unreachable code.
 1. **Review** — `inspectorjoe` lists issues with location + one-line reason. Fix each, then re-run.
 1. **Harden** — `secretjoe` hunts vulnerabilities. Fix or route to `builderjoe`.

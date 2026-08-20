@@ -58,21 +58,21 @@ Find candidates first, then evaluate them. Three routes, cheapest first.
 
 ### Awesome lists
 
-Curated, maintained lists per platform and framework. Fetch the README and grep.
+Curated, maintained lists per platform and framework. They live on GitHub, so fetch the README with `gh` and grep.
 
-- Meta-index of every list: `curl -sSL https://raw.githubusercontent.com/sindresorhus/awesome/main/readme.md`
-- Python: `curl -sSL https://raw.githubusercontent.com/vinta/awesome-python/master/README.md`
-- Django: `curl -sSL https://raw.githubusercontent.com/wsvincent/awesome-django/master/README.md`
-- FastAPI: `curl -sSL https://raw.githubusercontent.com/mjhea0/awesome-fastapi/master/README.md`
-- Node.js: `curl -sSL https://raw.githubusercontent.com/sindresorhus/awesome-nodejs/master/readme.md`
-- Go: `curl -sSL https://raw.githubusercontent.com/avelino/awesome-go/master/README.md`
-- Rust: `curl -sSL https://raw.githubusercontent.com/rust-unofficial/awesome-rust/master/README.md`
+- Meta-index of every list: `gh api repos/sindresorhus/awesome/readme --jq '.content' | base64 -d`
+- Python: `gh api repos/vinta/awesome-python/readme --jq '.content' | base64 -d`
+- Django: `gh api repos/wsvincent/awesome-django/readme --jq '.content' | base64 -d`
+- FastAPI: `gh api repos/mjhea0/awesome-fastapi/readme --jq '.content' | base64 -d`
+- Node.js: `gh api repos/sindresorhus/awesome-nodejs/readme --jq '.content' | base64 -d`
+- Go: `gh api repos/avelino/awesome-go/readme --jq '.content' | base64 -d`
+- Rust: `gh api repos/rust-unofficial/awesome-rust/readme --jq '.content' | base64 -d`
 
 Grep a list for a topic, or extract candidate repo links:
 
 ```bash
-curl -sSL <list-url> | grep -iA3 '<topic>'
-curl -sSL <list-url> | grep -oE 'https://github.com/[^ )]+' | grep -i '<topic>'
+gh api repos/<owner>/<repo>/readme --jq '.content' | base64 -d | grep -iA3 '<topic>'
+gh api repos/<owner>/<repo>/readme --jq '.content' | base64 -d | grep -oE 'https://github.com/[^ )]+' | grep -i '<topic>'
 ```
 
 Missing a framework? Find its awesome list on the meta-index, or search GitHub for `awesome <framework>`.

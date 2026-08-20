@@ -58,13 +58,16 @@ sequenceDiagram
     Main->>L: simplify
     L-->>Main: flags bloat (cut or route back)
     Main->>D: document
-    Main->>T: test
-    Main->>I: review
-    alt issues found
-        Main->>B: fix and re-run
-        I-->>Main: re-review
+    loop until test 100%, review 0 issues, no exploits
+        Main->>T: test
+        Main->>I: review
+        alt issues found
+            Main->>B: fix
+            Main->>T: re-test
+            Main->>I: re-review
+        end
+        Main->>S: harden
+        S-->>Main: exploits (or none)
     end
-    Main->>S: harden
-    S-->>Main: exploits (or none)
-    Note over Main: loop until I reports 0, T 100%, S clear
+    Note over Main: ship only when all gates pass
 ```

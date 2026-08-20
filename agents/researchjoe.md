@@ -58,17 +58,17 @@ Find candidates first, then evaluate them. Three routes, cheapest first.
 
 ### Awesome lists
 
-Curated, maintained lists per platform and framework. They live on GitHub, so fetch the README with `gh` and grep.
+Curated, maintained lists per platform and framework. They live on GitHub, so read them with `gh`.
 
-- Meta-index of every list: `gh api repos/sindresorhus/awesome/readme --jq '.content' | base64 -d`
-- Python: `gh api repos/vinta/awesome-python/readme --jq '.content' | base64 -d`
-- Django: `gh api repos/wsvincent/awesome-django/readme --jq '.content' | base64 -d`
-- FastAPI: `gh api repos/mjhea0/awesome-fastapi/readme --jq '.content' | base64 -d`
-- Node.js: `gh api repos/sindresorhus/awesome-nodejs/readme --jq '.content' | base64 -d`
-- Go: `gh api repos/avelino/awesome-go/readme --jq '.content' | base64 -d`
-- Rust: `gh api repos/rust-unofficial/awesome-rust/readme --jq '.content' | base64 -d`
+- Meta-index of every list: `gh repo view sindresorhus/awesome`
+- Python: `gh repo view vinta/awesome-python`
+- Django: `gh repo view wsvincent/awesome-django`
+- FastAPI: `gh repo view mjhea0/awesome-fastapi`
+- Node.js: `gh repo view sindresorhus/awesome-nodejs`
+- Go: `gh repo view avelino/awesome-go`
+- Rust: `gh repo view rust-unofficial/awesome-rust`
 
-Grep a list for a topic, or extract candidate repo links:
+`gh repo view` renders the README for reading. To grep, pull the raw markdown via the API:
 
 ```bash
 gh api repos/<owner>/<repo>/readme --jq '.content' | base64 -d | grep -iA3 '<topic>'

@@ -23,11 +23,11 @@ Use these directly; pipe JSON through `jq` to trim noise.
 
 ### PyPI
 
-- `uv pip index versions <pkg>` — list published versions
+- `curl -s https://pypi.org/pypi/<pkg>/json | jq -r '.releases | keys[]'` — all published versions
 - `curl -s https://pypi.org/pypi/<pkg>/json | jq -r '.info.version, .info.requires_python'` — latest + Python floor
 - `curl -s https://pypi.org/pypi/<pkg>/json | jq '.releases[][0].upload_time_iso_8601' | tail -1` — last release date
 - `curl -s https://pypi.org/pypi/<pkg>/json | jq '.info.project_urls, .info.author_email'` — homepage, source, contact
-- `uv pip download <pkg> --no-deps -d /tmp/pkg` — fetch the wheel to inspect
+- `uv pip install <pkg> --no-deps --target /tmp/pkg` — fetch a package into a dir to inspect
 
 ### npm
 
@@ -89,7 +89,7 @@ gh search repos "topic:awesome <framework>" --sort stars --order desc    # aweso
 
 - npm: `npm search <query> --json` (already above; the built-in discoverer)
 - crates.io: `curl -s "https://crates.io/api/v1/crates?q=<query>&page_size=20&sort=downloads" | jq -r '.crates[] | "\(.name)\t\(.max_version)\t\(.downloads)"'`
-- PyPI removed keyword search from its JSON API; discover via awesome lists or GitHub, then confirm with `uv pip index versions <pkg>`.
+- PyPI removed keyword search from its JSON API; discover via awesome lists or GitHub, then confirm against the PyPI JSON above.
 
 ## WebSearch
 

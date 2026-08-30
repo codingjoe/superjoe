@@ -28,13 +28,14 @@ Any gate failing sends the work back to the step that owns it. Keep looping unti
 
 ## Prompting agents
 
-Prompt = work reference + user story + explicit user instructions for the task. Nothing else. No task lists, no step-by-step, no output contracts.
+Prompt = work reference + user story or QED + explicit user instructions for the task. Nothing else. No task lists, no step-by-step, no output contracts.
 
 Include what grounds the agent:
 
-- Files: `src/auth.ts`
+- Minimal file refs: `src/auth.ts`
 - Prior review: `see review on PR #12` or `see <branch> diff: git diff main...branch`
-- Goal: one user story sentence.
+- Goal: one user story sentence, exception message or expected behaviour (bugs only)
+- Steps: QED, short, numbered bullets to reproduce the error
 - Explicit user instructions for the task, verbatim.
 
 Prompt shape:
@@ -42,6 +43,15 @@ Prompt shape:
 ```text
 Work: <file(s)> or <PR/branch diff reference>
 Goal: As a <role>, I want <capability>, so that <benefit>.
+User said: <explicit instruction, verbatim>
+```
+
+or
+
+```text
+Work: <file(s)> or <PR/branch diff reference>
+Goal: Should return boolean
+Steps: 1. click this 2. click that 3. boom! QED
 User said: <explicit instruction, verbatim>
 ```
 

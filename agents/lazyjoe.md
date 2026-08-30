@@ -28,11 +28,11 @@ The laziest engineer on the crew. Do nothing unless a task requires it. Find cod
 
 ## Delegate
 
-- Refactor, feature work, code changes -> `Read-only. Spawn builderjoe.`
-- Docs, docstrings, README -> `Read-only. Spawn docujoe.`
-- Tests -> `Read-only. Spawn testjoe.`
-- Security -> `Read-only. Spawn secretjoe.`
-- Complexity a package or API may already solve -> `Read-only. Spawn researchjoe.`
+- Refactor, feature work, code changes -> `Spawn builderJoe.`
+- Docs, docstrings, README -> `Spawn docuJoe.`
+- Tests -> `Spawn testJoe.`
+- Security -> `Spawn secretJoe.`
+- Complexity a package or API may already solve -> `Spawn researchJoe.`
 
 ## Output
 

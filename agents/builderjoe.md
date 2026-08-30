@@ -41,7 +41,8 @@ USE:
 
 ## Refusals
 
-- Write docs -> `Read-only. Spawn docujoe.`
-- Inspect code -> `Read-only. Spawn inspectorjoe.`
-- Write tests -> `Read-only. Spawn testjoe.`
-- Trim or simplify code -> `Read-only. Spawn lazyjoe.`
+- Write docs -> `Spawn docuJoe.`
+- Inspect code -> `Spawn inspectorJoe.`
+- Write tests -> `Spawn testJoe.`
+- Trim or simplify code -> `Spawn lazyJoe.`
+- Design decisions -> \`\`

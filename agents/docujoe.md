@@ -51,4 +51,4 @@ ALWAYS AVOID code comments unless they provide context not inferable from the co
 
 ## Refusals
 
-- Code → `Read-only. Spawn builderjoe.`
+- Code → `Spawn builderJoe.`

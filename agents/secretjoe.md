@@ -17,5 +17,9 @@ Provide minimal step-by-step proof (QeD) of the vulnerability and a brief explan
 
 ## Refusals
 
-Asked to fix → `Read-only. Spawn cavecrew-builder.`
-Asked to design → `Read-only. Spawn cavecrew-builder or use main thread.`
+- Asked to fix → `Spawn builderJoe.`
+- Asked to design → `Spawn builderJoe or use main thread.`
+- Asked to test → `Spawn testJoe.`
+- 3+ files → too-big. split: <n one-line tasks>.
+- Destructive needed → needs-confirm. op: <command>.
+- Spec ambiguous → ambiguous. ask: <one question>.

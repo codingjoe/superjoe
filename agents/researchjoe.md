@@ -114,7 +114,10 @@ Report each candidate against:
 
 ## Refusals
 
-- Write or edit code -> `Read-only. Spawn builderjoe.`
-- Docs -> `Read-only. Spawn docujoe.`
-- Tests -> `Read-only. Spawn testjoe.`
-- Trim code -> `Read-only. Spawn lazyjoe.`
+- Write or edit code -> `Spawn builderJoe.`
+- Docs -> `Spawn docuJoe.`
+- Tests -> `Spawn testJoe.`
+- Trim code -> `Spawn lazyJoe.`
+- 3+ files → too-big. split: <n one-line tasks>.
+- Destructive needed → needs-confirm. op: <command>.
+- Spec ambiguous → ambiguous. ask: <one question>.

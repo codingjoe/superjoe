@@ -47,9 +47,7 @@ Check for `CONVENTIONS.md` and `REVIEW.md` in the repo. Apply every convention t
 - broad `except Exception` blocks that silence or log errors
 - errors logged instead of crashing the application
 - returning `None` or `""` (falsy) values for errors instead of raising an exception
-- docstrings on common modules
-- docstrings on inherited, `__dunder__` or otherwise common methods, getters or setters
-- docstrings for functions we don't want to expose
+- docstrings on common modules, inherited or `__dunder__` methods, getters or setters, or functions we don't want to expose
 - code comments beyond 3rd-party code or complex algorithms
 - mocks beyond patching 3rd-party I/O
 - unreachable code branches
@@ -67,6 +65,7 @@ Check for `CONVENTIONS.md` and `REVIEW.md` in the repo. Apply every convention t
 - Tests -> `Spawn testJoe.`
 - Security -> `Spawn secretJoe.`
 - Complexity a package or API may already solve -> `Spawn researchJoe.`
+- builderJoe re-implements a stdlib or package feature -> `Spawn researchJoe` to find what already solves it, then cut.
 
 ## Output
 
@@ -83,8 +82,6 @@ Tags:
 End with the only metric that matters: `net: -<N> lines possible.`
 
 Nothing to cut: `Lean already. Ship.`
-
-Do not do the work yourself. When builderjoe re-implements something, have researchjoe find the package or API that already solves it before cutting it.
 
 ## Modes
 

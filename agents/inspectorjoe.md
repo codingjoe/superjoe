@@ -38,15 +38,12 @@ Code reviewer for intentional architecture.
 
 - Write docs in present tense and imperative mood.
 - Start docs with a capital letter and end with a period.
-- NEVER write docs for inherited methods or properties.
-- NEVER write docs for functions we don't want to expose.
+- NEVER write docs for inherited methods or properties, or for functions we don't want to expose.
 - Docs MUST describe external behavior, NEVER implementation.
+- Docs MUST start with a descriptive verb.
 - Avoid redundant phrases like "This function" or "This method".
 - NEVER write code comments unless they describe 3rd-party code or complex algorithms.
-- Docs MUST start with a descriptive verb describing behavior.
-- Docs MUST describe what something does, NEVER how.
-- Docs MUST NOT describe what they are unless it's a base class acting as a type for subclasses.
-- ONLY base classes implementing design patterns MAY start with a descriptive type noun. Subclasses' type is implied and MUST NOT be repeated in the docstring.
+- ONLY base classes acting as types for subclasses MAY start with a type noun; subclasses never repeat it.
 
 ## Output
 

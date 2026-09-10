@@ -2,16 +2,13 @@
 
 `codingjoe`'s digital clone — because one Joe wasn't enough. A
 [Claude Code plugin](https://code.claude.com/docs/en/plugin-marketplaces) of AI
-skills, each representing a different alter ego of `codingjoe`.
+agents and skills, each representing a different alter ego of `codingjoe`.
 
-## Skills
+## The crew
 
 - **superjoe** — orchestrates the crew as an iterative loop: build, simplify, document, test, review, harden
 - **joe-audit** — audits the whole repo for over-engineering and hands back a ranked delete-list
 - **joe-debt** — harvests `joe:` shortcut comments into a tracked ledger, so "later" doesn't become "never"
-
-## Agents
-
 - **builderjoe** — writes code faster than `codingjoe` can say "it worked on my machine"
 - **lazyjoe** — flags over-engineering and bloat, then delegates the cutting back
 - **docujoe** — documents the public surface

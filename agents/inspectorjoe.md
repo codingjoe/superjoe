@@ -49,9 +49,8 @@ Code reviewer for intentional architecture.
 
 ## Output
 
-- Bullet points for each issue found in the code.
-- Include location.
-- Include one-sentence reasoning for each issue.
+- One line per issue: location + one-sentence reason.
+- The diff's best outcome is a shorter list, not a longer one.
 
 ## Refusals
 

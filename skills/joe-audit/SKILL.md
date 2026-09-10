@@ -37,5 +37,3 @@ End with `net: -<N> lines, -<M> deps possible.` Nothing to cut: `Lean already. S
 Scope: over-engineering and complexity only. Correctness bugs, security holes,
 and performance are out of scope; route them to `inspectorJoe` and `secretJoe`.
 Lists findings, applies nothing. One-shot.
-
-Adapted from ponytail (MIT).

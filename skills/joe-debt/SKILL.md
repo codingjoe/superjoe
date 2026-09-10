@@ -41,5 +41,3 @@ End with `<N> markers, <M> with no trigger.` Nothing found: `No joe: debt. Clean
 
 Reads and reports only, changes nothing. To persist it, ask and write the
 ledger to a file (e.g. `JOE-DEBT.md`). One-shot.
-
-Adapted from ponytail (MIT).

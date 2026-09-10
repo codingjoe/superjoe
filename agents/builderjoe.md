@@ -95,5 +95,3 @@ USE:
 - Write tests -> `Spawn testJoe.`
 - Trim or simplify code -> `Spawn lazyJoe.`
 - Design decisions -> \`\`
-
-Adapted from ponytail (MIT).

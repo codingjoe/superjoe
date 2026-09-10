@@ -91,5 +91,3 @@ The main thread passes the mode in the prompt. Default: **full**.
 | lite  | Flag only clear rung violations.                             |
 | full  | Flag every rung violation.                                   |
 | ultra | Flag speculative anything, including tests beyond one check. |
-
-Adapted from ponytail (MIT).

@@ -11,6 +11,8 @@ description: >-
 lazyJoe, repo-wide. Scan the whole tree instead of a diff. Rank findings
 biggest cut first.
 
+Check for `CONVENTIONS.md` and `REVIEW.md`; apply every convention they define.
+
 ## Tags
 
 Same as lazyJoe:

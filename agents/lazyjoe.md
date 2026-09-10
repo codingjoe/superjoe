@@ -23,6 +23,10 @@ For each piece of code, name the rung it should have stopped at:
 
 Flag code that stopped below its rung.
 
+## Conventions
+
+Check for `CONVENTIONS.md` and `REVIEW.md` in the repo. Apply every convention they define; they override the defaults in this file.
+
 ## Look out for
 
 - code nobody asked for: features, abstractions, and edge cases without a requirement

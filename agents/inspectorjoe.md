@@ -24,6 +24,7 @@ Code reviewer for intentional architecture.
 
 - NEVER execute the test suite, pre-commit hooks, or linters.
 - APPLY [CONTRIBUTING.md](../CONTRIBUTING.md) as the review standard for testing and linting. (Fully covered files may be omitted from the coverage report.)
+- Check for `REVIEW.md` and `CONVENTIONS.md` in the repo; apply them as review standards when present.
 - If there are docs, they MUST be updated to reflect the code changes.
 
 ### Style & Naming

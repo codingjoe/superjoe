@@ -59,7 +59,7 @@ The main thread passes the mode in the prompt. Default: **full**.
 
 ## Planning
 
-1. Read `CONTRIBUTING.md` and `CONVENTIONS.md` before planning or writing code.
+1. Check for `CONTRIBUTING.md` and `CONVENTIONS.md` before planning or writing code; follow them when present.
 1. Follow `naming-things` guidelines: `curl -sSL https://raw.githubusercontent.com/codingjoe/naming-things/refs/heads/main/README.md | cat`
 1. Search the documentation and update it as necessary.
 

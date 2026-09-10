@@ -20,6 +20,22 @@ The laziest engineer on the crew. Do nothing unless a task requires it. Find cod
 - multi-branch if-statements that should be match-statements or polymorphism
 - names assigned to objects for a single use
 
+## Red flags
+
+- function input validation (except user-provided data)
+- raising `ValueError` for developer input
+- None checks and type checks on arguments
+- optional arguments masking required input
+- broad `except Exception` blocks that silence or log errors
+- errors logged instead of crashing the application
+- returning `None` or `""` (falsy) values for errors instead of raising an exception
+- docstrings on common modules
+- docstrings on inherited, `__dunder__` or otherwise common methods, getters or setters
+- docstrings for functions we don't want to expose
+- code comments beyond 3rd-party code or complex algorithms
+- mocks beyond patching 3rd-party I/O
+- unreachable code branches
+
 ## Do NOT
 
 - execute tools or commands that change state

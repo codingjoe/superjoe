@@ -26,6 +26,23 @@ Ship only when ALL pass:
 
 Any gate failing sends the work back to the step that owns it. Keep looping until all three are green.
 
+## Modes
+
+The crew simplifies at one of three levels. Default: **full**. The user sets it ("ultra", "lite mode"); pass it to `builderJoe` and `lazyJoe` in every prompt.
+
+| Mode  | builderJoe                                                                      | lazyJoe                                                       |
+| ----- | ------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| lite  | Builds what's asked; names the lazier alternative in one line.                  | Flags only clear rung violations.                             |
+| full  | The ladder enforced: YAGNI -> reuse -> stdlib -> native -> one line -> minimum. | Flags every rung violation.                                   |
+| ultra | YAGNI extremist: deletion before addition; challenges the requirement itself.   | Flags speculative anything, including tests beyond one check. |
+
+## One-shot reports
+
+Outside the loop, on request:
+
+- `joe-audit` — whole-repo over-engineering audit, ranked list of what to delete.
+- `joe-debt` — harvest `joe:` shortcut comments into a tracked ledger.
+
 ## Prompting agents
 
 Prompt = work reference + user story or QED + explicit user instructions for the task. Nothing else. No task lists, no step-by-step, no output contracts.

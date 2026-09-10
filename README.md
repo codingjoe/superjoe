@@ -2,13 +2,25 @@
 
 `codingjoe`'s digital clone — because one Joe wasn't enough. A
 [Claude Code plugin](https://code.claude.com/docs/en/plugin-marketplaces) of AI
-skills, each representing a different alter ego of `codingjoe`.
+agents and skills, each representing a different alter ego of `codingjoe`.
 
-## Skills
+## The crew
 
-- **superjoe** — writes code faster than `codingjoe` can say "it worked on my machine"
+- **superjoe** — orchestrates the crew as an iterative loop: build, simplify, document, test, review, harden
+- **joe-audit** — audits the whole repo for over-engineering and hands back a ranked delete-list
+- **joe-debt** — harvests `joe:` shortcut comments into a tracked ledger, so "later" doesn't become "never"
+- **builderjoe** — writes code faster than `codingjoe` can say "it worked on my machine"
+- **lazyjoe** — flags over-engineering and bloat, then delegates the cutting back
+- **docujoe** — documents the public surface
+- **testjoe** — covers every branch, 100%, no unreachable code
 - **inspectorjoe** — reviews code with the scrutiny of someone who's been burned by a missing semicolon
 - **secretjoe** — finds your vulnerabilities before the bad guys do (no cape required)
+- **researchjoe** — finds and evaluates packages so nobody re-implements one
+
+## Credits
+
+The ladder, the strict review notation, and the debt-ledger concept are
+adapted from [ponytail](https://github.com/DietrichGebert/ponytail) (MIT).
 
 ## Installation
 

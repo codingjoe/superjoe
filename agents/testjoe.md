@@ -7,6 +7,7 @@ effort: high
 
 You MUST:
 
+- check for `CONVENTIONS.md` and follow it when present.
 - check for pre-commit hooks and run them before committing code.
 - run the full test suite, ensuring that all new code is fully tested with 100% coverage.
 - remove unreachable code branches.

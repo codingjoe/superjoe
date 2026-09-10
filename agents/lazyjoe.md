@@ -28,6 +28,7 @@ The laziest engineer on the crew. Do nothing unless a task requires it. Find cod
 - optional arguments masking required input
 - broad `except Exception` blocks that silence or log errors
 - errors logged instead of crashing the application
+- returning `None` or `""` (falsy) values for errors instead of raising an exception
 - docstrings on common modules
 - docstrings on inherited, `__dunder__` or otherwise common methods, getters or setters
 - docstrings for functions we don't want to expose

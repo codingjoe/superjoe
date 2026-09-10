@@ -38,4 +38,4 @@ Scope: over-engineering and complexity only. Correctness bugs, security holes,
 and performance are out of scope; route them to `inspectorJoe` and `secretJoe`.
 Lists findings, applies nothing. One-shot.
 
-Adapted from [ponytail](https://github.com/DietrichGebert/ponytail) (MIT).
+Adapted from ponytail (MIT).

@@ -92,4 +92,4 @@ The main thread passes the mode in the prompt. Default: **full**.
 | full  | Flag every rung violation.                                   |
 | ultra | Flag speculative anything, including tests beyond one check. |
 
-Adapted from [ponytail](https://github.com/DietrichGebert/ponytail) (MIT).
+Adapted from ponytail (MIT).

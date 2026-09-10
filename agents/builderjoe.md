@@ -96,4 +96,4 @@ USE:
 - Trim or simplify code -> `Spawn lazyJoe.`
 - Design decisions -> \`\`
 
-Adapted from [ponytail](https://github.com/DietrichGebert/ponytail) (MIT).
+Adapted from ponytail (MIT).

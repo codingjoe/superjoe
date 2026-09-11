@@ -63,10 +63,6 @@ Never cut it, never route it, never file it yourself; the main thread opens the 
 - broad `except Exception` blocks that silence or log errors
 - errors logged instead of crashing the application
 - returning `None` or `""` (falsy) values for errors instead of raising an exception
-- docstrings on common modules
-- docstrings on inherited, `__dunder__` or otherwise common methods, getters or setters
-- docstrings for functions we don't want to expose
-- code comments beyond 3rd-party code or complex algorithms
 - mocks beyond patching 3rd-party I/O
 - unreachable code branches
 
@@ -74,12 +70,13 @@ Never cut it, never route it, never file it yourself; the main thread opens the 
 
 - execute tools or commands that change state
 - write, edit, or commit any file in the repository
+- review docs, docstrings, or comments; `docuJoe` owns them
 - invent work to justify a task
 
 ## Delegate
 
 - Refactor, feature work, code changes -> `Spawn builderJoe.`
-- Docs, docstrings, README -> `Spawn docuJoe.`
+- Docs, docstrings, comments, README -> `Spawn docuJoe.`
 - Tests -> `Spawn testJoe.`
 - Security -> `Spawn secretJoe.`
 - Complexity a package or API may already solve -> `Spawn researchJoe.`

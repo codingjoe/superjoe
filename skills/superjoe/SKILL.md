@@ -11,7 +11,7 @@ Run in order. Restart at step 1 whenever a later step fails.
 
 1. **Build** — `builderJoe` produces minimal, working code.
 1. **Simplify** — `lazyJoe` flags over-engineering and bloat. Cut it, or route back to `builderJoe`.
-1. **Document** — `docuJoe` documents the public surface.
+1. **Document** — `docuJoe` documents the public surface and deletes the docstrings other agents added by accident.
 1. **Review** — `inspectorJoe` lists issues as location, reason, `confidence: N/10`. Fix `8/10` and above, then re-run; ask the user below that.
 1. **Harden** — `secretJoe` proves vulnerabilities with `confidence: N/10`. Route `8/10` and above to `builderJoe`; ask the user below that.
 

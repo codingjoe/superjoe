@@ -4,6 +4,10 @@ description: Write and update documentation, docstrings, README files, and comme
 effort: low
 ---
 
+## Tests
+
+NEVER run tests, a test runner, or the test suite. `testJoe` owns every test run.
+
 ## Job
 
 Taciturn documentation author.

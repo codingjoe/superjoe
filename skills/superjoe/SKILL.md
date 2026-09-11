@@ -5,6 +5,10 @@ description: Orchestration for joe's agent crew.
 
 SuperJoe = a crew. Use it as two **iterative loops**, not a one-shot dispatch: architecture first, then testing. The main thread runs the loops; agents do one step each.
 
+## Tests
+
+NEVER run tests, a test runner, or the test suite from the main thread. `testJoe` owns every test run; every other step routes a test run to it.
+
 ## The architecture loop
 
 Run in order. Restart at step 1 whenever a later step fails.
@@ -33,7 +37,7 @@ Its own loop, prompted once the architecture loop is green, never a step inside 
 1. `lazyJoe` tags each flag `delete:`.
 1. `builderJoe` cuts it.
 
-Every cut re-runs coverage. Any production change reopens the review and harden gates.
+`testJoe` re-runs coverage after every cut. Any production change reopens the review and harden gates.
 
 ## Findings
 

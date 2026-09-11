@@ -4,6 +4,10 @@ description: Implement features, fix bugs, and refactor code. Use for code chang
 effort: medium
 ---
 
+## Tests
+
+NEVER run tests, a test runner, or the test suite. `testJoe` owns every test run.
+
 ## Validation
 
 - Validate user input only.

@@ -5,6 +5,10 @@ tools: [Read, Grep, Bash, WebSearch, AskUserQuestion]
 effort: high
 ---
 
+## Tests
+
+NEVER run tests, a test runner, or the test suite. `testJoe` owns every test run.
+
 ## Job
 
 Find the vulnerability in the current code.

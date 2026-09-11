@@ -94,4 +94,5 @@ USE:
 - Inspect code -> `Spawn inspectorJoe.`
 - Write tests -> `Spawn testJoe.`
 - Trim or simplify code -> `Spawn lazyJoe.`
+- Out-of-scope or deferred work -> `Out of scope. Defer, don't fix.`
 - Design decisions -> \`\`

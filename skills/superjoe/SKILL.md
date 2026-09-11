@@ -13,18 +13,43 @@ Run in order. Restart at step 1 whenever a later step fails.
 1. **Simplify** — `lazyJoe` flags over-engineering and bloat. Cut it, or route back to `builderJoe`.
 1. **Document** — `docuJoe` documents the public surface.
 1. **Test** — `testJoe` covers every branch, 100%, no unreachable code.
-1. **Review** — `inspectorJoe` lists issues with location + one-line reason. Fix each, then re-run.
-1. **Harden** — `secretJoe` hunts vulnerabilities. Fix or route to `builderJoe`.
+1. **Review** — `inspectorJoe` lists issues with location, one-line reason, and `confidence: N/10`. Fix the `8/10` and above, then re-run; ask the user before touching anything below.
+1. **Harden** — `secretJoe` hunts vulnerabilities with proof and `confidence: N/10`. Route the `8/10` and above to `builderJoe`; ask the user before touching anything below.
 
 ## Exit gates
 
 Ship only when ALL pass:
 
-- `inspectorJoe` reports zero issues
+- `inspectorJoe` reports no in-scope issue at `8/10` or above
 - `testJoe` reports 100% coverage
-- `secretJoe` finds nothing exploitable
+- `secretJoe` finds nothing exploitable in scope
+
+Findings below `8/10` never block the gate: the user approves them or they are deferred.
 
 Any gate failing sends the work back to the step that owns it. Keep looping until all three are green.
+
+## Findings
+
+Every agent reports a finding once. Route on the first line that matches:
+
+| Finding                            | Route                                     |
+| ---------------------------------- | ----------------------------------------- |
+| in scope, `8/10` or above          | fix it, then re-run the step that owns it |
+| in scope, below `8/10`             | ask the user first                        |
+| out of scope (`defer:`)            | file a GitHub issue, change nothing       |
+| vulnerability                      | `secretJoe`; nobody else reports one      |
+| bug, performance, naming, coverage | `inspectorJoe`; nobody else reports one   |
+| over-engineering, dead code        | `lazyJoe`; nobody else reports one        |
+
+## Out-of-scope findings
+
+A finding outside the work under review is deferred, never fixed:
+
+1. The reviewer emits one `defer: <what>. <why>. [path]` line.
+1. The main thread files one `gh issue create` per line, carrying the line verbatim, the repo, and the work reference.
+1. No agent addresses it. `builderJoe`, `docuJoe`, and `testJoe` treat deferred findings, and any other out-of-scope code they notice, as untouchable.
+
+Deferral covers feature and PR work. One-shot repo-wide reports (`joe-audit`, `joe-debt`) are exempt: their findings are the deliverable.
 
 ## Modes
 
@@ -50,6 +75,7 @@ Prompt = work reference + user story or QED + explicit user instructions for the
 Include what grounds the agent:
 
 - Minimal file refs: `src/auth.ts`
+- Scope: the work reference bounds the review; anything else gets a `defer:` line
 - Prior review: `see review on PR #12` or `see <branch> diff: git diff main...branch`
 - Goal: one user story sentence, exception message or expected behaviour (bugs only)
 - Steps: QED, short, numbered bullets to reproduce the error
@@ -97,18 +123,21 @@ sequenceDiagram
     participant T as testJoe
     participant I as inspectorJoe
     participant S as secretJoe
+    participant U as user
 
     Main->>B: build
     Main->>L: simplify
     L-->>Main: flags bloat (cut or route back)
     Main->>D: document
-    loop until test 100%, review 0 issues, no exploits
+    loop until test 100%, review clean, no exploits
         Main->>T: test
         Main->>I: review
-        alt issues found
+        alt in scope, 8/10 or above
             Main->>B: fix
             Main->>T: re-test
             Main->>I: re-review
+        else below 8/10 or out of scope
+            Main->>U: ask the user or file an issue
         end
         Main->>S: harden
         S-->>Main: exploits (or none)

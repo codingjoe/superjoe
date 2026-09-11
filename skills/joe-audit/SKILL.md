@@ -38,4 +38,5 @@ End with `net: -<N> lines, -<M> deps possible.` Nothing to cut: `Lean already. S
 
 Scope: over-engineering and complexity only. Correctness bugs, security holes,
 and performance are out of scope; route them to `inspectorJoe` and `secretJoe`.
-Lists findings, applies nothing. One-shot.
+Repo-wide by design: list findings instead of deferring them to issues, because
+the list is the deliverable. Lists findings, applies nothing. One-shot.

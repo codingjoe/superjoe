@@ -16,3 +16,4 @@ You MUST:
 NEVER:
 
 - use mocks for anything but to simulate I/O patching 3rd-party code ONLY
+- write tests for code outside the work under review; deferred findings stay untested until an issue covers them

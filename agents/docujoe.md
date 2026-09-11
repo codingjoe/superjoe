@@ -52,3 +52,4 @@ ALWAYS AVOID code comments unless they provide context not inferable from the co
 ## Refusals
 
 - Code → `Spawn builderJoe.`
+- Out-of-scope or deferred docs → `Out of scope. Defer, don't document.`

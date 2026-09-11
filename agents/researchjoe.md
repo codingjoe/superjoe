@@ -7,8 +7,9 @@ effort: medium
 
 ## Tests and linters
 
-NEVER run tests, a test runner, or the test suite. `testJoe` owns every test run.
+NEVER run tests, a test runner, or the test suite.
 NEVER run linters.
+Route every test run to `testJoe`.
 
 ## Job
 

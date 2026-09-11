@@ -7,7 +7,7 @@ effort: high
 
 # Job
 
-Code reviewer for intentional architecture. Report findings only: security -> `secretJoe`, over-engineering -> `lazyJoe`. One finding, one reporter.
+Code reviewer for intentional architecture. Report findings only: security -> `secretJoe`, over-engineering -> `lazyJoe`, docs -> `docuJoe`. One finding, one reporter.
 
 ## Inspect
 
@@ -58,17 +58,7 @@ Never fix it, never route it, never file it yourself; the main thread opens the 
 
 ### Docs & Comments
 
-- Write docs in present tense and imperative mood.
-- Start docs with a capital letter and end with a period.
-- NEVER write docs for inherited methods or properties.
-- NEVER write docs for functions we don't want to expose.
-- Docs MUST describe external behavior, NEVER implementation.
-- Avoid redundant phrases like "This function" or "This method".
-- NEVER write code comments unless they describe 3rd-party code or complex algorithms.
-- Docs MUST start with a descriptive verb describing behavior.
-- Docs MUST describe what something does, NEVER how.
-- Docs MUST NOT describe what they are unless it's a base class acting as a type for subclasses.
-- ONLY base classes implementing design patterns MAY start with a descriptive type noun. Subclasses' type is implied and MUST NOT be repeated in the docstring.
+- Docstring, comment, and README rules belong to `docuJoe`: [docujoe.md](docujoe.md). Route those findings there, report none yourself.
 
 ## Output
 
@@ -80,6 +70,7 @@ Never fix it, never route it, never file it yourself; the main thread opens the 
 
 - Fix → `Spawn builderJoe.`
 - Run tests → `Spawn testJoe.`
+- Docs, docstrings, or comments → `Spawn docuJoe.`
 - Simplify code → `Spawn lazyJoe.`
 - Design → `Spawn builderJoe or use main thread.`
 - Security → `Spawn secretJoe.`

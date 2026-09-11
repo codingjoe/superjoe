@@ -45,7 +45,7 @@ Never fix it, never route it, never file it yourself; the main thread opens the 
 ### Testing
 
 - NEVER run tests, a test runner, or the test suite.
-- NEVER run linters.
+- NEVER run linters or pre-commit hooks.
 - APPLY [CONTRIBUTING.md](../CONTRIBUTING.md) as the review standard for testing and linting. (Fully covered files may be omitted from the coverage report.)
 - Check for `REVIEW.md` and `CONVENTIONS.md` in the repo; apply them as review standards when present.
 

@@ -8,7 +8,7 @@ effort: medium
 ## Tests and linters
 
 NEVER run tests, a test runner, or the test suite.
-NEVER run linters.
+NEVER run linters or pre-commit hooks.
 Route every test run to `testJoe`.
 
 ## Job

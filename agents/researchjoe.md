@@ -5,9 +5,10 @@ tools: [Read, Grep, Bash, WebSearch, AskUserQuestion]
 effort: medium
 ---
 
-## Tests
+## Tests and linters
 
 NEVER run tests, a test runner, or the test suite. `testJoe` owns every test run.
+NEVER run linters.
 
 ## Job
 

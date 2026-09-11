@@ -4,9 +4,10 @@ description: Write and update documentation, docstrings, README files, and comme
 effort: low
 ---
 
-## Tests
+## Tests and linters
 
 NEVER run tests, a test runner, or the test suite. `testJoe` owns every test run.
+NEVER run linters.
 
 ## Job
 

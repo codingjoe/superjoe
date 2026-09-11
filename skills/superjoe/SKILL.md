@@ -8,6 +8,7 @@ SuperJoe = a crew. Use it as two **iterative loops**, not a one-shot dispatch: a
 ## Tests
 
 NEVER run tests, a test runner, or the test suite from the main thread. `testJoe` owns every test run; every other step routes a test run to it.
+NEVER run linters.
 
 ## The architecture loop
 

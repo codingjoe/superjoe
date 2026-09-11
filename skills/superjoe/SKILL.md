@@ -12,18 +12,35 @@ Run in order. Restart at step 1 whenever a later step fails.
 1. **Build** — `builderJoe` produces minimal, working code.
 1. **Simplify** — `lazyJoe` flags over-engineering and bloat. Cut it, or route back to `builderJoe`.
 1. **Document** — `docuJoe` documents the public surface and deletes docstrings nobody asked for.
-1. **Review** — `inspectorJoe` lists issues as location, reason, `confidence: N/10`. Fix `8/10` and above, then re-run; ask the user below that.
-1. **Harden** — `secretJoe` proves vulnerabilities with `confidence: N/10`. Route `8/10` and above to `builderJoe`; ask the user below that.
+1. **Review** — `inspectorJoe` triages to `suspicion:` lines, the user confirms, then it rates findings `confidence: N/10` and `impact: N/10`. Fix `8/10` and above on both axes, then re-run.
+1. **Harden** — `secretJoe` triages to `suspicion:` lines, the user confirms, then it proves them with `confidence: N/10` and `impact: N/10`. Route `8/10` and above on both axes to `builderJoe`.
 
 ## Exit gates
 
 Ship only when both loops pass.
 
-Architecture: no in-scope issue at `8/10` or above, nothing exploitable in scope.
+Architecture: no in-scope finding at `8/10` or above on both axes, nothing exploitable in scope.
 
 Testing: 100% coverage, every flagged branch cut.
 
-Findings below `8/10` never block the gate: the user approves them or they are deferred. A failing gate sends the work back to its owner.
+Only a finding at `8/10` or above on both axes blocks the gate. Everything else the user approves, or it is deferred. A failing gate sends the work back to its owner.
+
+## The confirmation gate
+
+`inspectorJoe` and `secretJoe` run in two phases, and the user sits between them.
+
+1. **Triage** — cheap. The agent sweeps the changed lines and emits `suspicion:` lines. `secretJoe` builds no proof here.
+1. **Confirm** — the agent asks the user which suspicions to investigate. Nothing runs unconfirmed.
+1. **Investigation** — expensive. The agent confirms or drops each one, then rates the survivors.
+
+`confidence: N/10` is how sure the agent is. `impact: N/10` is how much it matters if true. They are independent.
+
+| confidence | impact | Route                                                      |
+| ---------- | ------ | ---------------------------------------------------------- |
+| `>= 8`     | `>= 8` | fix it, then re-run the step that owns it; blocks the gate |
+| `>= 8`     | `< 8`  | fix it if the fix is small, otherwise `defer:` to an issue |
+| `< 8`      | `>= 8` | never fixed, never blocks; the user decides                |
+| `< 8`      | `< 8`  | report, change nothing                                     |
 
 ## The testing loop
 
@@ -39,16 +56,19 @@ Every cut re-runs coverage. Any production change reopens the review and harden 
 
 Every agent reports a finding once. Route on the first line that matches:
 
-| Finding                         | Route                                              |
-| ------------------------------- | -------------------------------------------------- |
-| in scope, `8/10` or above       | fix it, then re-run the step that owns it          |
-| in scope, below `8/10`          | ask the user first                                 |
-| out of scope (`defer:`)         | file a GitHub issue, change nothing                |
-| vulnerability                   | `secretJoe`; nobody else reports one               |
-| bug, performance, naming        | `inspectorJoe`; nobody else reports one            |
-| over-engineering, dead code     | `lazyJoe`; nobody else reports one                 |
-| uncovered lines                 | `testJoe`; nobody else reports them                |
-| unreachable or defensive branch | `testJoe` flags, `lazyJoe` tags, `builderJoe` cuts |
+| Finding                         | Route                                                          |
+| ------------------------------- | -------------------------------------------------------------- |
+| suspicion                       | triage only; the user confirms before anything is investigated |
+| cleared suspicion (`dropped:`)  | evidence of what was checked; route nothing                    |
+| `8/10` or above on both axes    | fix it, then re-run the step that owns it                      |
+| confidence `>= 8`, impact `< 8` | fix it if the fix is small, otherwise `defer:` to an issue     |
+| confidence `< 8`                | ask the user first; never auto-fix, never gate                 |
+| out of scope (`defer:`)         | file a GitHub issue, change nothing                            |
+| vulnerability                   | `secretJoe`; nobody else reports one                           |
+| bug, performance, naming        | `inspectorJoe`; nobody else reports one                        |
+| over-engineering, dead code     | `lazyJoe`; nobody else reports one                             |
+| uncovered lines                 | `testJoe`; nobody else reports them                            |
+| unreachable or defensive branch | `testJoe` flags, `lazyJoe` tags, `builderJoe` cuts             |
 
 ## Out-of-scope findings
 
@@ -88,6 +108,7 @@ Include what grounds the agent:
 - Prior review: `see review on PR #12` or `see <branch> diff: git diff main...branch`
 - Goal: one user story sentence, exception message or expected behaviour (bugs only)
 - Steps: QED, short, numbered bullets to reproduce the error
+- Phase: a reviewer prompt asks for triage. Its investigation phase runs on the suspicions the user confirms.
 - Explicit user instructions for the task, verbatim.
 
 Prompt shape:
@@ -141,14 +162,18 @@ sequenceDiagram
     Main->>D: document
     loop until review clean, no exploits
         Main->>I: review
-        alt in scope, 8/10 or above
+        I->>U: suspicions
+        U->>I: confirm what to investigate
+        alt 8/10 or above on both axes
             Main->>B: fix
             Main->>I: re-review
-        else below 8/10 or out of scope
+        else below 8/10 on either axis, or out of scope
             Main->>U: ask the user or file an issue
         end
         Main->>S: harden
-        S-->>Main: exploits (or none)
+        S->>U: suspicions
+        U->>S: confirm what to prove
+        S-->>Main: proven exploits (or none)
     end
     Note over Main: architecture green, prompt testJoe
     loop until coverage 100%

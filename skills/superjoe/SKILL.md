@@ -3,43 +3,60 @@ name: superJoe
 description: Orchestration for joe's agent crew.
 ---
 
-SuperJoe = a crew. Use it as an **iterative loop**, not a one-shot dispatch. The main thread runs the loop; agents do one step each.
+SuperJoe = a crew. Use it as two **iterative loops**, not a one-shot dispatch: architecture first, then testing. The main thread runs the loops; agents do one step each.
 
-## The loop
+## The architecture loop
 
 Run in order. Restart at step 1 whenever a later step fails.
 
 1. **Build** — `builderJoe` produces minimal, working code.
 1. **Simplify** — `lazyJoe` flags over-engineering and bloat. Cut it, or route back to `builderJoe`.
 1. **Document** — `docuJoe` documents the public surface.
-1. **Test** — `testJoe` covers every branch, 100%, no unreachable code.
 1. **Review** — `inspectorJoe` lists issues with location, one-line reason, and `confidence: N/10`. Fix the `8/10` and above, then re-run; ask the user before touching anything below.
 1. **Harden** — `secretJoe` hunts vulnerabilities with proof and `confidence: N/10`. Route the `8/10` and above to `builderJoe`; ask the user before touching anything below.
 
 ## Exit gates
 
-Ship only when ALL pass:
+Ship only when both loops pass.
+
+Architecture loop:
 
 - `inspectorJoe` reports no in-scope issue at `8/10` or above
-- `testJoe` reports 100% coverage
 - `secretJoe` finds nothing exploitable in scope
+
+Testing loop:
+
+- `testJoe` reports 100% coverage
+- every branch it flagged is cut or rewritten
 
 Findings below `8/10` never block the gate: the user approves them or they are deferred.
 
-Any gate failing sends the work back to the step that owns it. Keep looping until all three are green.
+Any gate failing sends the work back to the step that owns it. Keep looping until all are green.
+
+## The testing loop
+
+Testing is its own loop, prompted once the architecture loop is green. It owns `testJoe` and runs after the architecture review, never as a step inside it.
+
+`testJoe` writes tests, reaches 100% coverage, and flags what coverage exposes: branches nothing can reach and checks the signature already guarantees. It edits no production code.
+
+Route each flag the way the architecture loop routes bloat: `lazyJoe` gives the cut verdict, `builderJoe` rewrites anything a cut cannot fix. Every fix re-runs coverage, and any production change reopens the review and harden gates.
+
+Prompt `testJoe` on its own: work reference, scope, and the coverage bar.
 
 ## Findings
 
 Every agent reports a finding once. Route on the first line that matches:
 
-| Finding                            | Route                                     |
-| ---------------------------------- | ----------------------------------------- |
-| in scope, `8/10` or above          | fix it, then re-run the step that owns it |
-| in scope, below `8/10`             | ask the user first                        |
-| out of scope (`defer:`)            | file a GitHub issue, change nothing       |
-| vulnerability                      | `secretJoe`; nobody else reports one      |
-| bug, performance, naming, coverage | `inspectorJoe`; nobody else reports one   |
-| over-engineering, dead code        | `lazyJoe`; nobody else reports one        |
+| Finding                         | Route                                     |
+| ------------------------------- | ----------------------------------------- |
+| in scope, `8/10` or above       | fix it, then re-run the step that owns it |
+| in scope, below `8/10`          | ask the user first                        |
+| out of scope (`defer:`)         | file a GitHub issue, change nothing       |
+| vulnerability                   | `secretJoe`; nobody else reports one      |
+| bug, performance, naming        | `inspectorJoe`; nobody else reports one   |
+| over-engineering, dead code     | `lazyJoe`; nobody else reports one        |
+| uncovered lines                 | `testJoe`; nobody else reports them       |
+| unreachable or defensive branch | flagged by `testJoe`, cut by `lazyJoe`    |
 
 ## Out-of-scope findings
 
@@ -107,8 +124,9 @@ trim bloat / over-engineering -> `lazyJoe`
 concise goal-oriented docs -> `docuJoe`
 review minimalism/perf -> `inspectorJoe`
 security research -> `secretJoe`
+tests, coverage, unreachable branches -> `testJoe`, in the testing loop after review
 find & evaluate packages -> `researchJoe`
-orchestrate the loop -> main thread
+orchestrate the loops -> main thread
 
 Rule: main thread loops; each agent does one step. Spawn `researchJoe` from any step when a dependency or fact needs checking; it never edits.
 
@@ -129,12 +147,10 @@ sequenceDiagram
     Main->>L: simplify
     L-->>Main: flags bloat (cut or route back)
     Main->>D: document
-    loop until test 100%, review clean, no exploits
-        Main->>T: test
+    loop until review clean, no exploits
         Main->>I: review
         alt in scope, 8/10 or above
             Main->>B: fix
-            Main->>T: re-test
             Main->>I: re-review
         else below 8/10 or out of scope
             Main->>U: ask the user or file an issue
@@ -142,5 +158,13 @@ sequenceDiagram
         Main->>S: harden
         S-->>Main: exploits (or none)
     end
-    Note over Main: ship only when all gates pass
+    Note over Main: architecture green, prompt testJoe
+    loop until coverage 100%
+        Main->>T: test
+        T-->>Main: flags unreachable and defensive branches
+        Main->>L: cut verdict
+        Main->>B: rewrite what a cut cannot fix
+        Main->>I: re-review changed code
+    end
+    Note over Main: ship only when both loops pass
 ```

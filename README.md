@@ -11,7 +11,7 @@ agents and skills, each representing a different alter ego of `codingjoe`.
 - **joe-debt** — harvests `joe:` shortcut comments into a tracked ledger, so "later" doesn't become "never"
 - **builderjoe** — writes code faster than `codingjoe` can say "it worked on my machine"
 - **lazyjoe** — flags over-engineering and bloat, then delegates the cutting back
-- **docujoe** — documents the public surface, and deletes the docstrings other agents left behind
+- **docujoe** — documents the public surface, and deletes the docstrings nobody asked for
 - **testjoe** — covers every branch, 100%, and flags unreachable or defensive code for builderjoe to cut
 - **inspectorjoe** — reviews code with the scrutiny of someone who's been burned by a missing semicolon
 - **secretjoe** — finds your vulnerabilities before the bad guys do (no cape required)

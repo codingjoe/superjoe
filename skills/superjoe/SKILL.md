@@ -12,18 +12,33 @@ Run in order. Restart at step 1 whenever a later step fails.
 1. **Build** — `builderJoe` produces minimal, working code.
 1. **Simplify** — `lazyJoe` flags over-engineering and bloat. Cut it, or route back to `builderJoe`.
 1. **Document** — `docuJoe` documents the public surface and deletes docstrings nobody asked for.
-1. **Review** — `inspectorJoe` lists issues as location, reason, `confidence: N/10`. Fix `8/10` and above, then re-run; ask the user below that.
-1. **Harden** — `secretJoe` proves vulnerabilities with `confidence: N/10`. Route `8/10` and above to `builderJoe`; ask the user below that.
+1. **Review** — `inspectorJoe` triages to `suspicion:` lines, the user confirms, it rates `confidence: N/10` and `impact: N/10`. Fix both axes at `8/10` or above, then re-run.
+1. **Harden** — `secretJoe` triages to `suspicion:` lines, the user confirms, it proves and rates them. Route both axes at `8/10` or above to `builderJoe`.
 
 ## Exit gates
 
 Ship only when both loops pass.
 
-Architecture: no in-scope issue at `8/10` or above, nothing exploitable in scope.
+Architecture: no in-scope finding at `8/10` or above on both axes, nothing exploitable in scope.
 
 Testing: 100% coverage, every flagged branch cut.
 
-Findings below `8/10` never block the gate: the user approves them or they are deferred. A failing gate sends the work back to its owner.
+Only `8/10` or above on both axes blocks the gate. Everything else: the user approves it, or it is deferred. A failing gate sends the work back to its owner.
+
+## The confirmation gate
+
+`inspectorJoe` and `secretJoe` run two phases. The user sits between them.
+
+1. **Triage** — emit `suspicion:` lines. `secretJoe` proves nothing here.
+1. **Confirm** — ask the user which to investigate. Nothing runs unconfirmed.
+1. **Investigation** — confirm or drop each one, then rate the survivors.
+
+| confidence | impact | Action                           |
+| ---------- | ------ | -------------------------------- |
+| `>= 8`     | `>= 8` | fix now; blocks the gate         |
+| `>= 8`     | `< 8`  | fix if small, otherwise `defer:` |
+| `< 8`      | `>= 8` | ask the user                     |
+| `< 8`      | `< 8`  | report only                      |
 
 ## The testing loop
 
@@ -41,8 +56,11 @@ Every agent reports a finding once. Route on the first line that matches:
 
 | Finding                         | Route                                              |
 | ------------------------------- | -------------------------------------------------- |
-| in scope, `8/10` or above       | fix it, then re-run the step that owns it          |
-| in scope, below `8/10`          | ask the user first                                 |
+| suspicion                       | triage only; the user confirms first               |
+| cleared suspicion (`dropped:`)  | route nothing                                      |
+| `8/10` or above on both axes    | fix it, re-run the owning step                     |
+| confidence `>= 8`, impact `< 8` | fix if small, otherwise `defer:`                   |
+| confidence `< 8`                | ask the user; never fix, never gate                |
 | out of scope (`defer:`)         | file a GitHub issue, change nothing                |
 | vulnerability                   | `secretJoe`; nobody else reports one               |
 | bug, performance, naming        | `inspectorJoe`; nobody else reports one            |
@@ -88,6 +106,7 @@ Include what grounds the agent:
 - Prior review: `see review on PR #12` or `see <branch> diff: git diff main...branch`
 - Goal: one user story sentence, exception message or expected behaviour (bugs only)
 - Steps: QED, short, numbered bullets to reproduce the error
+- Phase: reviewer prompts ask for triage; investigation waits for user confirmation.
 - Explicit user instructions for the task, verbatim.
 
 Prompt shape:
@@ -141,14 +160,18 @@ sequenceDiagram
     Main->>D: document
     loop until review clean, no exploits
         Main->>I: review
-        alt in scope, 8/10 or above
+        I->>U: suspicions
+        U->>I: confirm what to investigate
+        alt 8/10 or above on both axes
             Main->>B: fix
             Main->>I: re-review
-        else below 8/10 or out of scope
+        else below 8/10 on either axis, or out of scope
             Main->>U: ask the user or file an issue
         end
         Main->>S: harden
-        S-->>Main: exploits (or none)
+        S->>U: suspicions
+        U->>S: confirm what to prove
+        S-->>Main: proven exploits (or none)
     end
     Note over Main: architecture green, prompt testJoe
     loop until coverage 100%

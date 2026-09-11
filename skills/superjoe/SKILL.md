@@ -27,7 +27,7 @@ Architecture loop:
 Testing loop:
 
 - `testJoe` reports 100% coverage
-- every branch it flagged is cut or rewritten
+- every branch `testJoe` flagged is cut
 
 Findings below `8/10` never block the gate: the user approves them or they are deferred.
 
@@ -39,7 +39,7 @@ Testing is its own loop, prompted once the architecture loop is green. It owns `
 
 `testJoe` writes tests, reaches 100% coverage, and flags what coverage exposes: branches nothing can reach and checks the signature already guarantees. It edits no production code.
 
-Route each flag the way the architecture loop routes bloat: `lazyJoe` gives the cut verdict, `builderJoe` rewrites anything a cut cannot fix. Every fix re-runs coverage, and any production change reopens the review and harden gates.
+Three jobs, no overlap: `lazyJoe` flags the branch with a `delete:` verdict, and `builderJoe` cuts it. Every cut re-runs coverage, and any production change reopens the review and harden gates.
 
 Prompt `testJoe` on its own: work reference, scope, and the coverage bar.
 
@@ -47,16 +47,16 @@ Prompt `testJoe` on its own: work reference, scope, and the coverage bar.
 
 Every agent reports a finding once. Route on the first line that matches:
 
-| Finding                         | Route                                     |
-| ------------------------------- | ----------------------------------------- |
-| in scope, `8/10` or above       | fix it, then re-run the step that owns it |
-| in scope, below `8/10`          | ask the user first                        |
-| out of scope (`defer:`)         | file a GitHub issue, change nothing       |
-| vulnerability                   | `secretJoe`; nobody else reports one      |
-| bug, performance, naming        | `inspectorJoe`; nobody else reports one   |
-| over-engineering, dead code     | `lazyJoe`; nobody else reports one        |
-| uncovered lines                 | `testJoe`; nobody else reports them       |
-| unreachable or defensive branch | flagged by `testJoe`, cut by `lazyJoe`    |
+| Finding                         | Route                                              |
+| ------------------------------- | -------------------------------------------------- |
+| in scope, `8/10` or above       | fix it, then re-run the step that owns it          |
+| in scope, below `8/10`          | ask the user first                                 |
+| out of scope (`defer:`)         | file a GitHub issue, change nothing                |
+| vulnerability                   | `secretJoe`; nobody else reports one               |
+| bug, performance, naming        | `inspectorJoe`; nobody else reports one            |
+| over-engineering, dead code     | `lazyJoe`; nobody else reports one                 |
+| uncovered lines                 | `testJoe`; nobody else reports them                |
+| unreachable or defensive branch | `testJoe` flags, `lazyJoe` tags, `builderJoe` cuts |
 
 ## Out-of-scope findings
 
@@ -163,7 +163,7 @@ sequenceDiagram
         Main->>T: test
         T-->>Main: flags unreachable and defensive branches
         Main->>L: cut verdict
-        Main->>B: rewrite what a cut cannot fix
+        Main->>B: cut
         Main->>I: re-review changed code
     end
     Note over Main: ship only when both loops pass

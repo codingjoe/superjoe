@@ -41,4 +41,4 @@ Coverage exposes code that should not exist. One line per flag:
 `L<line>: unreachable branch. <why it cannot run>.`
 `L<line>: defensive check. <what the signature already guarantees>.`
 
-Route a flag to `lazyJoe` for the cut verdict, or to `builderJoe` when it needs a rewrite. Then re-run coverage.
+Route a flag to `lazyJoe` for the cut verdict; `builderJoe` cuts it. Then re-run coverage.

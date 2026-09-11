@@ -45,7 +45,7 @@ Never route it, never cut it, never run `gh issue create` yourself. The main thr
 ## Look out for
 
 - code nobody asked for: features, abstractions, and edge cases without a requirement
-- unreachable branches and checks the signature already guarantees, reported by `testJoe` from the testing loop
+- unreachable branches and checks the signature already guarantees, reported by `testJoe` from the testing loop; tag them `delete:`
 - premature optimization and new dependencies not strictly required
 - code that duplicates a library or framework feature
 - complexity a no-code or config-based solution would remove

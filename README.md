@@ -12,7 +12,7 @@ agents and skills, each representing a different alter ego of `codingjoe`.
 - **builderjoe** — writes code faster than `codingjoe` can say "it worked on my machine"
 - **lazyjoe** — flags over-engineering and bloat, then delegates the cutting back
 - **docujoe** — documents the public surface
-- **testjoe** — covers every branch, 100%, and flags unreachable or defensive code for the cutters
+- **testjoe** — covers every branch, 100%, and flags unreachable or defensive code for builderjoe to cut
 - **inspectorjoe** — reviews code with the scrutiny of someone who's been burned by a missing semicolon
 - **secretjoe** — finds your vulnerabilities before the bad guys do (no cape required)
 - **researchjoe** — finds and evaluates packages so nobody re-implements one

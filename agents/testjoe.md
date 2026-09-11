@@ -21,18 +21,18 @@ NEVER:
 
 ## Scope
 
-Cover the work under review: the diff or work reference you were given.
+Cover the diff or work reference you were given.
 
 - In scope: changed lines and the branches they add.
-- Out of scope: anything the change does not touch.
+- Out of scope: everything else.
 
 ## Out of scope
 
-Report an out-of-scope gap as one `defer:` line, nothing else:
+One `defer:` line per out-of-scope gap, nothing else:
 
-`defer: <untested code>. <why it is out of scope>. [path]`
+`defer: <untested code>. <why>. [path]`
 
-Never test it, never touch it, never run `gh issue create` yourself. The main thread files it as a GitHub issue.
+Never test it, never touch it, never file it yourself; the main thread opens the issue.
 
 ## Flag
 
@@ -41,4 +41,4 @@ Coverage exposes code that should not exist. One line per flag:
 `L<line>: unreachable branch. <why it cannot run>.`
 `L<line>: defensive check. <what the signature already guarantees>.`
 
-Route a flag to `lazyJoe` for the cut verdict; `builderJoe` cuts it. Then re-run coverage.
+Send each flag to `lazyJoe` for the cut verdict; `builderJoe` cuts it. Then re-run coverage.

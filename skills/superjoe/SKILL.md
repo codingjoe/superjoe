@@ -12,36 +12,28 @@ Run in order. Restart at step 1 whenever a later step fails.
 1. **Build** — `builderJoe` produces minimal, working code.
 1. **Simplify** — `lazyJoe` flags over-engineering and bloat. Cut it, or route back to `builderJoe`.
 1. **Document** — `docuJoe` documents the public surface.
-1. **Review** — `inspectorJoe` lists issues with location, one-line reason, and `confidence: N/10`. Fix the `8/10` and above, then re-run; ask the user before touching anything below.
-1. **Harden** — `secretJoe` hunts vulnerabilities with proof and `confidence: N/10`. Route the `8/10` and above to `builderJoe`; ask the user before touching anything below.
+1. **Review** — `inspectorJoe` lists issues as location, reason, `confidence: N/10`. Fix `8/10` and above, then re-run; ask the user below that.
+1. **Harden** — `secretJoe` proves vulnerabilities with `confidence: N/10`. Route `8/10` and above to `builderJoe`; ask the user below that.
 
 ## Exit gates
 
 Ship only when both loops pass.
 
-Architecture loop:
+Architecture: no in-scope issue at `8/10` or above, nothing exploitable in scope.
 
-- `inspectorJoe` reports no in-scope issue at `8/10` or above
-- `secretJoe` finds nothing exploitable in scope
+Testing: 100% coverage, every flagged branch cut.
 
-Testing loop:
-
-- `testJoe` reports 100% coverage
-- every branch `testJoe` flagged is cut
-
-Findings below `8/10` never block the gate: the user approves them or they are deferred.
-
-Any gate failing sends the work back to the step that owns it. Keep looping until all are green.
+Findings below `8/10` never block the gate: the user approves them or they are deferred. A failing gate sends the work back to its owner.
 
 ## The testing loop
 
-Testing is its own loop, prompted once the architecture loop is green. It owns `testJoe` and runs after the architecture review, never as a step inside it.
+Its own loop, prompted once the architecture loop is green, never a step inside it.
 
-`testJoe` writes tests, reaches 100% coverage, and flags what coverage exposes: branches nothing can reach and checks the signature already guarantees. It edits no production code.
+1. `testJoe` writes tests, hits 100% coverage, flags unreachable branches and checks the signature already guarantees. It edits no production code.
+1. `lazyJoe` tags each flag `delete:`.
+1. `builderJoe` cuts it.
 
-Three jobs, no overlap: `lazyJoe` flags the branch with a `delete:` verdict, and `builderJoe` cuts it. Every cut re-runs coverage, and any production change reopens the review and harden gates.
-
-Prompt `testJoe` on its own: work reference, scope, and the coverage bar.
+Every cut re-runs coverage. Any production change reopens the review and harden gates.
 
 ## Findings
 
@@ -60,13 +52,13 @@ Every agent reports a finding once. Route on the first line that matches:
 
 ## Out-of-scope findings
 
-A finding outside the work under review is deferred, never fixed:
+Deferred, never fixed:
 
 1. The reviewer emits one `defer: <what>. <why>. [path]` line.
-1. The main thread files one `gh issue create` per line, carrying the line verbatim, the repo, and the work reference.
-1. No agent addresses it. `builderJoe`, `docuJoe`, and `testJoe` treat deferred findings, and any other out-of-scope code they notice, as untouchable.
+1. The main thread files one `gh issue create`, quoting the line, the repo, and the work reference.
+1. No other agent touches it, or any out-of-scope code it notices.
 
-Deferral covers feature and PR work. One-shot repo-wide reports (`joe-audit`, `joe-debt`) are exempt: their findings are the deliverable.
+`joe-audit` and `joe-debt` are exempt: their repo-wide list is the deliverable.
 
 ## Modes
 

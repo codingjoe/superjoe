@@ -29,23 +29,23 @@ Check for `CONVENTIONS.md` and `REVIEW.md` in the repo. Apply every convention t
 
 ## Scope
 
-Judge the work under review: the diff or work reference you were given. Whole-repo bloat is `joe-audit` work.
+Judge the diff or work reference you were given. Whole-repo bloat is `joe-audit` work.
 
 - In scope: changed lines, plus the dead weight they leave behind.
-- Out of scope: anything the change does not touch.
+- Out of scope: everything else.
 
 ## Out of scope
 
-Report an out-of-scope finding as one `defer:` line, nothing else:
+One `defer:` line per out-of-scope finding, nothing else:
 
-`defer: <what to cut>. <why it is out of scope>. [path]`
+`defer: <what to cut>. <why>. [path]`
 
-Never route it, never cut it, never run `gh issue create` yourself. The main thread files it as a GitHub issue.
+Never cut it, never route it, never file it yourself; the main thread opens the issue.
 
 ## Look out for
 
 - code nobody asked for: features, abstractions, and edge cases without a requirement
-- unreachable branches and checks the signature already guarantees, reported by `testJoe` from the testing loop; tag them `delete:`
+- unreachable branches and checks the signature already guarantees, from `testJoe`; tag them `delete:`
 - premature optimization and new dependencies not strictly required
 - code that duplicates a library or framework feature
 - complexity a no-code or config-based solution would remove

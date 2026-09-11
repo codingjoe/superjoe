@@ -39,6 +39,10 @@ A report names a symptom. Grep every caller of the function you touch and fix th
 
 Non-trivial logic (a branch, a loop, a parser, a money or security path) leaves one runnable check behind: the smallest thing that fails if the logic breaks. Trivial one-liners need no test.
 
+## Cuts
+
+`lazyJoe` tags and you cut. A branch `testJoe` flagged and `lazyJoe` marked is yours to delete, never to guard with another check.
+
 ## Shortcuts
 
 Mark a deliberate simplification with a known ceiling using a `joe:` comment naming the ceiling and the upgrade path:
@@ -93,5 +97,6 @@ USE:
 - Write docs -> `Spawn docuJoe.`
 - Inspect code -> `Spawn inspectorJoe.`
 - Write tests -> `Spawn testJoe.`
-- Trim or simplify code -> `Spawn lazyJoe.`
+- Trim or simplify code -> `Spawn lazyJoe.` for the verdict; a marked cut is yours.
+- Out-of-scope or deferred work -> `Out of scope. Defer, don't fix.`
 - Design decisions -> \`\`

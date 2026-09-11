@@ -3,28 +3,62 @@ name: superJoe
 description: Orchestration for joe's agent crew.
 ---
 
-SuperJoe = a crew. Use it as an **iterative loop**, not a one-shot dispatch. The main thread runs the loop; agents do one step each.
+SuperJoe = a crew. Use it as two **iterative loops**, not a one-shot dispatch: architecture first, then testing. The main thread runs the loops; agents do one step each.
 
-## The loop
+## The architecture loop
 
 Run in order. Restart at step 1 whenever a later step fails.
 
 1. **Build** — `builderJoe` produces minimal, working code.
 1. **Simplify** — `lazyJoe` flags over-engineering and bloat. Cut it, or route back to `builderJoe`.
 1. **Document** — `docuJoe` documents the public surface.
-1. **Test** — `testJoe` covers every branch, 100%, no unreachable code.
-1. **Review** — `inspectorJoe` lists issues with location + one-line reason. Fix each, then re-run.
-1. **Harden** — `secretJoe` hunts vulnerabilities. Fix or route to `builderJoe`.
+1. **Review** — `inspectorJoe` lists issues as location, reason, `confidence: N/10`. Fix `8/10` and above, then re-run; ask the user below that.
+1. **Harden** — `secretJoe` proves vulnerabilities with `confidence: N/10`. Route `8/10` and above to `builderJoe`; ask the user below that.
 
 ## Exit gates
 
-Ship only when ALL pass:
+Ship only when both loops pass.
 
-- `inspectorJoe` reports zero issues
-- `testJoe` reports 100% coverage
-- `secretJoe` finds nothing exploitable
+Architecture: no in-scope issue at `8/10` or above, nothing exploitable in scope.
 
-Any gate failing sends the work back to the step that owns it. Keep looping until all three are green.
+Testing: 100% coverage, every flagged branch cut.
+
+Findings below `8/10` never block the gate: the user approves them or they are deferred. A failing gate sends the work back to its owner.
+
+## The testing loop
+
+Its own loop, prompted once the architecture loop is green, never a step inside it.
+
+1. `testJoe` writes tests, hits 100% coverage, flags unreachable branches and checks the signature already guarantees. It edits no production code.
+1. `lazyJoe` tags each flag `delete:`.
+1. `builderJoe` cuts it.
+
+Every cut re-runs coverage. Any production change reopens the review and harden gates.
+
+## Findings
+
+Every agent reports a finding once. Route on the first line that matches:
+
+| Finding                         | Route                                              |
+| ------------------------------- | -------------------------------------------------- |
+| in scope, `8/10` or above       | fix it, then re-run the step that owns it          |
+| in scope, below `8/10`          | ask the user first                                 |
+| out of scope (`defer:`)         | file a GitHub issue, change nothing                |
+| vulnerability                   | `secretJoe`; nobody else reports one               |
+| bug, performance, naming        | `inspectorJoe`; nobody else reports one            |
+| over-engineering, dead code     | `lazyJoe`; nobody else reports one                 |
+| uncovered lines                 | `testJoe`; nobody else reports them                |
+| unreachable or defensive branch | `testJoe` flags, `lazyJoe` tags, `builderJoe` cuts |
+
+## Out-of-scope findings
+
+Deferred, never fixed:
+
+1. The reviewer emits one `defer: <what>. <why>. [path]` line.
+1. The main thread files one `gh issue create`, quoting the line, the repo, and the work reference.
+1. No other agent touches it, or any out-of-scope code it notices.
+
+`joe-audit` and `joe-debt` are exempt: their repo-wide list is the deliverable.
 
 ## Modes
 
@@ -50,6 +84,7 @@ Prompt = work reference + user story or QED + explicit user instructions for the
 Include what grounds the agent:
 
 - Minimal file refs: `src/auth.ts`
+- Scope: the work reference bounds the review; anything else gets a `defer:` line
 - Prior review: `see review on PR #12` or `see <branch> diff: git diff main...branch`
 - Goal: one user story sentence, exception message or expected behaviour (bugs only)
 - Steps: QED, short, numbered bullets to reproduce the error
@@ -81,8 +116,9 @@ trim bloat / over-engineering -> `lazyJoe`
 concise goal-oriented docs -> `docuJoe`
 review minimalism/perf -> `inspectorJoe`
 security research -> `secretJoe`
+tests, coverage, unreachable branches -> `testJoe`, in the testing loop after review
 find & evaluate packages -> `researchJoe`
-orchestrate the loop -> main thread
+orchestrate the loops -> main thread
 
 Rule: main thread loops; each agent does one step. Spawn `researchJoe` from any step when a dependency or fact needs checking; it never edits.
 
@@ -97,21 +133,30 @@ sequenceDiagram
     participant T as testJoe
     participant I as inspectorJoe
     participant S as secretJoe
+    participant U as user
 
     Main->>B: build
     Main->>L: simplify
     L-->>Main: flags bloat (cut or route back)
     Main->>D: document
-    loop until test 100%, review 0 issues, no exploits
-        Main->>T: test
+    loop until review clean, no exploits
         Main->>I: review
-        alt issues found
+        alt in scope, 8/10 or above
             Main->>B: fix
-            Main->>T: re-test
             Main->>I: re-review
+        else below 8/10 or out of scope
+            Main->>U: ask the user or file an issue
         end
         Main->>S: harden
         S-->>Main: exploits (or none)
     end
-    Note over Main: ship only when all gates pass
+    Note over Main: architecture green, prompt testJoe
+    loop until coverage 100%
+        Main->>T: test
+        T-->>Main: flags unreachable and defensive branches
+        Main->>L: cut verdict
+        Main->>B: cut
+        Main->>I: re-review changed code
+    end
+    Note over Main: ship only when both loops pass
 ```

@@ -12,8 +12,8 @@ Run in order. Restart at step 1 whenever a later step fails.
 1. **Build** — `builderJoe` produces minimal, working code.
 1. **Simplify** — `lazyJoe` flags over-engineering and bloat. Cut it, or route back to `builderJoe`.
 1. **Document** — `docuJoe` documents the public surface and deletes docstrings nobody asked for.
-1. **Review** — `inspectorJoe` triages to `suspicion:` lines, the user confirms, then it rates findings `confidence: N/10` and `impact: N/10`. Fix `8/10` and above on both axes, then re-run.
-1. **Harden** — `secretJoe` triages to `suspicion:` lines, the user confirms, then it proves them with `confidence: N/10` and `impact: N/10`. Route `8/10` and above on both axes to `builderJoe`.
+1. **Review** — `inspectorJoe` triages to `suspicion:` lines, the user confirms, it rates `confidence: N/10` and `impact: N/10`. Fix both axes at `8/10` or above, then re-run.
+1. **Harden** — `secretJoe` triages to `suspicion:` lines, the user confirms, it proves and rates them. Route both axes at `8/10` or above to `builderJoe`.
 
 ## Exit gates
 
@@ -23,24 +23,22 @@ Architecture: no in-scope finding at `8/10` or above on both axes, nothing explo
 
 Testing: 100% coverage, every flagged branch cut.
 
-Only a finding at `8/10` or above on both axes blocks the gate. Everything else the user approves, or it is deferred. A failing gate sends the work back to its owner.
+Only `8/10` or above on both axes blocks the gate. Everything else: the user approves it, or it is deferred. A failing gate sends the work back to its owner.
 
 ## The confirmation gate
 
-`inspectorJoe` and `secretJoe` run in two phases, and the user sits between them.
+`inspectorJoe` and `secretJoe` run two phases. The user sits between them.
 
-1. **Triage** — cheap. The agent sweeps the changed lines and emits `suspicion:` lines. `secretJoe` builds no proof here.
-1. **Confirm** — the agent asks the user which suspicions to investigate. Nothing runs unconfirmed.
-1. **Investigation** — expensive. The agent confirms or drops each one, then rates the survivors.
+1. **Triage** — emit `suspicion:` lines. `secretJoe` proves nothing here.
+1. **Confirm** — ask the user which to investigate. Nothing runs unconfirmed.
+1. **Investigation** — confirm or drop each one, then rate the survivors.
 
-`confidence: N/10` is how sure the agent is. `impact: N/10` is how much it matters if true. They are independent.
-
-| confidence | impact | Route                                                      |
-| ---------- | ------ | ---------------------------------------------------------- |
-| `>= 8`     | `>= 8` | fix it, then re-run the step that owns it; blocks the gate |
-| `>= 8`     | `< 8`  | fix it if the fix is small, otherwise `defer:` to an issue |
-| `< 8`      | `>= 8` | never fixed, never blocks; the user decides                |
-| `< 8`      | `< 8`  | report, change nothing                                     |
+| confidence | impact | Action                           |
+| ---------- | ------ | -------------------------------- |
+| `>= 8`     | `>= 8` | fix now; blocks the gate         |
+| `>= 8`     | `< 8`  | fix if small, otherwise `defer:` |
+| `< 8`      | `>= 8` | ask the user                     |
+| `< 8`      | `< 8`  | report only                      |
 
 ## The testing loop
 
@@ -56,19 +54,19 @@ Every cut re-runs coverage. Any production change reopens the review and harden 
 
 Every agent reports a finding once. Route on the first line that matches:
 
-| Finding                         | Route                                                          |
-| ------------------------------- | -------------------------------------------------------------- |
-| suspicion                       | triage only; the user confirms before anything is investigated |
-| cleared suspicion (`dropped:`)  | evidence of what was checked; route nothing                    |
-| `8/10` or above on both axes    | fix it, then re-run the step that owns it                      |
-| confidence `>= 8`, impact `< 8` | fix it if the fix is small, otherwise `defer:` to an issue     |
-| confidence `< 8`                | ask the user first; never auto-fix, never gate                 |
-| out of scope (`defer:`)         | file a GitHub issue, change nothing                            |
-| vulnerability                   | `secretJoe`; nobody else reports one                           |
-| bug, performance, naming        | `inspectorJoe`; nobody else reports one                        |
-| over-engineering, dead code     | `lazyJoe`; nobody else reports one                             |
-| uncovered lines                 | `testJoe`; nobody else reports them                            |
-| unreachable or defensive branch | `testJoe` flags, `lazyJoe` tags, `builderJoe` cuts             |
+| Finding                         | Route                                              |
+| ------------------------------- | -------------------------------------------------- |
+| suspicion                       | triage only; the user confirms first               |
+| cleared suspicion (`dropped:`)  | route nothing                                      |
+| `8/10` or above on both axes    | fix it, re-run the owning step                     |
+| confidence `>= 8`, impact `< 8` | fix if small, otherwise `defer:`                   |
+| confidence `< 8`                | ask the user; never fix, never gate                |
+| out of scope (`defer:`)         | file a GitHub issue, change nothing                |
+| vulnerability                   | `secretJoe`; nobody else reports one               |
+| bug, performance, naming        | `inspectorJoe`; nobody else reports one            |
+| over-engineering, dead code     | `lazyJoe`; nobody else reports one                 |
+| uncovered lines                 | `testJoe`; nobody else reports them                |
+| unreachable or defensive branch | `testJoe` flags, `lazyJoe` tags, `builderJoe` cuts |
 
 ## Out-of-scope findings
 
@@ -108,7 +106,7 @@ Include what grounds the agent:
 - Prior review: `see review on PR #12` or `see <branch> diff: git diff main...branch`
 - Goal: one user story sentence, exception message or expected behaviour (bugs only)
 - Steps: QED, short, numbered bullets to reproduce the error
-- Phase: a reviewer prompt asks for triage. Its investigation phase runs on the suspicions the user confirms.
+- Phase: reviewer prompts ask for triage; investigation waits for user confirmation.
 - Explicit user instructions for the task, verbatim.
 
 Prompt shape:

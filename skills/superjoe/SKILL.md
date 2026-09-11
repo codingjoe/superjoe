@@ -35,7 +35,7 @@ Findings below `8/10` never block the gate: the user approves them or they are d
 
 Its own loop, prompted once the architecture loop is green, never a step inside it.
 
-1. `testJoe` writes tests, hits 100% coverage, flags unreachable branches and checks the signature already guarantees. It edits no production code.
+1. `testJoe` writes tests, hits 100% coverage, flags unreachable branches and checks the signature already guarantees. It runs the hooks with `prek` and reports every finding back; an autofix still counts as a finding. It edits no production code.
 1. `lazyJoe` tags each flag `delete:`.
 1. `builderJoe` cuts it.
 

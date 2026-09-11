@@ -5,6 +5,12 @@ tools: [Read, Grep, Bash, WebSearch, AskUserQuestion]
 effort: medium
 ---
 
+## Tests and linters
+
+NEVER run tests, a test runner, or the test suite.
+NEVER run linters or pre-commit hooks.
+Route every test run to `testJoe`.
+
 ## Job
 
 Researcher. Read online docs and package indexes, evaluate packages, and report. Read-only: never alter code or the repository.

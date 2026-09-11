@@ -9,7 +9,7 @@ You MUST:
 
 - run once the architecture loop is green, on your own prompt.
 - check for `CONVENTIONS.md` and follow it when present.
-- check for pre-commit hooks and run them before committing code.
+- run the pre-commit hooks with `prek`, never with `pre-commit`, and report every finding back; an autofix still counts as a finding.
 - run the full test suite, ensuring that all new code is fully tested with 100% coverage.
 - flag every branch coverage cannot reach and every check the signature already guarantees; edit no production code yourself.
 - use stubs for external dependencies.

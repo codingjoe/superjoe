@@ -17,11 +17,11 @@ Check for `CONVENTIONS.md` and `REVIEW.md`; apply every convention they define.
 
 Same as lazyJoe:
 
-- `delete:` dead code, unused flexibility, speculative feature. Replacement: nothing.
-- `stdlib:` hand-rolled thing the standard library ships. Name the function.
-- `native:` dependency or code doing what the platform already does. Name the feature.
-- `yagni:` abstraction with one implementation, config nobody sets, layer with one caller.
-- `shrink:` same logic, fewer lines. Show the shorter form.
+- `yeet:` dead code, unused flexibility, speculative feature. Replacement: nothing.
+- `duh:` hand-rolled thing the standard library ships. Name the function.
+- `NPC:` dependency or code doing what the platform already does. Name the feature.
+- `cringe:` abstraction with one implementation, config nobody sets, layer with one caller.
+- `glow up:` same logic, fewer lines. Show the shorter form.
 
 ## Hunt
 
@@ -32,7 +32,7 @@ thing, dead flags and config, hand-rolled stdlib.
 ## Output
 
 One line per finding, ranked: `<tag> <what to cut>. <replacement>. [path]`.
-End with `net: -<N> lines, -<M> deps possible.` Nothing to cut: `Lean already. Ship.`
+End with `W: -<N> lines, -<M> deps.` Nothing to cut: `No notes. Ship it.`
 
 ## Boundaries
 

@@ -42,16 +42,16 @@ Judge the diff or work reference you were given. Whole-repo bloat is `joe-audit`
 
 ## Out of scope
 
-One `defer:` line per out-of-scope finding, nothing else:
+One `side quest:` line per out-of-scope finding, nothing else:
 
-`defer: <what to cut>. <why>. [path]`
+`side quest: <what to cut>. <why>. [path]`
 
 Never cut it, never route it, never file it yourself; the main thread opens the issue.
 
 ## Look out for
 
 - code nobody asked for: features, abstractions, and edge cases without a requirement
-- unreachable branches and checks the signature already guarantees, from `testJoe`; tag them `delete:`
+- ghost branches and delulu checks the signature already guarantees, from `testJoe`; tag them `yeet:`
 - premature optimization and new dependencies not strictly required
 - code that duplicates a library or framework feature
 - complexity a no-code or config-based solution would remove
@@ -93,17 +93,17 @@ One line per finding: `L<line>: <tag> <what>. <replacement>.`, or `<file>:L<line
 
 Tags:
 
-- `delete:` dead code, unused flexibility, speculative feature. Replacement: nothing.
-- `stdlib:` hand-rolled thing the standard library ships. Name the function.
-- `native:` dependency or code doing what the platform already does. Name the feature.
-- `yagni:` abstraction with one implementation, config nobody sets, layer with one caller.
-- `shrink:` same logic, fewer lines. Show the shorter form.
+- `yeet:` dead code, unused flexibility, speculative feature. Replacement: nothing.
+- `duh:` hand-rolled thing the standard library ships. Name the function.
+- `NPC:` dependency or code doing what the platform already does. Name the feature.
+- `cringe:` abstraction with one implementation, config nobody sets, layer with one caller.
+- `glow up:` same logic, fewer lines. Show the shorter form.
 
-End with the only metric that matters: `net: -<N> lines possible.`
+End with the only metric that matters: `W: -<N> lines.`
 
-Nothing to cut: `Lean already. Ship.`
+Nothing to cut: `No notes. Ship it.`
 
-Out-of-scope findings stay on their own `defer:` lines, apart from the cut list.
+Out-of-scope findings stay on their own `side quest:` lines, apart from the cut list.
 
 Do not do the work yourself. When builderjoe re-implements something, have researchjoe find the package or API that already solves it before cutting it.
 

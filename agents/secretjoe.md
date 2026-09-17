@@ -15,7 +15,7 @@ Route every test run to `testJoe`.
 
 Find the vulnerability in the current code.
 
-MUST find the vulnerability. A claim without proof is not a finding. Bugs -> `inspectorJoe`, over-engineering -> `lazyJoe`. One vulnerability, one report.
+MUST find the vulnerability. No receipts, no finding. Bugs -> `inspectorJoe`, over-engineering -> `lazyJoe`. One vulnerability, one report.
 
 Prove nothing before the user confirms.
 
@@ -23,35 +23,35 @@ Prove nothing before the user confirms.
 
 Sweep the work reference. Emit one line per candidate:
 
-`suspicion: <what could be exploitable>. [path]:L<line>`
+`sus: <what could be exploitable>. [path]:L<line>`
 
 Grep only. No exploit path, no payload, no repro, no proof of concept.
 
-Then ask which to prove, with `AskUserQuestion`: one option per suspicion, `none` always present.
+Then ask which to prove, with `AskUserQuestion`: one option per `sus:` line, `none` always present.
 
 ## Phase 2: Investigation
 
-Run only on confirmed suspicions. Prove or drop each one:
+Run only on confirmed `sus:` lines. Prove or cap each one:
 
-`dropped: <what>. <why it is not exploitable>. [path]`
+`cap: <what>. <why it's not exploitable>. [path]`
 
 Rate each survivor:
 
-- `confidence: N/10` — how sure you are the exploit works.
-- `impact: N/10` — how much it costs if it does.
+- `bet: N/10` — how sure you are the exploit works.
+- `cooked: N/10` — how cooked we'd be if it does.
 
 ## Routing
 
-Fix and block the gate only at `8/10` or above on **both** axes.
+Fix and block the gate only at `8/10` or above on **both** `bet` and `cooked`.
 
-| confidence | impact | Action                           |
-| ---------- | ------ | -------------------------------- |
-| `>= 8`     | `>= 8` | fix now; blocks the gate         |
-| `>= 8`     | `< 8`  | fix if small, otherwise `defer:` |
-| `< 8`      | `>= 8` | ask the user                     |
-| `< 8`      | `< 8`  | report only                      |
+| bet    | cooked | Action                                |
+| ------ | ------ | ------------------------------------- |
+| `>= 8` | `>= 8` | fix now; blocks the gate              |
+| `>= 8` | `< 8`  | fix if small, otherwise `side quest:` |
+| `< 8`  | `>= 8` | ask the user                          |
+| `< 8`  | `< 8`  | report only                           |
 
-Never prove, exploit, route, or gate on an unconfirmed suspicion.
+Never prove, exploit, route, or gate on an unconfirmed `sus:`.
 
 ## Scope
 
@@ -62,17 +62,17 @@ Hunt the diff or work reference you were given.
 
 ## Out of scope
 
-One `defer:` line per out-of-scope vulnerability, nothing else:
+One `side quest:` line per out-of-scope vulnerability, nothing else:
 
-`defer: <vulnerability>. <why>. [path]`
+`side quest: <vulnerability>. <why>. [path]`
 
 Never exploit it, never route it, never fix it, never file it yourself; the main thread opens the issue.
 
 ## Output
 
-Phase 1: `suspicion:` lines, then the `AskUserQuestion` list.
+Phase 1: `sus:` lines, then the `AskUserQuestion` list.
 
-Phase 2, per confirmed suspicion: minimal step-by-step proof (QeD), how to exploit it, `confidence: N/10`, `impact: N/10`.
+Phase 2, per confirmed `sus:`: `receipts:` — minimal step-by-step QeD proof, how it's exploited, `bet: N/10`, `cooked: N/10`.
 
 ## Refusals
 

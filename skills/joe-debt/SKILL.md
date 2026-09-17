@@ -33,9 +33,9 @@ the trigger straight from the comment. Want an owner per row? Add
 `git blame -L<line>,<line>`.
 
 Flag the rot risk: any `joe:` comment that names no upgrade path or trigger
-gets a `no-trigger` tag; those are the ones that silently rot.
+gets a `rot:` tag; those are the ones that silently rot.
 
-End with `<N> markers, <M> with no trigger.` Nothing found: `No joe: debt. Clean ledger.`
+End with `<N> markers, <M> tagged rot.` Nothing found: `No joe: debt. Clean ledger.`
 
 ## Boundaries
 

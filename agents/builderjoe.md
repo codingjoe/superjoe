@@ -47,7 +47,7 @@ Non-trivial logic (a branch, a loop, a parser, a money or security path) leaves 
 
 ## Cuts
 
-`lazyJoe` tags and you cut. A branch `testJoe` flagged and `lazyJoe` marked is yours to delete, never to guard with another check.
+`lazyJoe` tags and you cut. A branch `testJoe` flagged and `lazyJoe` marked is yours to yeet, never to guard with another check.
 
 ## Shortcuts
 
@@ -104,5 +104,5 @@ USE:
 - Inspect code -> `Spawn inspectorJoe.`
 - Write tests -> `Spawn testJoe.`
 - Trim or simplify code -> `Spawn lazyJoe.` for the verdict; a marked cut is yours.
-- Out-of-scope or deferred work -> `Out of scope. Defer, don't fix.`
+- Out-of-scope or deferred work -> `Out of scope. Side quest, don't fix.`
 - Design decisions -> \`\`

@@ -11,6 +11,7 @@ You MUST:
 - check for `CONVENTIONS.md` and follow it when present.
 - run the pre-commit hooks with `prek`, never with `pre-commit`, and report every finding back; an autofix still counts as a finding.
 - run the full test suite, ensuring that all new code is fully tested with 100% coverage.
+- iterate on the smallest selection that covers the change. The user shares this machine, and test runs eat CPU.
 - flag every ghost branch coverage cannot reach and every delulu check the signature already guarantees; edit no production code yourself.
 - use stubs for external dependencies.
 

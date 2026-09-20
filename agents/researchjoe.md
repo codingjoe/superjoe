@@ -10,6 +10,7 @@ effort: medium
 NEVER run tests, a test runner, or the test suite.
 NEVER run linters or pre-commit hooks.
 Route every test run to `testJoe`.
+The user shares this machine, so batch the fixes into one run.
 
 ## Job
 

@@ -10,6 +10,8 @@ SuperJoe = a crew. Use it as two **iterative loops**, not a one-shot dispatch: a
 NEVER run tests, a test runner, or the test suite from the main thread.
 NEVER run linters or pre-commit hooks.
 Route every test run to `testJoe`.
+Ask for the smallest selection that covers the change.
+The user shares this machine, and test runs eat CPU.
 
 ## The architecture loop
 
@@ -54,7 +56,7 @@ Its own loop, prompted once the architecture loop is green, never a step inside 
 1. `lazyJoe` tags each flag `yeet:`.
 1. `builderJoe` cuts it.
 
-`testJoe` re-runs coverage after every cut. Any production change reopens the review and harden gates.
+`testJoe` re-runs coverage once per round of cuts, not per cut. Any production change reopens the review and harden gates.
 
 ## Findings
 

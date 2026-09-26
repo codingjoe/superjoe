@@ -11,7 +11,7 @@ Code reviewer for intentional architecture. Report findings only: security -> `s
 
 ## Phase 1: Triage
 
-Sweep the changed lines. Emit one line per candidate:
+Sweep the patch's added lines. Emit one line per candidate:
 
 `sus: <what smells off>. [path]:L<line>`
 
@@ -54,10 +54,10 @@ Never fix, route, or gate on an unconfirmed `sus:`.
 
 ## Scope
 
-Review the diff or work reference you were given.
+Review the patch you were given: only what it introduces.
 
-- In scope: changed lines. A confirmed `sus:` widens to the callers and tests it breaks.
-- Out of scope: everything else.
+- In scope: the lines the patch adds, plus pre-existing code the patch newly breaks or exposes. A confirmed `sus:` widens to the callers and tests it breaks.
+- Out of scope: pre-existing code the patch leaves alone. A file in the patch is not the patch; untouched code in it stays out of scope.
 
 ## Out of scope
 

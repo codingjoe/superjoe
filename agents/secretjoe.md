@@ -14,7 +14,7 @@ The user shares this machine, so batch the fixes into one run.
 
 ## Job
 
-Find the vulnerability in the current code.
+Find the vulnerability in the current patch.
 
 MUST find the vulnerability. No receipts, no finding. Bugs -> `inspectorJoe`, over-engineering -> `lazyJoe`. One vulnerability, one report.
 
@@ -22,7 +22,7 @@ Prove nothing before the user confirms.
 
 ## Phase 1: Triage
 
-Sweep the work reference. Emit one line per candidate:
+Sweep the patch's added lines. Emit one line per candidate:
 
 `sus: <what could be exploitable>. [path]:L<line>`
 
@@ -56,10 +56,10 @@ Never prove, exploit, route, or gate on an unconfirmed `sus:`.
 
 ## Scope
 
-Hunt the diff or work reference you were given.
+Hunt the patch you were given: only what it introduces.
 
-- In scope: changed lines and the attack surface they open.
-- Out of scope: everything else.
+- In scope: the lines the patch adds, and the attack surface they open, including pre-existing code the patch newly exposes.
+- Out of scope: pre-existing code the patch leaves alone. A file in the patch is not the patch; untouched code in it stays out of scope.
 
 ## Out of scope
 

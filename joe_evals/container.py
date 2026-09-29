@@ -2,12 +2,10 @@ import os
 import sys
 from collections.abc import Iterator
 from contextlib import contextmanager
-from datetime import datetime
 from pathlib import Path
 
-from docker.errors import DockerException
+from docker.errors import DockerException, ImageNotFound
 from testcontainers.core.container import DockerContainer
-from testcontainers.core.docker_client import DockerClient
 from testcontainers.core.image import DockerImage
 
 IMAGE = "joe-evals:latest"
@@ -47,26 +45,15 @@ def passed_env() -> dict[str, str]:
     return {name: value for name in PASSTHROUGH if (value := os.environ.get(name))}
 
 
-def creation_time(tag: str) -> datetime | None:
-    """Return when the image was built, or None when it is absent or unreadable."""
-    try:
-        return datetime.fromisoformat(
-            DockerClient().client.images.get(tag).attrs["Created"]
-        )
-    except (
-        DockerException,
-        KeyError,
-        TypeError,
-        ValueError,
-    ):
-        return None
-
-
 @contextmanager
 def docker_failure() -> Iterator[None]:
     """Turn a docker client failure into one message the CLI can show."""
     try:
         yield
+    except ImageNotFound as error:
+        raise SystemExit(
+            f"the eval image {IMAGE} is missing: build it with joe_evals_build"
+        ) from error
     except DockerException as error:
         raise SystemExit(
             f"docker is unavailable: {error}; install Docker or start its daemon,"
@@ -74,21 +61,10 @@ def docker_failure() -> Iterator[None]:
         ) from error
 
 
-def ensure_image(root: Path, force: bool = False) -> str:
-    """Return the eval image tag, building the image when it is stale."""
-    inputs = [
-        root / "Dockerfile",
-        root / "pyproject.toml",
-        root / "uv.lock",
-        *(root / "joe_evals").rglob("*"),
-    ]
-    newest = max(
-        (path.stat().st_mtime for path in inputs if path.exists()), default=0.0
-    )
-    built = creation_time(IMAGE)
-    if force or built is None or built.timestamp() < newest:
-        with docker_failure():
-            DockerImage(path=root, tag=IMAGE, clean_up=False).build()
+def build_image(root: Path) -> str:
+    """Build the eval image from the Dockerfile in `root`."""
+    with docker_failure():
+        DockerImage(path=root, tag=IMAGE, clean_up=False).build()
     return IMAGE
 
 

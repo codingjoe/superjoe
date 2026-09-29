@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 
 from .agents import ModelConfig, build_model, load_agents
-from .container import ensure_image, in_container, launch
+from .container import build_image, in_container, launch
 from .evaluators import EVALUATORS, with_judge
 from .sandbox import CaseDataset, CaseRunner
 from .scoring import RunReport, changed, rate, regressions, render_comment
@@ -47,7 +47,7 @@ def baseline_report(model: str) -> RunReport | None:
 
 def build() -> None:
     """Build the eval image."""
-    print(ensure_image(ROOT, force=True))
+    print(build_image(ROOT))
 
 
 def main() -> None:
@@ -57,7 +57,6 @@ def main() -> None:
             "set OLLAMA_API_KEY for Ollama Cloud, or OLLAMA_BASE_URL for a local Ollama"
         )
     if not in_container():
-        ensure_image(ROOT)
         raise SystemExit(launch(ROOT))
     model, judge, repeats = model_settings()
     before = baseline_report(model)

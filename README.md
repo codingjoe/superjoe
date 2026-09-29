@@ -20,6 +20,7 @@ agents and skills, each representing a different alter ego of `codingjoe`.
 ## The crew, scored
 
 ```bash
+uv run joe_evals_build                          # once, and after a harness change
 export OLLAMA_API_KEY=...                       # Ollama Cloud key
 uv run joe_evals
 ```
@@ -33,12 +34,12 @@ OLLAMA_BASE_URL=http://host.docker.internal:11434 \
     JOE_EVALS_JUDGE=deepseek-v4.1-flash:cloud uv run joe_evals
 ```
 
-That is the one command. It builds the image, mounts the repository at
-`/work`, and executes the whole suite in the container, so no agent gets a
-shell on this machine. `joe_evals_build` builds the image on its own.
-`JOE_EVALS_MODEL`, `JOE_EVALS_JUDGE` and `JOE_EVALS_REPEATS` override
-`models.yaml`; `JOE_EVALS_REPORT`, `JOE_EVALS_BASELINE` and
-`JOE_EVALS_COMMENT` name the three files it writes, beside the sources.
+`joe_evals` mounts the repository at `/work` and executes the whole suite in the
+container, so no agent gets a shell on this machine; the image it runs has to
+exist, which is what `joe_evals_build` is for. `JOE_EVALS_MODEL`,
+`JOE_EVALS_JUDGE` and `JOE_EVALS_REPEATS` override `models.yaml`;
+`JOE_EVALS_REPORT`, `JOE_EVALS_BASELINE` and `JOE_EVALS_COMMENT` name the three
+files it writes, beside the sources.
 
 ### What a rating means
 
@@ -142,10 +143,12 @@ calls. It finds its own sticky comment by the `## superjoe evals` marker and the
 `github-actions[bot]` author, so a comment that merely quotes the marker is
 never patched.
 
-The eval image builds in the workflow through `joe_evals_build`, in a step with
-no secret in that step's environment. A pull request's `Dockerfile` therefore
-runs where it can reach nothing the job holds, and the cases afterwards run in
-the container `joe_evals` starts from that image.
+The eval image builds in the workflow with `docker/build-push-action`, through
+the Actions cache and loaded onto the runner, in a step with no secret in that
+step's environment. A pull request's `Dockerfile` therefore runs where it can
+reach nothing the job holds, and the cases afterwards run in the container
+`joe_evals` starts from that image. The tag `joe-evals:latest` is what ties the
+two together.
 
 The scores upload as the `evals-scores` artifact, one `scores-<model>.json` per
 model. On a pull request the `comment` job posts or patches the

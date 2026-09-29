@@ -10,13 +10,15 @@ from typing import Any, Self
 
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, AgentRetries, RunContext
-from pydantic_ai.capabilities import AbstractCapability
+from pydantic_ai.capabilities import AbstractCapability, WebSearch
 from pydantic_ai.capabilities.hooks import Hooks
 from pydantic_ai.exceptions import AgentRunError
 from pydantic_ai.messages import ToolCallPart
 from pydantic_ai.models import Model
 from pydantic_ai.tools import Tool, ToolDefinition
 from pydantic_ai.toolsets import AbstractToolset, ToolsetTool, WrapperToolset
+from pydantic_ai_harness import AskUser
+from pydantic_ai_harness.ask_user import AskUserAnswer, AskUserRequest, AskUserResponse
 from pydantic_ai_harness.filesystem import FileSystem
 from pydantic_ai_harness.shell import LLM_API_KEY_ENV_PATTERNS, Shell
 from pydantic_evals import Case, Dataset
@@ -174,24 +176,6 @@ def web_search(ctx: RunContext[SandboxDeps], query: str) -> str:
     )
 
 
-def ask_user_question(ctx: RunContext[SandboxDeps], question: str) -> str:
-    """
-    Ask the user, with the case scripting the answer.
-
-    Args:
-        ctx: The run this tool was called in.
-        question: Question to ask.
-
-    """
-    return ctx.deps.script.answer
-
-
-SCRIPTED_TOOLS: dict[str, Tool[SandboxDeps]] = {
-    "WebSearch": Tool(web_search, name="WebSearch"),
-    "AskUserQuestion": Tool(ask_user_question, name="AskUserQuestion"),
-}
-
-
 def rename_map(tools: Sequence[str]) -> dict[str, str]:
     return {public: inner for public, inner in HARNESS_TOOLS.items() if inner in tools}
 
@@ -236,12 +220,39 @@ class RenamedFileSystem(FileSystem[SandboxDeps]):
 
 
 @dataclass
+class RenamedAskUser(AskUser[SandboxDeps]):
+    def get_toolset(self) -> AbstractToolset[SandboxDeps]:
+        return RenamingToolset(
+            super().get_toolset(), {"AskUserQuestion": "ask_user_question"}
+        )
+
+
+@dataclass
 class RenamedShell(Shell[SandboxDeps]):
     def get_toolset(self) -> AbstractToolset[SandboxDeps]:
         return RenamingToolset(super().get_toolset(), {"Bash": "run_command"})
 
 
-def build_agent(spec: AgentSpec, model: Model, root: Path) -> Agent[SandboxDeps, str]:
+SCRIPTED_TOOLS: tuple[str, ...] = ("WebSearch", "AskUserQuestion")
+
+
+def scripted_answerer(
+    script: ToolScript,
+) -> Callable[[AskUserRequest], Awaitable[AskUserResponse]]:
+    async def answers(request: AskUserRequest) -> AskUserResponse:
+        return AskUserResponse(
+            answers=tuple(
+                AskUserAnswer(header=question.header, custom_answer=script.answer)
+                for question in request.questions
+            )
+        )
+
+    return answers
+
+
+def build_agent(
+    spec: AgentSpec, model: Model, root: Path, script: ToolScript
+) -> Agent[SandboxDeps, str]:
     names = (
         (*HARNESS_TOOLS, *SCRIPTED_TOOLS) if spec.tools is None else tuple(spec.tools)
     )
@@ -261,13 +272,18 @@ def build_agent(spec: AgentSpec, model: Model, root: Path) -> Agent[SandboxDeps,
                 allow_interactive=False,
             )
         )
+    if "WebSearch" in names:
+        capabilities.append(
+            WebSearch(native=False, local=Tool(web_search, name="WebSearch"))
+        )
+    if "AskUserQuestion" in names:
+        capabilities.append(RenamedAskUser(answerer=scripted_answerer(script)))
     agent = Agent(
         model,
         deps_type=SandboxDeps,
         name=spec.name,
         description=spec.description,
         instructions=spec.instructions,
-        tools=[tool for name, tool in SCRIPTED_TOOLS.items() if name in names],
         capabilities=[*capabilities, Hooks(tool_execute=record_tool_call)],
         retries=AgentRetries(tools=3),
     )
@@ -373,7 +389,10 @@ class CaseRunner:
         with Sandbox.create(fixture, patch) as sandbox:
             deps = SandboxDeps(root=sandbox.root, script=case.script, log=ToolCallLog())
             agent = build_agent(
-                self.agents[case.agent], build_model(self.model_name), sandbox.root
+                self.agents[case.agent],
+                build_model(self.model_name),
+                sandbox.root,
+                case.script,
             )
             result = agent.run_sync(case.prompt, deps=deps)
             return AgentRun(

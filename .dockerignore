@@ -4,6 +4,5 @@ __pycache__/
 .ruff_cache/
 
 agents/
-cases.yaml
-fixtures/
+cases/
 report.txt

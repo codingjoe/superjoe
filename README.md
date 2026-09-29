@@ -130,10 +130,9 @@ repeats of every swept model.
 
 ### What CI does
 
-`.github/workflows/evals.yml` runs on pull requests and on `main` pushes that
-touch `agents/`, `cases.yaml`, `fixtures/`, `joe_evals/`, `models.yaml` or
-`pyproject.toml`. The run needs `OLLAMA_API_KEY`; a fork pull request gets no
-secret, so only a branch of this repository reaches a keyed run.
+`.github/workflows/evals.yml` runs on every pull request and on every push to
+`main`. The run needs `OLLAMA_API_KEY`; a fork pull request gets no secret, so
+only a branch of this repository reaches a keyed run.
 
 The run splits into jobs, so no single one holds both the branch's code and a
 write token. `evals` runs the branch's harness with `contents: read` and no

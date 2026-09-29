@@ -2,24 +2,8 @@ name: evals
 on:
   pull_request:
     types: [opened, synchronize, reopened, labeled]
-    paths:
-      - .github/workflows/evals.yml
-      - agents/**
-      - cases.yaml
-      - fixtures/**
-      - joe_evals/**
-      - models.yaml
-      - pyproject.toml
   push:
     branches: [main]
-    paths:
-      - .github/workflows/evals.yml
-      - agents/**
-      - cases.yaml
-      - fixtures/**
-      - joe_evals/**
-      - models.yaml
-      - pyproject.toml
   workflow_dispatch:
     inputs:
       model:

@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 
 from opentelemetry.sdk.trace import TracerProvider
@@ -49,15 +50,16 @@ def baseline_report(model: str) -> RunReport | None:
 
 def build() -> None:
     """Build the eval image."""
-    print(build_image(ROOT))
+    sys.stdout.write(f"{build_image(ROOT)}\n")
 
 
 def main() -> None:
     """Score the suite in the eval image and write the report and the comment."""
     if not (os.environ.get("OLLAMA_API_KEY") or os.environ.get("OLLAMA_BASE_URL")):
-        raise SystemExit(
-            "set OLLAMA_API_KEY for Ollama Cloud, or OLLAMA_BASE_URL for a local Ollama"
+        sys.stderr.write(
+            "set OLLAMA_API_KEY for Ollama Cloud, or OLLAMA_BASE_URL for a local Ollama\n"
         )
+        raise SystemExit(1)
     if not in_container():
         raise SystemExit(launch(ROOT))
     if not isinstance(get_tracer_provider(), TracerProvider):
@@ -77,17 +79,19 @@ def main() -> None:
     )
     scored = rate(report, model=model)
     scored.save(REPORT)
-    print(f"{len(scored.cases)} case runs -> {REPORT}")
+    sys.stdout.write(f"{len(scored.cases)} case runs -> {REPORT}\n")
     broken: list[str] = []
     if before is not None:
         if changed(before, scored):
             COMMENT.write_text(render_comment(before, scored), encoding="utf-8")
-            print(f"comment -> {COMMENT}")
+            sys.stdout.write(f"comment -> {COMMENT}\n")
         broken = [delta.case for delta in regressions(before, scored)]
     if reason := scored.failure():
-        raise SystemExit(reason)
+        sys.stderr.write(f"{reason}\n")
+        raise SystemExit(1)
     if broken:
-        raise SystemExit(f"regressions: {', '.join(broken)}")
+        sys.stderr.write(f"regressions: {', '.join(broken)}\n")
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

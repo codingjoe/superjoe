@@ -51,14 +51,16 @@ def docker_failure() -> Iterator[None]:
     try:
         yield
     except ImageNotFound as error:
-        raise SystemExit(
-            f"the eval image {IMAGE} is missing: build it with joe_evals_build"
-        ) from error
+        sys.stderr.write(
+            f"the eval image {IMAGE} is missing: build it with joe_evals_build\n"
+        )
+        raise SystemExit(1) from error
     except DockerException as error:
-        raise SystemExit(
+        sys.stderr.write(
             f"docker is unavailable: {error}; install Docker or start its daemon,"
-            " then retry"
-        ) from error
+            " then retry\n"
+        )
+        raise SystemExit(1) from error
 
 
 def build_image(root: Path) -> str:

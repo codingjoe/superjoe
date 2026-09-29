@@ -13,7 +13,7 @@ DEFAULT_OLLAMA_URL = "https://ollama.com"
 
 
 def ollama_base_url(endpoint: str) -> str:
-    """The OpenAI-compatible root the provider posts to, `/v1` included."""
+    """Return the OpenAI-compatible root the provider posts to, `/v1` included."""
     root = endpoint.rstrip("/")
     return root if root.endswith("/v1") else f"{root}/v1"
 

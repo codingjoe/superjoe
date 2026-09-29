@@ -1,4 +1,3 @@
-import os
 import re
 import shutil
 import subprocess
@@ -157,10 +156,13 @@ async def record_tool_call(
 
 
 def web_search(ctx: RunContext[SandboxDeps], query: str) -> str:
-    """Search the web. Nothing leaves the container: the case scripts the results.
+    """
+    Search the web, with the case scripting every result.
 
     Args:
+        ctx: The run this tool was called in.
         query: Search query.
+
     """
     return next(
         (
@@ -173,10 +175,13 @@ def web_search(ctx: RunContext[SandboxDeps], query: str) -> str:
 
 
 def ask_user_question(ctx: RunContext[SandboxDeps], question: str) -> str:
-    """Ask the user a question. The case scripts the answer.
+    """
+    Ask the user, with the case scripting the answer.
 
     Args:
+        ctx: The run this tool was called in.
         question: Question to ask.
+
     """
     return ctx.deps.script.answer
 
@@ -188,13 +193,14 @@ SCRIPTED_TOOLS: dict[str, Tool[SandboxDeps]] = {
 
 
 def rename_map(tools: Sequence[str]) -> dict[str, str]:
-    """The public tool names for the harness tools an agent was granted."""
+    """Return the public names of the harness tools an agent was granted."""
     return {public: inner for public, inner in HARNESS_TOOLS.items() if inner in tools}
 
 
 @dataclass
 class RenamingToolset(WrapperToolset[SandboxDeps]):
-    """Rename tools for the model while leaving `ctx.tool_name` under the public name.
+    """
+    Rename tools for the model, keeping the public name on `ctx.tool_name`.
 
     `RenamedToolset` rewrites `ctx.tool_name` to the original name on the way in,
     which hides the tool from the run's registry and stops the harness emitting
@@ -285,7 +291,7 @@ def build_agent(spec: AgentSpec, model: Model, root: Path) -> Agent[SandboxDeps,
 
 def read_tree(root: Path) -> dict[str, bytes]:
     return {
-        str(path.relative_to(root)): os.readlink(path).encode()
+        str(path.relative_to(root)): path.readlink().encode()
         if path.is_symlink()
         else path.read_bytes()
         for path in root.rglob("*")

@@ -20,23 +20,28 @@ agents and skills, each representing a different alter ego of `codingjoe`.
 ## The crew, scored
 
 `joe_evals/` runs every joe agent against a throwaway copy of a fixture and
-grades the run. No case touches the repository it was written for.
+grades the run. No case touches the repository it was written for, and the
+agents never run a shell on your machine: the suite runs in a container.
 
 ```bash
+docker build -t joe-evals .
 export OLLAMA_API_KEY=...                       # Ollama Cloud key
-export OLLAMA_BASE_URL=http://localhost:11434   # ...or a local Ollama, which needs no key
-uv run joe_evals run                            # writes evals-report.json
+docker run --rm -v "$PWD:/work" -w /work -e OLLAMA_API_KEY joe-evals run
 ```
 
-A local daemon serves only the tags it holds, so a local run names one for the
-agent and the judge both:
-`--model deepseek-v4.1-flash:cloud --judge deepseek-v4.1-flash:cloud`.
+A local Ollama needs no key, and needs the daemon reachable from inside the
+container:
 
-Docker has to be running: the harness builds the sandbox image from
-`joe_evals/Dockerfile` and starts a container per command through
-testcontainers. `--model`, `--judge` and `--repeats` override `models.yaml`;
-`--agents`, `--cases`, `--fixtures` and `--models` point the harness at other
-directories.
+```bash
+docker run --rm -v "$PWD:/work" -w /work \
+    -e OLLAMA_BASE_URL=http://host.docker.internal:11434 \
+    joe-evals run --model deepseek-v4.1-flash:cloud --judge deepseek-v4.1-flash:cloud
+```
+
+`run` refuses to start outside the container, so the guarantee cannot be
+skipped by accident. `--model`, `--judge` and `--repeats` override
+`models.yaml`; `--agents`, `--cases`, `--fixtures` and `--models` point the run
+at other directories.
 
 ### What a rating means
 
@@ -141,10 +146,9 @@ calls. It finds its own sticky comment by the `## superjoe evals` marker and the
 `github-actions[bot]` author, so a comment that merely quotes the marker is
 never patched.
 
-The sandbox image builds in its own step, with no secret in that step's
-environment and a digest-pinned base, and the harness reuses that tag instead of
-building again. A pull request's `Dockerfile` therefore runs where it can reach
-nothing the job holds.
+The eval image builds in the workflow, in a step with no secret in that step's
+environment. A pull request's `Dockerfile` therefore runs where it can reach
+nothing the job holds, and the cases afterwards run inside the image it built.
 
 The scores upload as the `evals-scores` artifact, one `scores-<model>.json` per
 model. On a pull request the `comment` job posts or patches the
@@ -156,29 +160,29 @@ from the artifact and commits it, so the next pull request diffs against a
 current one. That commit alone matches no trigger path, so it cannot start a
 loop.
 
-### The sandbox
+### The container
 
-Every `Bash` call runs in a fresh container from `joe_evals/Dockerfile`, with:
+The whole run happens in the image built from the root `Dockerfile`: the
+harness, the model calls, and every command an agent runs. That is the
+boundary, and `run` refuses to start outside it.
 
-- no network
-- a user that is never root
-- a read-only root filesystem, and a writable `/tmp`
-- only the case workspace mounted, at `/workspace`
-- every capability dropped
-- one CPU, 512 MB of memory and 128 processes
-- a 60 second wall-clock limit, after which `timeout(1)` kills the command
+Inside the container the agents get
+[pydantic-ai-harness](https://pydantic.dev/docs/ai/harness/): `FileSystem`
+under the names the prompts use (`Read`, `Grep`, `Write`, `Edit`) and `Shell`
+as `Bash`. There is no per-command container and no network restriction on the
+agent's shell, so what a case can reach is what the container can reach:
 
-That is the guarantee for `Bash` alone. `Read`, `Grep`, `Write` and `Edit` work
-in the harness process, confined to a throwaway copy of the fixture, and a
-scripted command never reaches the container at all. The image holds bash,
-coreutils, git and grep, and no Python: it cannot install a package or run your
-suite, so a case that needs test output scripts it.
+- the repository is mounted at `/work`, and nothing else of yours is
+- the agent's shell cannot read `OLLAMA_API_KEY` or the other provider keys:
+  the harness strips them from the environment it runs commands in
+- `git` and `bash` are in the image; Python is not, so a case that needs test
+  output scripts it
 
-The copy is guarded, not just isolated: a fixture is copied with its links kept
-as links, and a fixture holding a link that leaves it is refused. `Read` and
-`Grep` refuse any path or link that resolves outside the copy. A case's
-`fixture` has to stay inside the fixtures tree and its `patch` inside the
-fixture, or the case fails before it runs.
+Files stay guarded, because a fixture and a patch come from a pull request: a
+fixture is copied with its links kept as links, a fixture holding a link that
+leaves it is refused, and a case's `fixture` has to stay inside the fixtures
+tree while its `patch` stays inside the fixture. A scripted command never
+reaches the shell at all.
 
 ## Credits
 

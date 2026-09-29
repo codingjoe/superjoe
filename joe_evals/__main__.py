@@ -7,10 +7,10 @@ import click
 
 from .agents import ModelConfig, build_model, load_agents
 from .evaluators import EVALUATORS, with_judge
-from .sandbox import CaseDataset, CaseRunner, build_sandbox_image
+from .sandbox import CaseDataset, CaseRunner
 from .scoring import RunReport, changed, rate, regressions, render_comment
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(os.environ.get("JOE_EVALS_ROOT") or Path(__file__).resolve().parent.parent)
 
 AGENTS_DIR = ROOT / "agents"
 CASES_DIR = ROOT / "cases"
@@ -19,6 +19,21 @@ BASELINE_PATH = ROOT / "baseline.json"
 MODELS_PATH = ROOT / "models.yaml"
 
 MAX_CONCURRENCY = 4
+
+CONTAINER_MARKER = "JOE_EVALS_CONTAINER"
+
+CONTAINER_COMMAND = (
+    'docker run --rm -v "$PWD:/work" -w /work -e OLLAMA_API_KEY joe-evals run'
+)
+
+
+def require_container() -> None:
+    """Refuse to run the agents anywhere but inside the eval container."""
+    if os.environ.get(CONTAINER_MARKER) != "1":
+        raise click.UsageError(
+            "the agents run their own shell, so run the suite in the container: "
+            f"docker build -t joe-evals . && {CONTAINER_COMMAND}"
+        )
 
 
 @click.group()
@@ -74,6 +89,7 @@ def run(
     out: Path,
 ) -> None:
     """Run every case and write the score artifact."""
+    require_container()
     if not (os.environ.get("OLLAMA_API_KEY") or os.environ.get("OLLAMA_BASE_URL")):
         raise click.UsageError(
             "set OLLAMA_API_KEY for Ollama Cloud, or OLLAMA_BASE_URL for a local Ollama"
@@ -92,10 +108,9 @@ def run(
         fixtures=fixtures,
     )
     runner.validate(dataset.cases)
-    with build_sandbox_image():
-        report = dataset.evaluate_sync(
-            runner.run, repeat=repeats, max_concurrency=MAX_CONCURRENCY, progress=False
-        )
+    report = dataset.evaluate_sync(
+        runner.run, repeat=repeats, max_concurrency=MAX_CONCURRENCY, progress=False
+    )
     artifact = rate(report, model=model or config.default_model)
     artifact.save(out)
     click.echo(f"{len(artifact.cases)} case runs -> {out}")

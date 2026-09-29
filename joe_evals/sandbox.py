@@ -6,45 +6,29 @@ import shutil
 import subprocess
 import tempfile
 import time
-from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
-from contextlib import contextmanager, nullcontext
-from dataclasses import dataclass, field
-from functools import wraps
+from collections.abc import Awaitable, Callable, Iterable, Mapping, Sequence
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Self
 
-from docker.errors import ImageNotFound
 from pydantic import BaseModel, Field
-from pydantic_ai import Agent, RunContext
+from pydantic_ai import Agent, AgentRetries, RunContext
+from pydantic_ai.capabilities import AbstractCapability
+from pydantic_ai.capabilities.hooks import Hooks
+from pydantic_ai.messages import ToolCallPart
 from pydantic_ai.models import Model
-from pydantic_ai.tools import Tool
+from pydantic_ai.tools import Tool, ToolDefinition
+from pydantic_ai.toolsets import AbstractToolset, ToolsetTool, WrapperToolset
+from pydantic_ai_harness.filesystem import FileSystem
+from pydantic_ai_harness.shell import LLM_API_KEY_ENV_PATTERNS, Shell
 from pydantic_evals import Case, Dataset
 from pydantic_evals.evaluators import Evaluator
-from testcontainers.core.container import DockerContainer
-from testcontainers.core.docker_client import DockerClient
-from testcontainers.core.image import DockerImage
 
 from .agents import AgentSpec, build_model
 
-SANDBOX_IMAGE = "joe-evals-sandbox:latest"
-
-WORKSPACE = "/workspace"
-
-NOBODY_ID = "65534"
-
-TIMEOUT_SECS = 60
-
-TIMEOUT_EXIT_CODE = 124
-
-MEMORY_LIMIT = "512m"
-CPU_LIMIT_NANOS = 1_000_000_000
-PID_LIMIT = 128
+COMMAND_TIMEOUT_SECS = 60
 
 RETRY_DELAY_SECS = 5
-
-MAX_LINES = 2000
-
-MAX_MATCHES = 200
 
 RUNNER_PREFIXES: tuple[str, ...] = (
     "uv run ",
@@ -60,63 +44,58 @@ UNKNOWN_SEARCH = "No search results available in the eval sandbox."
 
 UNKNOWN_ANSWER = "No answer available in the eval sandbox."
 
+HARNESS_TOOLS: dict[str, str] = {
+    "Read": "read_file",
+    "Grep": "search_files",
+    "Write": "write_file",
+    "Edit": "edit_file",
+    "Bash": "run_command",
+}
+
+DENIED_SHELL_ENV: tuple[str, ...] = (*LLM_API_KEY_ENV_PATTERNS, "OLLAMA_*")
+
+
+class ToolScript(BaseModel):
+    bash: dict[str, str] = Field(
+        default_factory=dict,
+        description="Command line to its output; anything else runs in the shell.",
+    )
+    web_search: dict[str, str] = Field(
+        default_factory=dict,
+        description="Query substring to the canned results it returns.",
+    )
+    answer: str = Field(
+        default=UNKNOWN_ANSWER, description="Answer to every AskUserQuestion call."
+    )
+
+
+@dataclass(frozen=True)
+class ToolCall:
+    name: str
+    arguments: dict[str, Any]
+    result: str
+
+
+@dataclass
+class ToolCallLog:
+    calls: list[ToolCall] = field(default_factory=list)
+
+    def record(self, name: str, arguments: dict[str, Any], result: str) -> None:
+        self.calls.append(ToolCall(name, arguments, result))
+
+
+@dataclass(frozen=True)
+class SandboxDeps:
+    root: Path
+    script: ToolScript
+    log: ToolCallLog
+
 
 @dataclass(frozen=True)
 class AgentRun:
     text: str
     tool_calls: tuple[ToolCall, ...]
     changed_paths: tuple[str, ...]
-
-
-@contextmanager
-def build_sandbox_image() -> Iterator[None]:
-    try:
-        DockerClient().client.images.get(SANDBOX_IMAGE)
-    except ImageNotFound:
-        image = DockerImage(path=Path(__file__).parent, tag=SANDBOX_IMAGE)
-    else:
-        image = nullcontext()
-    with image:
-        yield
-
-
-def container_user() -> str:
-    return f"{os.getuid() or NOBODY_ID}:{os.getgid() or NOBODY_ID}"
-
-
-def render_result(stdout: str, stderr: str, exit_code: int) -> str:
-    if exit_code == TIMEOUT_EXIT_CODE:
-        stderr = f"killed after {TIMEOUT_SECS}s\n{stderr}"
-    return (
-        f"exit code {exit_code}\nstdout:\n{stdout.rstrip()}\nstderr:\n{stderr.rstrip()}"
-    )
-
-
-def run_command(command: str, root: Path) -> str:
-    container = (
-        DockerContainer(
-            SANDBOX_IMAGE, command=["timeout", str(TIMEOUT_SECS), "bash", "-c", command]
-        )
-        .with_volume_mapping(root, WORKSPACE, "rw")
-        .with_tmpfs_mount("/tmp")
-        .with_kwargs(
-            network_mode="none",
-            read_only=True,
-            cap_drop=["ALL"],
-            security_opt=["no-new-privileges"],
-            pids_limit=PID_LIMIT,
-            mem_limit=MEMORY_LIMIT,
-            nano_cpus=CPU_LIMIT_NANOS,
-            user=container_user(),
-            working_dir=WORKSPACE,
-        )
-    )
-    with container:
-        exit_code = container.wait()
-        stdout, stderr = container.get_logs()
-    return render_result(
-        stdout.decode(errors="replace"), stderr.decode(errors="replace"), exit_code
-    )
 
 
 def normalize_command(command: str) -> str:
@@ -151,188 +130,41 @@ def scripted_output(script: ToolScript, command: str) -> str | None:
     return None
 
 
-class ToolScript(BaseModel):
-    bash: dict[str, str] = Field(
-        default_factory=dict,
-        description="Command line to its output; anything else runs in the container.",
-    )
-    web_search: dict[str, str] = Field(
-        default_factory=dict,
-        description="Query substring to the canned results it returns.",
-    )
-    answer: str = Field(
-        default=UNKNOWN_ANSWER, description="Answer to every AskUserQuestion call."
-    )
-
-
-@dataclass(frozen=True)
-class ToolCall:
-    name: str
-    arguments: dict[str, Any]
-    result: str
-
-
-@dataclass
-class ToolCallLog:
-    calls: list[ToolCall] = field(default_factory=list)
-
-    def record(self, name: str, arguments: dict[str, Any], result: str) -> None:
-        self.calls.append(ToolCall(name, arguments, result))
-
-
-@dataclass(frozen=True)
-class SandboxDeps:
-    root: Path
-    script: ToolScript
-    log: ToolCallLog
-
-
-def report_errors_to_model(tool: Callable[..., str]) -> Callable[..., str]:
-    @wraps(tool)
-    def wrapper(*args: Any, **kwargs: Any) -> str:
-        try:
-            return tool(*args, **kwargs)
-        except (OSError, ValueError, re.error) as error:
-            return f"{type(error).__name__}: {error}"
-
-    return wrapper
-
-
-def resolve(root: Path, path: str) -> Path:
-    resolved = (root / path).resolve()
-    if not resolved.is_relative_to(root.resolve()):
-        raise ValueError(f"{path} is outside the sandbox")
-    return resolved
-
-
-def read(
-    ctx: RunContext[SandboxDeps], path: str, offset: int = 1, limit: int = MAX_LINES
-) -> str:
-    """Read a file from the workspace.
-
-    Args:
-        path: File path relative to the workspace root.
-        offset: First line to read, counted from 1.
-        limit: Maximum number of lines to read.
-    """
-    lines = resolve(ctx.deps.root, path).read_text(encoding="utf-8").splitlines()
-    selected = lines[offset - 1 : offset - 1 + limit]
-    result = "\n".join(
-        f"{number:>6}\t{line}" for number, line in enumerate(selected, offset)
-    )
-    ctx.deps.log.record(
-        "Read", {"path": path, "offset": offset, "limit": limit}, result
-    )
-    return result
-
-
-def grep(ctx: RunContext[SandboxDeps], pattern: str, path: str = ".") -> str:
-    """Search the workspace with a regular expression.
-
-    Args:
-        pattern: Regular expression to search for.
-        path: File or directory to search, relative to the workspace root.
-    """
-    root = ctx.deps.root.resolve()
-    target = resolve(root, path)
-    files = (
-        [target]
-        if target.is_file()
-        else [
-            resolve(root, str(file.relative_to(root)))
-            for file in sorted(target.rglob("*"))
-            if file.is_file()
-        ]
-    )
-    regex = re.compile(pattern)
-    matches = [
-        f"{file.relative_to(root)}:{number}: {line}"
-        for file in files
-        for number, line in enumerate(file.read_text(encoding="utf-8").splitlines(), 1)
-        if regex.search(line)
-    ]
-    result = "\n".join(matches[:MAX_MATCHES]) or "No matches."
-    ctx.deps.log.record("Grep", {"pattern": pattern, "path": path}, result)
-    return result
-
-
-def write(ctx: RunContext[SandboxDeps], path: str, content: str) -> str:
-    """Write a file in the workspace, creating directories as needed.
-
-    Args:
-        path: File path relative to the workspace root.
-        content: Full file content.
-    """
-    file = resolve(ctx.deps.root, path)
-    file.parent.mkdir(parents=True, exist_ok=True)
-    file.write_text(content, encoding="utf-8")
-    result = f"Wrote {path}"
-    ctx.deps.log.record("Write", {"path": path, "content": content}, result)
-    return result
-
-
-def edit(
+async def record_tool_call(
     ctx: RunContext[SandboxDeps],
-    path: str,
-    old_string: str,
-    new_string: str,
-    replace_all: bool = False,
-) -> str:
-    """Replace an exact string in a workspace file.
-
-    Args:
-        path: File path relative to the workspace root.
-        old_string: Text to replace.
-        new_string: Replacement text.
-        replace_all: Replace every occurrence instead of the first one.
-    """
-    file = resolve(ctx.deps.root, path)
-    text = file.read_text(encoding="utf-8")
-    if old_string in text:
-        file.write_text(
-            text.replace(old_string, new_string, -1 if replace_all else 1),
-            encoding="utf-8",
-        )
-        result = f"Edited {path}"
-    else:
-        result = f"{path}: old_string not found"
-    ctx.deps.log.record(
-        "Edit",
-        {
-            "path": path,
-            "old_string": old_string,
-            "new_string": new_string,
-            "replace_all": replace_all,
-        },
-        result,
+    *,
+    call: ToolCallPart,
+    tool_def: ToolDefinition,
+    args: dict[str, Any],
+    handler: Callable[[dict[str, Any]], Awaitable[Any]],
+) -> Any:
+    command = args.get("command")
+    scripted = (
+        scripted_output(ctx.deps.script, command)
+        if call.tool_name == "Bash" and isinstance(command, str)
+        else None
     )
-    return result
-
-
-def bash(ctx: RunContext[SandboxDeps], command: str) -> str:
-    """Run a shell command: the case's script wins, anything else runs in a throwaway container.
-
-    Args:
-        command: Command line for the shell inside the container.
-    """
-    scripted = scripted_output(ctx.deps.script, command)
-    if scripted is None:
-        result = run_command(command, ctx.deps.root)
-        if ctx.deps.script.bash:
-            result = f"[scripted miss: no entry matched, ran in the sandbox container]\n{result}"
-    else:
-        result = scripted
-    ctx.deps.log.record("Bash", {"command": command}, result)
+    try:
+        if scripted is not None:
+            result = scripted
+        else:
+            result = await handler(args)
+            if call.tool_name == "Bash" and ctx.deps.script.bash:
+                result = f"[scripted miss: no entry matched]\n{result}"
+    except Exception as error:
+        ctx.deps.log.record(call.tool_name, args, f"{type(error).__name__}: {error}")
+        raise
+    ctx.deps.log.record(call.tool_name, args, str(result))
     return result
 
 
 def web_search(ctx: RunContext[SandboxDeps], query: str) -> str:
-    """Search the web. Nothing leaves the machine: the case scripts the results.
+    """Search the web. Nothing leaves the container: the case scripts the results.
 
     Args:
         query: Search query.
     """
-    result = next(
+    return next(
         (
             text
             for key, text in ctx.deps.script.web_search.items()
@@ -340,8 +172,6 @@ def web_search(ctx: RunContext[SandboxDeps], query: str) -> str:
         ),
         UNKNOWN_SEARCH,
     )
-    ctx.deps.log.record("WebSearch", {"query": query}, result)
-    return result
 
 
 def ask_user_question(ctx: RunContext[SandboxDeps], question: str) -> str:
@@ -350,34 +180,106 @@ def ask_user_question(ctx: RunContext[SandboxDeps], question: str) -> str:
     Args:
         question: Question to ask.
     """
-    result = ctx.deps.script.answer
-    ctx.deps.log.record("AskUserQuestion", {"question": question}, result)
-    return result
+    return ctx.deps.script.answer
 
 
-TOOLS: dict[str, Tool[SandboxDeps]] = {
-    tool.name: tool
-    for tool in (
-        Tool(report_errors_to_model(read), name="Read"),
-        Tool(report_errors_to_model(grep), name="Grep"),
-        Tool(report_errors_to_model(write), name="Write"),
-        Tool(report_errors_to_model(edit), name="Edit"),
-        Tool(bash, name="Bash"),
-        Tool(web_search, name="WebSearch"),
-        Tool(ask_user_question, name="AskUserQuestion"),
-    )
+SCRIPTED_TOOLS: dict[str, Tool[SandboxDeps]] = {
+    "WebSearch": Tool(web_search, name="WebSearch"),
+    "AskUserQuestion": Tool(ask_user_question, name="AskUserQuestion"),
 }
 
 
-def build_agent(spec: AgentSpec, model: Model) -> Agent[SandboxDeps, str]:
-    names = tuple(TOOLS) if spec.tools is None else spec.tools
+def rename_map(tools: Sequence[str]) -> dict[str, str]:
+    """The public tool names for the harness tools an agent was granted."""
+    return {public: inner for public, inner in HARNESS_TOOLS.items() if inner in tools}
+
+
+@dataclass
+class RenamingToolset(WrapperToolset[SandboxDeps]):
+    """Rename tools for the model while leaving `ctx.tool_name` under the public name.
+
+    `RenamedToolset` rewrites `ctx.tool_name` to the original name on the way in,
+    which hides the tool from the run's registry and stops the harness emitting
+    its capability events.
+    """
+
+    name_map: dict[str, str]
+
+    async def get_tools(
+        self, ctx: RunContext[SandboxDeps]
+    ) -> dict[str, ToolsetTool[SandboxDeps]]:
+        inverse = {inner: public for public, inner in self.name_map.items()}
+        return {
+            inverse.get(name, name): replace(
+                tool,
+                toolset=self,
+                tool_def=replace(tool.tool_def, name=inverse.get(name, name)),
+            )
+            for name, tool in (await self.wrapped.get_tools(ctx)).items()
+        }
+
+    async def call_tool(
+        self,
+        name: str,
+        tool_args: dict[str, Any],
+        ctx: RunContext[SandboxDeps],
+        tool: ToolsetTool[SandboxDeps],
+    ) -> Any:
+        original = self.name_map.get(name, name)
+        return await self.wrapped.call_tool(
+            original,
+            tool_args,
+            ctx,
+            replace(tool, tool_def=replace(tool.tool_def, name=original)),
+        )
+
+
+@dataclass
+class RenamedFileSystem(FileSystem[SandboxDeps]):
+    """The harness file tools under the names the joe prompts use."""
+
+    def get_toolset(self) -> AbstractToolset[SandboxDeps]:
+        return RenamingToolset(super().get_toolset(), rename_map(self.tools))
+
+
+@dataclass
+class RenamedShell(Shell[SandboxDeps]):
+    """The harness shell under the name the joe prompts use."""
+
+    def get_toolset(self) -> AbstractToolset[SandboxDeps]:
+        return RenamingToolset(super().get_toolset(), {"Bash": "run_command"})
+
+
+def build_agent(spec: AgentSpec, model: Model, root: Path) -> Agent[SandboxDeps, str]:
+    """Assemble the agent under test from its prompt, its tools and the sandbox root."""
+    names = (
+        (*HARNESS_TOOLS, *SCRIPTED_TOOLS) if spec.tools is None else tuple(spec.tools)
+    )
+    harness = {name: HARNESS_TOOLS[name] for name in names if name in HARNESS_TOOLS}
+    capabilities: list[AbstractCapability[SandboxDeps]] = []
+    if file_tools := [tool for tool in harness.values() if tool != "run_command"]:
+        capabilities.append(
+            RenamedFileSystem(root_dir=root, tools=file_tools, content_hashes=False)
+        )
+    if harness.get("Bash"):
+        capabilities.append(
+            RenamedShell(
+                cwd=root,
+                tools=["run_command"],
+                default_timeout=COMMAND_TIMEOUT_SECS,
+                denied_env_patterns=DENIED_SHELL_ENV,
+                allow_interactive=False,
+            )
+        )
     return Agent(
         model,
         deps_type=SandboxDeps,
         name=spec.name,
         description=spec.description,
         instructions=spec.instructions,
-        tools=[TOOLS[name] for name in names],
+        tools=[tool for name, tool in SCRIPTED_TOOLS.items() if name in names],
+        capabilities=[*capabilities, Hooks(tool_execute=record_tool_call)],
+        retries=AgentRetries(tools=3),
     )
 
 
@@ -469,6 +371,13 @@ class CaseDataset(Dataset[CaseSpec, AgentRun, Any]):
         return dataset
 
 
+def resolve(root: Path, path: str) -> Path:
+    resolved = (root / path).resolve()
+    if not resolved.is_relative_to(root.resolve()):
+        raise ValueError(f"{path} is outside the fixtures tree")
+    return resolved
+
+
 @dataclass(frozen=True)
 class CaseRunner:
     agents: Mapping[str, AgentSpec]
@@ -512,9 +421,10 @@ class CaseRunner:
         fixture, patch = self.resolve_paths(case)
         with Sandbox.create(fixture, patch) as sandbox:
             deps = SandboxDeps(root=sandbox.root, script=case.script, log=ToolCallLog())
-            result = build_agent(
-                self.agents[case.agent], build_model(self.model_name)
-            ).run_sync(case.prompt, deps=deps)
+            agent = build_agent(
+                self.agents[case.agent], build_model(self.model_name), sandbox.root
+            )
+            result = agent.run_sync(case.prompt, deps=deps)
             return AgentRun(
                 text=result.output,
                 tool_calls=tuple(deps.log.calls),

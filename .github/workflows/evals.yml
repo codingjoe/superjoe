@@ -60,12 +60,12 @@ jobs:
           else
             echo 'ran=true' >> "$GITHUB_OUTPUT"
           fi
-      - name: Build the sandbox image
-        # The branch's Dockerfile runs here, in a step with no secret in its environment, no write
-        # scope, and a digest-pinned base: its `RUN` lines reach nothing this workflow holds. The
-        # harness finds the tag already built and reuses it instead of building again.
+      - name: Build the eval container
+        # The branch's Dockerfile runs here, in a step with no secret in its environment and no write
+        # scope: its `RUN` lines reach nothing this workflow holds. The image is what isolates the
+        # run - the agents execute their own shell inside it, not on the runner.
         if: steps.key.outputs.ran == 'true'
-        run: docker build --tag joe-evals-sandbox:latest joe_evals
+        run: docker build --tag joe-evals .
       - name: Run the cases
         if: steps.key.outputs.ran == 'true'
         env:
@@ -83,7 +83,11 @@ jobs:
             models=${MODEL:-$(yq -r '.default_model' models.yaml)}
           fi
           for model in $models; do
-            uv run --locked joe_evals run --repeats "$repeats" --model "$model" --out "scores-$model.json"
+            docker run --rm --user "$(id -u):$(id -g)" -v "$PWD:/work" -w /work \
+              -e OLLAMA_API_KEY -e OLLAMA_BASE_URL \
+              joe-evals run --agents /work/agents --cases /work/cases \
+              --fixtures /work/fixtures --models /work/models.yaml \
+              --repeats "$repeats" --model "$model" --out "/work/scores-$model.json"
           done
       - name: Render the delta
         # Rendering is local work on the uploaded report, and a regression fails the run here. The

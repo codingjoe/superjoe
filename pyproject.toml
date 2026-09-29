@@ -10,7 +10,7 @@ dependencies = [
     "pydantic-evals>=1.0.0",
     "pyyaml>=6.0",
     "click>=8.1",
-    "testcontainers>=4.0",
+    "pydantic-ai-harness>=0.36.0",
 ]
 
 [project.scripts]

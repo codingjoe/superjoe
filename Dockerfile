@@ -9,7 +9,8 @@ COPY joe_evals ./joe_evals
 RUN uv sync --locked
 
 ENV JOE_EVALS_CONTAINER=1 \
-    JOE_EVALS_ROOT=/work
+    JOE_EVALS_ROOT=/work \
+    PATH=/opt/joe-evals/.venv/bin:$PATH
 
 WORKDIR /work
 

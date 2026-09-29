@@ -4,10 +4,10 @@ version = "0.1.0"
 description = "Eval harness for the superjoe crew: contract, cohesion, speed and reliability scores."
 requires-python = ">=3.14"
 dependencies = [
-    "pydantic-ai-slim[openai,duckduckgo]>=1.0.0",
+    "pydantic-ai-slim[openai]>=1.0.0",
     "pydantic-evals>=1.0.0",
     "pyyaml>=6.0",
-    "pydantic-ai-harness>=0.36.0",
+    "pydantic-ai-harness[coder,researcher]>=0.36.0",
     "opentelemetry-sdk>=1.44",
     "testcontainers>=4.15",
 ]

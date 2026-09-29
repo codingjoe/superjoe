@@ -4,19 +4,11 @@ from pathlib import Path
 
 import yaml
 from pydantic_ai import Agent
-from pydantic_ai.capabilities import AbstractCapability, WebSearch
+from pydantic_ai.capabilities import AbstractCapability
 from pydantic_ai.models import Model
 from pydantic_ai.models.ollama import OllamaModel
 from pydantic_ai.providers.ollama import OllamaProvider
-from pydantic_ai_harness.filesystem import FileSystem
-from pydantic_ai_harness.shell import LLM_API_KEY_ENV_PATTERNS, Shell
-
-FILE_TOOLS: dict[str, str] = {
-    "Read": "read_file",
-    "Grep": "search_files",
-    "Write": "write_file",
-    "Edit": "edit_file",
-}
+from pydantic_ai_harness import Coder, Researcher
 
 DEFAULT_MODEL = "deepseek-v4.1-flash"
 
@@ -55,20 +47,9 @@ def build_model(model_name: str) -> Model:
 
 
 def build_agent(spec: AgentSpec, model: Model, root: Path) -> Agent[None, str]:
-    tools = set(spec.tools or ())
-    capabilities: list[AbstractCapability[None]] = []
-    if file_tools := [name for tool, name in FILE_TOOLS.items() if tool in tools]:
-        capabilities.append(FileSystem(root_dir=root, tools=file_tools))
-    if "Bash" in tools:
-        capabilities.append(
-            Shell(
-                cwd=root,
-                tools=["run_command"],
-                denied_env_patterns=[*LLM_API_KEY_ENV_PATTERNS, "OLLAMA_*"],
-            )
-        )
-    if "WebSearch" in tools:
-        capabilities.append(WebSearch(local="duckduckgo"))
+    capabilities: list[AbstractCapability[None]] = [Coder(root)]
+    if "WebSearch" in (spec.tools or ()):
+        capabilities.append(Researcher())
     agent = Agent(
         model,
         name=spec.name,

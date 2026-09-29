@@ -10,7 +10,7 @@ cases:
           value: pydantic-ai-harness
           evaluation_name: names-package
       - ToolCorrectness:
-          expected_tools: [run_command]
+          expected_tools: [shell]
           allow_extra: true
       - MaxDuration:
           seconds: 180

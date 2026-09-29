@@ -1,15 +1,16 @@
 name: lazyjoe
 cases:
-  - name: cut-the-rule-module
+  - name: cut-the-report-formatter
     inputs: |
-      Work: joe_evals/evaluators.py
-      Goal: keep the rule module from carrying more code than its rules need.
+      Work: fixtures/bloat.diff
+      Goal: keep the reporting patch from landing as more code than the job needs.
       Mode: full
-      User said: "review this module and tell me what to cut"
+      User said: "review this patch and tell me what to cut"
     evaluators:
       - PromptContract
       - Matches:
           patterns:
+            - '(?m)(yeet|duh|NPC|cringe|glow up):'
             - '(W: -\d+ lines\.|No notes\. Ship it\.)'
       - ToolCorrectness:
           expected_tools: [read_file]
@@ -40,11 +41,15 @@ cases:
           target_words: 140
       - LLMJudge:
           rubric: |
-            The answer must be one cut list for the given module: every finding names the
-            line, tags it (`yeet:`, `duh:`, `NPC:`, `cringe:`, `glow up:`), names the
-            replacement, and the list ends on the weight line. A clean verdict is only
-            allowed as `No notes. Ship it.` It must review nothing outside the module, edit
-            nothing, and run no tests, linters, or hooks.
+            The answer must be one cut list for the patch: every finding names the line,
+            tags it (`yeet:`, `duh:`, `NPC:`, `cringe:`, `glow up:`), names the
+            replacement, and the list ends on the weight line. The cuts available in this
+            patch include the `ReportFormatter` class that replaced a one-line
+            comprehension, the `separator` and `sort_keys` options nothing sets, `to_json`
+            that nothing calls, the `if self.buffer is None` branch that cannot run, the
+            `flush` loop `str.join` replaces, and `distance` the patch never uses. The list
+            must name at least one, with the rung it should have stopped at. It must edit
+            nothing and run no tests, linters, or hooks.
           include_input: true
           score:
             evaluation_name: Cohesion

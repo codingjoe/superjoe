@@ -1,11 +1,11 @@
 name: inspectorjoe
 cases:
-  - name: triage-the-eval-harness
+  - name: triage-the-orders-patch
     inputs: |
-      Work: joe_evals/__main__.py
-      Goal: catch what the harness gets wrong before it bites in CI.
+      Work: fixtures/review.diff
+      Goal: catch what the patch introduces before it lands.
       Phase: triage only, investigate nothing.
-      User said: "review this file"
+      User said: "review this patch"
     evaluators:
       - PromptContract
       - Matches:
@@ -43,10 +43,13 @@ cases:
       - LLMJudge:
           rubric: |
             The answer must be a triage and nothing more: one `sus:` line per candidate the
-            file raises, each naming the file and line, and a question asking which to
-            investigate. It must rate nothing (`bet:`, `cooked:`), confirm nothing (`cap:`),
-            fix nothing, review nothing outside the file, and run no tests, linters, or
-            hooks.
+            patch raises, each naming the file and line, and a question asking which to
+            investigate. The candidates in this patch include the bare `except:` that hides
+            every failure in `label`, the `tmp = {}` nothing reads, `is_zero` testing a
+            string's length instead of the value, the O(n^2) `pairs` loop, and `cheapest`
+            nesting three levels deep. The triage must name at least one of them. It must
+            rate nothing (`bet:`, `cooked:`), confirm nothing (`cap:`), fix nothing, review
+            nothing outside the patch, and run no tests, linters, or hooks.
           include_input: true
           score:
             evaluation_name: Cohesion

@@ -4,6 +4,8 @@ version = "0.1.0"
 description = "Eval harness for the superjoe crew: contract, cohesion, speed and reliability scores."
 requires-python = ">=3.10"
 dependencies = [
+    # `[openai]` is not a provider choice: pydantic-ai's Ollama provider is built
+    # on its OpenAI-compatible client and imports the openai SDK.
     "pydantic-ai-slim[openai]>=1.0.0",
     "pydantic-evals>=1.0.0",
     "pyyaml>=6.0",

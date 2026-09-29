@@ -24,13 +24,5 @@ build-backend = "hatchling.build"
 packages = ["joe_evals"]
 
 [tool.ruff]
-line-length = 120
 # Fixtures are case input, not code under test; ruff must never rewrite them.
 extend-exclude = ["fixtures"]
-
-[tool.ruff.format]
-quote-style = "single"
-
-[tool.ruff.lint]
-# Ruff's classic default set, pinned so a new default rule cannot fail the hooks unannounced.
-select = ["E4", "E7", "E9", "F"]

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from statistics import mean
 from typing import Any
@@ -12,19 +12,24 @@ from pydantic_evals.reporting import EvaluationReport, ReportCase, ReportCaseFai
 
 from .sandbox import AgentRun, CaseSpec
 
-AXIS_WEIGHTS: dict[str, float] = {'contract': 0.5, 'cohesion': 0.2, 'speed': 0.15, 'reliability': 0.15}
+AXIS_WEIGHTS: dict[str, float] = {
+    "contract": 0.5,
+    "cohesion": 0.2,
+    "speed": 0.15,
+    "reliability": 0.15,
+}
 
 AXIS_SIGNALS: dict[str, tuple[str, ...]] = {
-    'contract': ('Contract', 'ToolDiscipline', 'WorkspaceDiff'),
-    'cohesion': ('Cohesion',),
-    'speed': ('MaxDuration', 'ToolBudget'),
+    "contract": ("Contract", "ToolDiscipline", "WorkspaceDiff"),
+    "cohesion": ("Cohesion",),
+    "speed": ("MaxDuration", "ToolBudget"),
 }
 
 PASS_SCORE = 60.0
 
 REGRESSION_POINTS = 2.0
 
-COMMENT_MARKER = '## superjoe evals'
+COMMENT_MARKER = "## superjoe evals"
 
 
 class CaseScore(BaseModel):
@@ -37,7 +42,7 @@ class CaseScore(BaseModel):
     total: float = 0.0
     duration_secs: float = 0.0
     passed: bool = False
-    text: str = ''
+    text: str = ""
     failure: str | None = None
 
 
@@ -48,29 +53,39 @@ class RunReport(BaseModel):
     ratings: dict[str, float]
 
     def save(self, path: Path) -> None:
-        path.write_text(self.model_dump_json(indent=2) + '\n', encoding='utf-8')
+        path.write_text(self.model_dump_json(indent=2) + "\n", encoding="utf-8")
 
     @classmethod
     def read(cls, path: Path) -> RunReport:
-        return cls.model_validate_json(path.read_text(encoding='utf-8'))
+        return cls.model_validate_json(path.read_text(encoding="utf-8"))
 
     def summary(self) -> RunReport:
-        return self.model_copy(update={'cases': [case.model_copy(update={'text': ''}) for case in self.cases]})
+        return self.model_copy(
+            update={
+                "cases": [case.model_copy(update={"text": ""}) for case in self.cases]
+            }
+        )
 
     def failure(self) -> str | None:
-        broken = [f'{case.name} (run {case.repeat}): {case.failure}' for case in self.cases if case.failure]
+        broken = [
+            f"{case.name} (run {case.repeat}): {case.failure}"
+            for case in self.cases
+            if case.failure
+        ]
         if broken:
-            return 'case runs failed:\n' + '\n'.join(broken)
-        return None if self.ratings else 'no case produced a rating'
+            return "case runs failed:\n" + "\n".join(broken)
+        return None if self.ratings else "no case produced a rating"
 
 
-def axis_scores(signals: Mapping[str, float], reliability: float | None = None) -> dict[str, float | None]:
+def axis_scores(
+    signals: Mapping[str, float], reliability: float | None = None
+) -> dict[str, float | None]:
     axes: dict[str, float | None] = {
         axis: 100.0 * mean(values)
         for axis, names in AXIS_SIGNALS.items()
         if (values := [signals[name] for name in names if name in signals])
     }
-    axes['reliability'] = None if reliability is None else 100.0 * reliability
+    axes["reliability"] = None if reliability is None else 100.0 * reliability
     return axes
 
 
@@ -79,14 +94,17 @@ def case_score(axes: Mapping[str, float | None]) -> float:
 
 
 def evaluator_signals(run: ReportCase[CaseSpec, AgentRun, Any]) -> dict[str, float]:
-    return {name: float(result.value) for name, result in (run.scores | run.assertions).items()}
+    return {
+        name: float(result.value)
+        for name, result in (run.scores | run.assertions).items()
+    }
 
 
 def rate(report: EvaluationReport[CaseSpec, AgentRun, Any], model: str) -> RunReport:
     cases = [row for group in group_cases(report) for row in score_case_runs(group)]
     return RunReport(
         model=model,
-        created_at=datetime.now(tz=timezone.utc),
+        created_at=datetime.now(tz=UTC),
         cases=cases,
         ratings=ratings(cases),
     )
@@ -124,18 +142,33 @@ def group_cases(report: EvaluationReport[CaseSpec, AgentRun, Any]) -> list[CaseR
         else:
             runs.setdefault(name, []).append(result)
     return [
-        CaseRuns(name=name, case=case, runs=tuple(runs.get(name, ())), failures=tuple(failures.get(name, ())))
+        CaseRuns(
+            name=name,
+            case=case,
+            runs=tuple(runs.get(name, ())),
+            failures=tuple(failures.get(name, ())),
+        )
         for name, case in inputs.items()
     ]
 
 
 def score_case_runs(group: CaseRuns) -> list[CaseScore]:
     scores = [case_score(axis_scores(evaluator_signals(run))) for run in group.runs]
-    reliability = sum(score >= PASS_SCORE for score in scores) / group.count if group.count > 1 else None
+    reliability = (
+        sum(score >= PASS_SCORE for score in scores) / group.count
+        if group.count > 1
+        else None
+    )
     return [
-        score_run(group, run, repeat=repeat, reliability=reliability) for repeat, run in enumerate(group.runs, 1)
+        score_run(group, run, repeat=repeat, reliability=reliability)
+        for repeat, run in enumerate(group.runs, 1)
     ] + [
-        CaseScore(name=group.name, agent=group.case.agent, repeat=repeat, failure=failure.error_message)
+        CaseScore(
+            name=group.name,
+            agent=group.case.agent,
+            repeat=repeat,
+            failure=failure.error_message,
+        )
         for repeat, failure in enumerate(group.failures, len(group.runs) + 1)
     ]
 
@@ -154,7 +187,7 @@ def score_run(
         agent=group.case.agent,
         repeat=repeat,
         signals=signals,
-        reasons={name: result.reason or '' for name, result in run.scores.items()},
+        reasons={name: result.reason or "" for name, result in run.scores.items()},
         axes=axes,
         total=total,
         duration_secs=run.task_duration,
@@ -184,7 +217,10 @@ class CaseDelta:
 
     @property
     def regressed(self) -> bool:
-        return self.before - self.after > REGRESSION_POINTS or self.before >= PASS_SCORE > self.after
+        return (
+            self.before - self.after > REGRESSION_POINTS
+            or self.before >= PASS_SCORE > self.after
+        )
 
 
 def case_deltas(baseline: RunReport, current: RunReport) -> list[CaseDelta]:
@@ -212,45 +248,50 @@ def render_comment(baseline: RunReport, current: RunReport) -> str:
     deltas = case_deltas(baseline, current)
     broken = [delta for delta in deltas if delta.regressed]
     lines = [
-        f'{COMMENT_MARKER} — `{current.model}`',
-        '',
-        '| Agent | Rating | Δ |',
-        '| --- | --- | --- |',
+        f"{COMMENT_MARKER} — `{current.model}`",
+        "",
+        "| Agent | Rating | Δ |",
+        "| --- | --- | --- |",
         *(
             render_rating_row(agent, baseline.ratings.get(agent), rating)
             for agent, rating in sorted(current.ratings.items())
         ),
-        '',
+        "",
     ]
     if unmeasured := unmeasured_axes(current):
-        lines += [f'Unmeasured axes: {", ".join(unmeasured)}.', '']
+        lines += [f"Unmeasured axes: {', '.join(unmeasured)}.", ""]
     if not baseline.cases:
-        lines += ['No baseline yet — nothing to compare against.', '']
+        lines += ["No baseline yet — nothing to compare against.", ""]
     elif broken:
-        lines += ['### Regressions', '', *render_case_table(broken)]
+        lines += ["### Regressions", "", *render_case_table(broken)]
     elif not current.ratings:
-        lines += ['No case produced a rating; every case run failed.', '']
+        lines += ["No case produced a rating; every case run failed.", ""]
     else:
-        lines += ['No regressions.', '', '### Cases', '', *render_case_table(deltas)]
-    return '\n'.join(lines) + '\n'
+        lines += ["No regressions.", "", "### Cases", "", *render_case_table(deltas)]
+    return "\n".join(lines) + "\n"
 
 
 def unmeasured_axes(report: RunReport) -> list[str]:
-    measured = {axis for case in report.cases for axis, score in case.axes.items() if score is not None}
+    measured = {
+        axis
+        for case in report.cases
+        for axis, score in case.axes.items()
+        if score is not None
+    }
     return sorted(set(AXIS_WEIGHTS) - measured) if report.cases else []
 
 
 def render_case_table(deltas: Iterable[CaseDelta]) -> list[str]:
     return [
-        '| Case | Agent | Before | After | Δ |',
-        '| --- | --- | --- | --- | --- |',
+        "| Case | Agent | Before | After | Δ |",
+        "| --- | --- | --- | --- | --- |",
         *(
-            f'| {delta.case} | {delta.agent} | {delta.before:.1f} | {delta.after:.1f} | {delta.delta:+.1f} |'
+            f"| {delta.case} | {delta.agent} | {delta.before:.1f} | {delta.after:.1f} | {delta.delta:+.1f} |"
             for delta in deltas
         ),
-        '',
+        "",
     ]
 
 
 def render_rating_row(agent: str, before: float | None, after: float) -> str:
-    return f'| {agent} | {after:.1f} | {"new" if before is None else f"{after - before:+.1f}"} |'
+    return f"| {agent} | {after:.1f} | {'new' if before is None else f'{after - before:+.1f}'} |"

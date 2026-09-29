@@ -11,7 +11,7 @@ from contextlib import contextmanager, nullcontext
 from dataclasses import dataclass, field
 from functools import wraps
 from pathlib import Path
-from typing import Any
+from typing import Any, Self
 
 from docker.errors import ImageNotFound
 from pydantic import BaseModel, Field
@@ -26,17 +26,17 @@ from testcontainers.core.image import DockerImage
 
 from .agents import AgentSpec, build_model
 
-SANDBOX_IMAGE = 'joe-evals-sandbox:latest'
+SANDBOX_IMAGE = "joe-evals-sandbox:latest"
 
-WORKSPACE = '/workspace'
+WORKSPACE = "/workspace"
 
-NOBODY_ID = '65534'
+NOBODY_ID = "65534"
 
 TIMEOUT_SECS = 60
 
 TIMEOUT_EXIT_CODE = 124
 
-MEMORY_LIMIT = '512m'
+MEMORY_LIMIT = "512m"
 CPU_LIMIT_NANOS = 1_000_000_000
 PID_LIMIT = 128
 
@@ -46,11 +46,19 @@ MAX_LINES = 2000
 
 MAX_MATCHES = 200
 
-RUNNER_PREFIXES: tuple[str, ...] = ('uv run ', 'uvx ', 'python -m ', 'python3 -m ', 'sudo ', 'env ', 'time ')
+RUNNER_PREFIXES: tuple[str, ...] = (
+    "uv run ",
+    "uvx ",
+    "python -m ",
+    "python3 -m ",
+    "sudo ",
+    "env ",
+    "time ",
+)
 
-UNKNOWN_SEARCH = 'No search results available in the eval sandbox.'
+UNKNOWN_SEARCH = "No search results available in the eval sandbox."
 
-UNKNOWN_ANSWER = 'No answer available in the eval sandbox.'
+UNKNOWN_ANSWER = "No answer available in the eval sandbox."
 
 
 @dataclass(frozen=True)
@@ -73,25 +81,29 @@ def build_sandbox_image() -> Iterator[None]:
 
 
 def container_user() -> str:
-    return f'{os.getuid() or NOBODY_ID}:{os.getgid() or NOBODY_ID}'
+    return f"{os.getuid() or NOBODY_ID}:{os.getgid() or NOBODY_ID}"
 
 
 def render_result(stdout: str, stderr: str, exit_code: int) -> str:
     if exit_code == TIMEOUT_EXIT_CODE:
-        stderr = f'killed after {TIMEOUT_SECS}s\n{stderr}'
-    return f'exit code {exit_code}\nstdout:\n{stdout.rstrip()}\nstderr:\n{stderr.rstrip()}'
+        stderr = f"killed after {TIMEOUT_SECS}s\n{stderr}"
+    return (
+        f"exit code {exit_code}\nstdout:\n{stdout.rstrip()}\nstderr:\n{stderr.rstrip()}"
+    )
 
 
 def run_command(command: str, root: Path) -> str:
     container = (
-        DockerContainer(SANDBOX_IMAGE, command=['timeout', str(TIMEOUT_SECS), 'bash', '-c', command])
-        .with_volume_mapping(root, WORKSPACE, 'rw')
-        .with_tmpfs_mount('/tmp')
+        DockerContainer(
+            SANDBOX_IMAGE, command=["timeout", str(TIMEOUT_SECS), "bash", "-c", command]
+        )
+        .with_volume_mapping(root, WORKSPACE, "rw")
+        .with_tmpfs_mount("/tmp")
         .with_kwargs(
-            network_mode='none',
+            network_mode="none",
             read_only=True,
-            cap_drop=['ALL'],
-            security_opt=['no-new-privileges'],
+            cap_drop=["ALL"],
+            security_opt=["no-new-privileges"],
             pids_limit=PID_LIMIT,
             mem_limit=MEMORY_LIMIT,
             nano_cpus=CPU_LIMIT_NANOS,
@@ -102,39 +114,55 @@ def run_command(command: str, root: Path) -> str:
     with container:
         exit_code = container.wait()
         stdout, stderr = container.get_logs()
-    return render_result(stdout.decode(errors='replace'), stderr.decode(errors='replace'), exit_code)
+    return render_result(
+        stdout.decode(errors="replace"), stderr.decode(errors="replace"), exit_code
+    )
 
 
 def normalize_command(command: str) -> str:
-    line = ' '.join(command.split())
-    while runner := next((runner for runner in RUNNER_PREFIXES if line.startswith(runner)), None):
+    line = " ".join(command.split())
+    while runner := next(
+        (runner for runner in RUNNER_PREFIXES if line.startswith(runner)), None
+    ):
         line = line[len(runner) :].lstrip()
     return line
 
 
 def shell_commands(line: str) -> tuple[str, ...]:
-    return tuple(command for segment in re.split(r'[;&|\n]+', line) if (command := normalize_command(segment)))
+    return tuple(
+        command
+        for segment in re.split(r"[;&|\n]+", line)
+        if (command := normalize_command(segment))
+    )
 
 
 def scripted_output(script: ToolScript, command: str) -> str | None:
     commands = shell_commands(command)
     entries = sorted(
-        ((normalize_command(key), output) for key, output in script.bash.items()), key=lambda entry: -len(entry[0])
+        ((normalize_command(key), output) for key, output in script.bash.items()),
+        key=lambda entry: -len(entry[0]),
     )
     for key, output in entries:
-        if any(candidate == key or candidate.startswith(f'{key} ') for candidate in commands):
+        if any(
+            candidate == key or candidate.startswith(f"{key} ")
+            for candidate in commands
+        ):
             return output
     return None
 
 
 class ToolScript(BaseModel):
     bash: dict[str, str] = Field(
-        default_factory=dict, description='Command line to its output; anything else runs in the container.'
+        default_factory=dict,
+        description="Command line to its output; anything else runs in the container.",
     )
     web_search: dict[str, str] = Field(
-        default_factory=dict, description='Query substring to the canned results it returns.'
+        default_factory=dict,
+        description="Query substring to the canned results it returns.",
     )
-    answer: str = Field(default=UNKNOWN_ANSWER, description='Answer to every AskUserQuestion call.')
+    answer: str = Field(
+        default=UNKNOWN_ANSWER, description="Answer to every AskUserQuestion call."
+    )
 
 
 @dataclass(frozen=True)
@@ -165,7 +193,7 @@ def report_errors_to_model(tool: Callable[..., str]) -> Callable[..., str]:
         try:
             return tool(*args, **kwargs)
         except (OSError, ValueError, re.error) as error:
-            return f'{type(error).__name__}: {error}'
+            return f"{type(error).__name__}: {error}"
 
     return wrapper
 
@@ -173,11 +201,13 @@ def report_errors_to_model(tool: Callable[..., str]) -> Callable[..., str]:
 def resolve(root: Path, path: str) -> Path:
     resolved = (root / path).resolve()
     if not resolved.is_relative_to(root.resolve()):
-        raise ValueError(f'{path} is outside the sandbox')
+        raise ValueError(f"{path} is outside the sandbox")
     return resolved
 
 
-def read(ctx: RunContext[SandboxDeps], path: str, offset: int = 1, limit: int = MAX_LINES) -> str:
+def read(
+    ctx: RunContext[SandboxDeps], path: str, offset: int = 1, limit: int = MAX_LINES
+) -> str:
     """Read a file from the workspace.
 
     Args:
@@ -185,14 +215,18 @@ def read(ctx: RunContext[SandboxDeps], path: str, offset: int = 1, limit: int = 
         offset: First line to read, counted from 1.
         limit: Maximum number of lines to read.
     """
-    lines = resolve(ctx.deps.root, path).read_text(encoding='utf-8').splitlines()
+    lines = resolve(ctx.deps.root, path).read_text(encoding="utf-8").splitlines()
     selected = lines[offset - 1 : offset - 1 + limit]
-    result = '\n'.join(f'{number:>6}\t{line}' for number, line in enumerate(selected, offset))
-    ctx.deps.log.record('Read', {'path': path, 'offset': offset, 'limit': limit}, result)
+    result = "\n".join(
+        f"{number:>6}\t{line}" for number, line in enumerate(selected, offset)
+    )
+    ctx.deps.log.record(
+        "Read", {"path": path, "offset": offset, "limit": limit}, result
+    )
     return result
 
 
-def grep(ctx: RunContext[SandboxDeps], pattern: str, path: str = '.') -> str:
+def grep(ctx: RunContext[SandboxDeps], pattern: str, path: str = ".") -> str:
     """Search the workspace with a regular expression.
 
     Args:
@@ -204,17 +238,21 @@ def grep(ctx: RunContext[SandboxDeps], pattern: str, path: str = '.') -> str:
     files = (
         [target]
         if target.is_file()
-        else [resolve(root, str(file.relative_to(root))) for file in sorted(target.rglob('*')) if file.is_file()]
+        else [
+            resolve(root, str(file.relative_to(root)))
+            for file in sorted(target.rglob("*"))
+            if file.is_file()
+        ]
     )
     regex = re.compile(pattern)
     matches = [
-        f'{file.relative_to(root)}:{number}: {line}'
+        f"{file.relative_to(root)}:{number}: {line}"
         for file in files
-        for number, line in enumerate(file.read_text(encoding='utf-8').splitlines(), 1)
+        for number, line in enumerate(file.read_text(encoding="utf-8").splitlines(), 1)
         if regex.search(line)
     ]
-    result = '\n'.join(matches[:MAX_MATCHES]) or 'No matches.'
-    ctx.deps.log.record('Grep', {'pattern': pattern, 'path': path}, result)
+    result = "\n".join(matches[:MAX_MATCHES]) or "No matches."
+    ctx.deps.log.record("Grep", {"pattern": pattern, "path": path}, result)
     return result
 
 
@@ -227,9 +265,9 @@ def write(ctx: RunContext[SandboxDeps], path: str, content: str) -> str:
     """
     file = resolve(ctx.deps.root, path)
     file.parent.mkdir(parents=True, exist_ok=True)
-    file.write_text(content, encoding='utf-8')
-    result = f'Wrote {path}'
-    ctx.deps.log.record('Write', {'path': path, 'content': content}, result)
+    file.write_text(content, encoding="utf-8")
+    result = f"Wrote {path}"
+    ctx.deps.log.record("Write", {"path": path, "content": content}, result)
     return result
 
 
@@ -249,15 +287,23 @@ def edit(
         replace_all: Replace every occurrence instead of the first one.
     """
     file = resolve(ctx.deps.root, path)
-    text = file.read_text(encoding='utf-8')
+    text = file.read_text(encoding="utf-8")
     if old_string in text:
-        file.write_text(text.replace(old_string, new_string, -1 if replace_all else 1), encoding='utf-8')
-        result = f'Edited {path}'
+        file.write_text(
+            text.replace(old_string, new_string, -1 if replace_all else 1),
+            encoding="utf-8",
+        )
+        result = f"Edited {path}"
     else:
-        result = f'{path}: old_string not found'
+        result = f"{path}: old_string not found"
     ctx.deps.log.record(
-        'Edit',
-        {'path': path, 'old_string': old_string, 'new_string': new_string, 'replace_all': replace_all},
+        "Edit",
+        {
+            "path": path,
+            "old_string": old_string,
+            "new_string": new_string,
+            "replace_all": replace_all,
+        },
         result,
     )
     return result
@@ -273,10 +319,10 @@ def bash(ctx: RunContext[SandboxDeps], command: str) -> str:
     if scripted is None:
         result = run_command(command, ctx.deps.root)
         if ctx.deps.script.bash:
-            result = f'[scripted miss: no entry matched, ran in the sandbox container]\n{result}'
+            result = f"[scripted miss: no entry matched, ran in the sandbox container]\n{result}"
     else:
         result = scripted
-    ctx.deps.log.record('Bash', {'command': command}, result)
+    ctx.deps.log.record("Bash", {"command": command}, result)
     return result
 
 
@@ -287,10 +333,14 @@ def web_search(ctx: RunContext[SandboxDeps], query: str) -> str:
         query: Search query.
     """
     result = next(
-        (text for key, text in ctx.deps.script.web_search.items() if key.lower() in query.lower()),
+        (
+            text
+            for key, text in ctx.deps.script.web_search.items()
+            if key.lower() in query.lower()
+        ),
         UNKNOWN_SEARCH,
     )
-    ctx.deps.log.record('WebSearch', {'query': query}, result)
+    ctx.deps.log.record("WebSearch", {"query": query}, result)
     return result
 
 
@@ -301,20 +351,20 @@ def ask_user_question(ctx: RunContext[SandboxDeps], question: str) -> str:
         question: Question to ask.
     """
     result = ctx.deps.script.answer
-    ctx.deps.log.record('AskUserQuestion', {'question': question}, result)
+    ctx.deps.log.record("AskUserQuestion", {"question": question}, result)
     return result
 
 
 TOOLS: dict[str, Tool[SandboxDeps]] = {
     tool.name: tool
     for tool in (
-        Tool(report_errors_to_model(read), name='Read'),
-        Tool(report_errors_to_model(grep), name='Grep'),
-        Tool(report_errors_to_model(write), name='Write'),
-        Tool(report_errors_to_model(edit), name='Edit'),
-        Tool(bash, name='Bash'),
-        Tool(web_search, name='WebSearch'),
-        Tool(ask_user_question, name='AskUserQuestion'),
+        Tool(report_errors_to_model(read), name="Read"),
+        Tool(report_errors_to_model(grep), name="Grep"),
+        Tool(report_errors_to_model(write), name="Write"),
+        Tool(report_errors_to_model(edit), name="Edit"),
+        Tool(bash, name="Bash"),
+        Tool(web_search, name="WebSearch"),
+        Tool(ask_user_question, name="AskUserQuestion"),
     )
 }
 
@@ -333,8 +383,10 @@ def build_agent(spec: AgentSpec, model: Model) -> Agent[SandboxDeps, str]:
 
 def read_tree(root: Path) -> dict[str, bytes]:
     return {
-        str(path.relative_to(root)): os.readlink(path).encode() if path.is_symlink() else path.read_bytes()
-        for path in root.rglob('*')
+        str(path.relative_to(root)): os.readlink(path).encode()
+        if path.is_symlink()
+        else path.read_bytes()
+        for path in root.rglob("*")
         if path.is_file() or path.is_symlink()
     }
 
@@ -349,26 +401,30 @@ class Sandbox:
     def create(cls, fixture: Path, patch: Path | None = None) -> Sandbox:
         fixture = fixture.resolve()
         escaping = [
-            link for link in fixture.rglob('*') if link.is_symlink() and not link.resolve().is_relative_to(fixture)
+            link
+            for link in fixture.rglob("*")
+            if link.is_symlink() and not link.resolve().is_relative_to(fixture)
         ]
         if escaping:
-            links = ', '.join(str(link.relative_to(fixture)) for link in escaping)
-            raise ValueError(f'fixture links outside itself: {links}')
-        temporary = tempfile.TemporaryDirectory(prefix='joe-evals-')
+            links = ", ".join(str(link.relative_to(fixture)) for link in escaping)
+            raise ValueError(f"fixture links outside itself: {links}")
+        temporary = tempfile.TemporaryDirectory(prefix="joe-evals-")
         root = Path(temporary.name)
         shutil.copytree(fixture, root, dirs_exist_ok=True, symlinks=True)
         if patch is not None:
-            subprocess.run(['git', 'apply', str(patch.resolve())], cwd=root, check=True)
+            subprocess.run(["git", "apply", str(patch.resolve())], cwd=root, check=True)
         return cls(root=root, original=read_tree(root), temporary=temporary)
 
     def changed_paths(self) -> tuple[str, ...]:
         current = read_tree(self.root)
         changed = (self.original.keys() ^ current.keys()) | {
-            path for path in self.original.keys() & current.keys() if self.original[path] != current[path]
+            path
+            for path in self.original.keys() & current.keys()
+            if self.original[path] != current[path]
         }
         return tuple(sorted(changed))
 
-    def __enter__(self) -> Sandbox:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(self, *exc_info: object) -> None:
@@ -376,25 +432,40 @@ class Sandbox:
 
 
 class CaseSpec(BaseModel):
-    agent: str = Field(description='Agent name, spelled as its frontmatter spells it.')
-    prompt: str = Field(description='Task prompt handed to the agent.')
-    fixture: str = Field(description='Fixture directory copied into the sandbox.')
-    patch: str | None = Field(default=None, description='Diff inside the fixture, applied to the copy.')
-    script: ToolScript = Field(default_factory=ToolScript, description='Canned answers for the scripted tools.')
+    agent: str = Field(description="Agent name, spelled as its frontmatter spells it.")
+    prompt: str = Field(description="Task prompt handed to the agent.")
+    fixture: str = Field(description="Fixture directory copied into the sandbox.")
+    patch: str | None = Field(
+        default=None, description="Diff inside the fixture, applied to the copy."
+    )
+    script: ToolScript = Field(
+        default_factory=ToolScript, description="Canned answers for the scripted tools."
+    )
 
 
 class CaseDataset(Dataset[CaseSpec, AgentRun, Any]):
     @classmethod
-    def read(cls, paths: Iterable[Path], evaluator_types: Sequence[type[Evaluator]]) -> CaseDataset:
-        datasets = [cls.from_file(path, custom_evaluator_types=evaluator_types) for path in paths]
+    def read(
+        cls, paths: Iterable[Path], evaluator_types: Sequence[type[Evaluator]]
+    ) -> CaseDataset:
+        datasets = [
+            cls.from_file(path, custom_evaluator_types=evaluator_types)
+            for path in paths
+        ]
         dataset = cls(
-            name='superjoe',
+            name="superjoe",
             cases=[case for source in datasets for case in source.cases],
-            evaluators=[evaluator for source in datasets for evaluator in source.evaluators],
+            evaluators=[
+                evaluator for source in datasets for evaluator in source.evaluators
+            ],
         )
-        ungraded = [case.name for case in dataset.cases if not case.evaluators and not dataset.evaluators]
+        ungraded = [
+            case.name
+            for case in dataset.cases
+            if not case.evaluators and not dataset.evaluators
+        ]
         if ungraded:
-            raise ValueError(f'cases without a single evaluator: {", ".join(ungraded)}')
+            raise ValueError(f"cases without a single evaluator: {', '.join(ungraded)}")
         return dataset
 
 
@@ -405,9 +476,13 @@ class CaseRunner:
     fixtures: Path
 
     def validate(self, cases: Sequence[Case[CaseSpec, AgentRun, Any]]) -> None:
-        broken = [f'{case.name}: {problem}' for case in cases if (problem := self.problem(case))]
+        broken = [
+            f"{case.name}: {problem}"
+            for case in cases
+            if (problem := self.problem(case))
+        ]
         if broken:
-            raise ValueError('cannot run these cases:\n' + '\n'.join(broken))
+            raise ValueError("cannot run these cases:\n" + "\n".join(broken))
 
     def resolve_paths(self, case: CaseSpec) -> tuple[Path, Path | None]:
         fixture = resolve(self.fixtures, case.fixture)
@@ -415,21 +490,21 @@ class CaseRunner:
 
     def problem(self, case: Case[CaseSpec, AgentRun, Any]) -> str:
         if case.inputs.agent not in self.agents:
-            return f'unknown agent {case.inputs.agent}'
+            return f"unknown agent {case.inputs.agent}"
         try:
             fixture, patch = self.resolve_paths(case.inputs)
         except ValueError as error:
             return str(error)
         if not fixture.is_dir():
-            return f'missing fixture {case.inputs.fixture}'
+            return f"missing fixture {case.inputs.fixture}"
         if patch is not None and not patch.is_file():
-            return f'missing patch {case.inputs.patch}'
-        return ''
+            return f"missing patch {case.inputs.patch}"
+        return ""
 
     def run(self, case: CaseSpec) -> AgentRun:
         try:
             return self.run_in_sandbox(case)
-        except Exception:
+        except Exception:  # noqa: BLE001
             time.sleep(RETRY_DELAY_SECS)
             return self.run_in_sandbox(case)
 
@@ -437,7 +512,9 @@ class CaseRunner:
         fixture, patch = self.resolve_paths(case)
         with Sandbox.create(fixture, patch) as sandbox:
             deps = SandboxDeps(root=sandbox.root, script=case.script, log=ToolCallLog())
-            result = build_agent(self.agents[case.agent], build_model(self.model_name)).run_sync(case.prompt, deps=deps)
+            result = build_agent(
+                self.agents[case.agent], build_model(self.model_name)
+            ).run_sync(case.prompt, deps=deps)
             return AgentRun(
                 text=result.output,
                 tool_calls=tuple(deps.log.calls),

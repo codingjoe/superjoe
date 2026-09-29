@@ -19,24 +19,9 @@ agents and skills, each representing a different alter ego of `codingjoe`.
 
 ## The crew, scored
 
-```bash
-uv run joe_evals_build                          # once, and after a harness change
-export OLLAMA_API_KEY=...                       # Ollama Cloud key
-uv run joe_evals
-```
-
-A local Ollama needs no key:
-
-```bash
-OLLAMA_BASE_URL=http://host.docker.internal:11434 \
-    JOE_EVALS_MODEL=deepseek-v4.1-flash:cloud \
-    JOE_EVALS_JUDGE=deepseek-v4.1-flash:cloud uv run joe_evals
-```
-
-The image must exist first, and `joe_evals` then runs the whole suite in it.
-`JOE_EVALS_MODEL`, `JOE_EVALS_JUDGE` and `JOE_EVALS_REPEATS` choose the models
-and the repeats; `JOE_EVALS_REPORT`, `JOE_EVALS_BASELINE` and `JOE_EVALS_COMMENT`
-name the three files it writes beside the sources.
+Build the image once with `uv run joe_evals_build`, then run the suite with
+`uv run joe_evals` and `OLLAMA_API_KEY` set. A local Ollama needs no key, only
+`OLLAMA_BASE_URL=http://host.docker.internal:11434`.
 
 ## Credits
 

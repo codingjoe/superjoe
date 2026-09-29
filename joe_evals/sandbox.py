@@ -156,6 +156,14 @@ async def record_tool_call(
 
 
 def web_search(ctx: RunContext[SandboxDeps], query: str) -> str:
+    """
+    Search the web, with the case scripting every result.
+
+    Args:
+        ctx: The run this tool was called in.
+        query: Search query.
+
+    """
     return next(
         (
             text
@@ -167,6 +175,14 @@ def web_search(ctx: RunContext[SandboxDeps], query: str) -> str:
 
 
 def ask_user_question(ctx: RunContext[SandboxDeps], question: str) -> str:
+    """
+    Ask the user, with the case scripting the answer.
+
+    Args:
+        ctx: The run this tool was called in.
+        question: Question to ask.
+
+    """
     return ctx.deps.script.answer
 
 

@@ -156,14 +156,6 @@ async def record_tool_call(
 
 
 def web_search(ctx: RunContext[SandboxDeps], query: str) -> str:
-    """
-    Search the web, with the case scripting every result.
-
-    Args:
-        ctx: The run this tool was called in.
-        query: Search query.
-
-    """
     return next(
         (
             text
@@ -175,14 +167,6 @@ def web_search(ctx: RunContext[SandboxDeps], query: str) -> str:
 
 
 def ask_user_question(ctx: RunContext[SandboxDeps], question: str) -> str:
-    """
-    Ask the user, with the case scripting the answer.
-
-    Args:
-        ctx: The run this tool was called in.
-        question: Question to ask.
-
-    """
     return ctx.deps.script.answer
 
 
@@ -193,20 +177,11 @@ SCRIPTED_TOOLS: dict[str, Tool[SandboxDeps]] = {
 
 
 def rename_map(tools: Sequence[str]) -> dict[str, str]:
-    """Return the public names of the harness tools an agent was granted."""
     return {public: inner for public, inner in HARNESS_TOOLS.items() if inner in tools}
 
 
 @dataclass
 class RenamingToolset(WrapperToolset[SandboxDeps]):
-    """
-    Rename tools for the model, keeping the public name on `ctx.tool_name`.
-
-    `RenamedToolset` rewrites `ctx.tool_name` to the original name on the way in,
-    which hides the tool from the run's registry and stops the harness emitting
-    its capability events.
-    """
-
     name_map: dict[str, str]
 
     async def get_tools(
@@ -240,22 +215,17 @@ class RenamingToolset(WrapperToolset[SandboxDeps]):
 
 @dataclass
 class RenamedFileSystem(FileSystem[SandboxDeps]):
-    """The harness file tools under the names the joe prompts use."""
-
     def get_toolset(self) -> AbstractToolset[SandboxDeps]:
         return RenamingToolset(super().get_toolset(), rename_map(self.tools))
 
 
 @dataclass
 class RenamedShell(Shell[SandboxDeps]):
-    """The harness shell under the name the joe prompts use."""
-
     def get_toolset(self) -> AbstractToolset[SandboxDeps]:
         return RenamingToolset(super().get_toolset(), {"Bash": "run_command"})
 
 
 def build_agent(spec: AgentSpec, model: Model, root: Path) -> Agent[SandboxDeps, str]:
-    """Assemble the agent under test from its prompt, its tools and the sandbox root."""
     names = (
         (*HARNESS_TOOLS, *SCRIPTED_TOOLS) if spec.tools is None else tuple(spec.tools)
     )
@@ -343,7 +313,7 @@ class CaseSpec(BaseModel):
 
 
 class CaseDataset(Dataset[CaseSpec, AgentRun, Any]):
-    """The whole suite as one dataset."""
+    pass
 
 
 @dataclass(frozen=True)

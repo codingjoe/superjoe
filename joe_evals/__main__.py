@@ -21,7 +21,6 @@ MAX_CONCURRENCY = 4
 
 
 def artifact(name: str, default: str) -> Path:
-    """Return the artifact path the environment names, beside the sources."""
     return ROOT / (os.environ.get(name) or default)
 
 
@@ -31,7 +30,6 @@ COMMENT = artifact("JOE_EVALS_COMMENT", "comment.md")
 
 
 def model_settings() -> tuple[str, str, int]:
-    """Return the model, the judge and the repeat count this run uses."""
     model = os.environ.get("JOE_EVALS_MODEL") or DEFAULT_MODEL
     return (
         model,
@@ -41,7 +39,6 @@ def model_settings() -> tuple[str, str, int]:
 
 
 def baseline_report(model: str) -> RunReport | None:
-    """Return the baseline to compare against, when it scored the same model."""
     if not BASELINE.exists():
         return None
     before = RunReport.read(BASELINE)
@@ -49,12 +46,10 @@ def baseline_report(model: str) -> RunReport | None:
 
 
 def build() -> None:
-    """Build the eval image."""
     sys.stdout.write(f"{build_image(ROOT)}\n")
 
 
 def main() -> None:
-    """Score the suite in the eval image and write the report and the comment."""
     if not (os.environ.get("OLLAMA_API_KEY") or os.environ.get("OLLAMA_BASE_URL")):
         sys.stderr.write(
             "set OLLAMA_API_KEY for Ollama Cloud, or OLLAMA_BASE_URL for a local Ollama\n"

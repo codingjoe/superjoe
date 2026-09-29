@@ -53,8 +53,6 @@ def command_matches(commands: Iterable[str], patterns: Iterable[str]) -> bool:
 
 @dataclass
 class Contract(Evaluator):
-    """Required and forbidden regular expressions in the agent's answer."""
-
     required_patterns: tuple[str, ...] = ()
     forbidden_patterns: tuple[str, ...] = ()
 
@@ -77,8 +75,6 @@ class Contract(Evaluator):
 
 @dataclass
 class ToolDiscipline(Evaluator):
-    """Which tools a run used, and which command lines it ran."""
-
     required_tools: tuple[str, ...] = ()
     forbidden_tools: tuple[str, ...] = ()
     required_commands: tuple[str, ...] = ()
@@ -106,8 +102,6 @@ class ToolDiscipline(Evaluator):
 
 @dataclass
 class WorkspaceDiff(Evaluator):
-    """The files a run changed in its sandbox; patterns are globs, and `*` crosses directory separators."""
-
     required_paths: tuple[str, ...] = ()
     forbidden_paths: tuple[str, ...] = ()
 
@@ -138,8 +132,6 @@ DEFAULT_RUBRIC = (
 
 @dataclass(repr=False)
 class Cohesion(LLMJudge):
-    """Cohesion, scored by an LLM judge."""
-
     rubric: str = DEFAULT_RUBRIC
     include_input: bool = True
     score: OutputConfig | Literal[False] = field(

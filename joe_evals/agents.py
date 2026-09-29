@@ -13,7 +13,6 @@ DEFAULT_OLLAMA_URL = "https://ollama.com"
 
 
 def ollama_base_url(endpoint: str) -> str:
-    """Return the OpenAI-compatible root the provider posts to, `/v1` included."""
     root = endpoint.rstrip("/")
     return root if root.endswith("/v1") else f"{root}/v1"
 
@@ -44,7 +43,6 @@ def load_agents(directory: Path) -> dict[str, AgentSpec]:
 
 
 def build_model(model_name: str) -> Model:
-    """Build the Ollama model behind `model_name`."""
     endpoint = os.environ.get("OLLAMA_BASE_URL") or DEFAULT_OLLAMA_URL
     return OllamaModel(
         model_name, provider=OllamaProvider(base_url=ollama_base_url(endpoint))

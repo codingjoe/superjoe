@@ -29,25 +29,21 @@ NOBODY = 65534
 
 
 def in_container() -> bool:
-    """Return whether the CLI already runs inside the eval image."""
     return os.environ.get(CONTAINER_MARKER) == "1"
 
 
 def container_user() -> str | None:
-    """Return the host uid and gid as a docker user, or None without one."""
     if not hasattr(os, "getuid"):
         return None
     return f"{os.getuid() or NOBODY}:{os.getgid() or NOBODY}"
 
 
 def passed_env() -> dict[str, str]:
-    """Return the credentials this environment passes into the container."""
     return {name: value for name in PASSTHROUGH if (value := os.environ.get(name))}
 
 
 @contextmanager
 def docker_failure() -> Iterator[None]:
-    """Turn a docker client failure into one message the CLI can show."""
     try:
         yield
     except ImageNotFound as error:
@@ -64,14 +60,12 @@ def docker_failure() -> Iterator[None]:
 
 
 def build_image(root: Path) -> str:
-    """Build the eval image from the Dockerfile in `root`."""
     with docker_failure():
         DockerImage(path=root, tag=IMAGE, clean_up=False).build()
     return IMAGE
 
 
 def launch(root: Path) -> int:
-    """Run the eval image over `root` and return the container's exit code."""
     with docker_failure():
         container = DockerContainer(
             IMAGE,

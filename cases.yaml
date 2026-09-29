@@ -26,7 +26,7 @@ cases:
             - '*'
       - MaxDuration:
           seconds: 150
-      - ToolBudget:
+      - MaxToolCalls:
           max_calls: 10
       - Cohesion: {}
   - name: builderjoe-reuse-helper
@@ -60,7 +60,7 @@ cases:
             - pyproject.toml
       - MaxDuration:
           seconds: 180
-      - ToolBudget:
+      - MaxToolCalls:
           max_calls: 12
       - Cohesion: {}
   - name: docujoe-clean-docstrings
@@ -93,7 +93,7 @@ cases:
             - pyproject.toml
       - MaxDuration:
           seconds: 180
-      - ToolBudget:
+      - MaxToolCalls:
           max_calls: 12
       - Cohesion: {}
   - name: docujoe-refresh-stale-docs
@@ -126,7 +126,7 @@ cases:
             - pyproject.toml
       - MaxDuration:
           seconds: 240
-      - ToolBudget:
+      - MaxToolCalls:
           max_calls: 14
       - Cohesion: {}
   - name: inspectorjoe-rate-findings
@@ -161,7 +161,7 @@ cases:
             - '*'
       - MaxDuration:
           seconds: 180
-      - ToolBudget:
+      - MaxToolCalls:
           max_calls: 10
       - Cohesion: {}
   - name: inspectorjoe-triage-only
@@ -200,7 +200,7 @@ cases:
             - '*'
       - MaxDuration:
           seconds: 150
-      - ToolBudget:
+      - MaxToolCalls:
           max_calls: 8
       - Cohesion: {}
   - name: lazyjoe-ship-ready
@@ -232,7 +232,7 @@ cases:
             - '*'
       - MaxDuration:
           seconds: 120
-      - ToolBudget:
+      - MaxToolCalls:
           max_calls: 6
       - Cohesion: {}
   - name: lazyjoe-tag-findings
@@ -265,7 +265,7 @@ cases:
             - '*'
       - MaxDuration:
           seconds: 180
-      - ToolBudget:
+      - MaxToolCalls:
           max_calls: 10
       - Cohesion: {}
   - name: researchjoe-missing-package
@@ -306,7 +306,7 @@ cases:
             - '*'
       - MaxDuration:
           seconds: 150
-      - ToolBudget:
+      - MaxToolCalls:
           max_calls: 10
       - Cohesion: {}
   - name: researchjoe-verify-package
@@ -352,7 +352,7 @@ cases:
             - '*'
       - MaxDuration:
           seconds: 180
-      - ToolBudget:
+      - MaxToolCalls:
           max_calls: 12
       - Cohesion: {}
   - name: secretjoe-prove-injection
@@ -389,7 +389,7 @@ cases:
             - '*'
       - MaxDuration:
           seconds: 180
-      - ToolBudget:
+      - MaxToolCalls:
           max_calls: 10
       - Cohesion: {}
   - name: secretjoe-triage-only
@@ -431,7 +431,7 @@ cases:
             - '*'
       - MaxDuration:
           seconds: 150
-      - ToolBudget:
+      - MaxToolCalls:
           max_calls: 8
       - Cohesion: {}
   - name: testjoe-flag-ghost-branch
@@ -494,7 +494,7 @@ cases:
             - src/ledger/entry.py
       - MaxDuration:
           seconds: 240
-      - ToolBudget:
+      - MaxToolCalls:
           max_calls: 16
       - Cohesion: {}
   - name: testjoe-run-hooks
@@ -561,6 +561,6 @@ cases:
             - src/pricing.py
       - MaxDuration:
           seconds: 240
-      - ToolBudget:
+      - MaxToolCalls:
           max_calls: 16
       - Cohesion: {}

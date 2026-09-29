@@ -269,7 +269,7 @@ def build_agent(spec: AgentSpec, model: Model, root: Path) -> Agent[SandboxDeps,
                 allow_interactive=False,
             )
         )
-    return Agent(
+    agent = Agent(
         model,
         deps_type=SandboxDeps,
         name=spec.name,
@@ -279,6 +279,8 @@ def build_agent(spec: AgentSpec, model: Model, root: Path) -> Agent[SandboxDeps,
         capabilities=[*capabilities, Hooks(tool_execute=record_tool_call)],
         retries=AgentRetries(tools=3),
     )
+    agent.instrument = True
+    return agent
 
 
 def read_tree(root: Path) -> dict[str, bytes]:
@@ -375,7 +377,7 @@ class CaseRunner:
             return self.run_in_sandbox(case)
 
     def run_in_sandbox(self, case: CaseSpec) -> AgentRun:
-        fixture, patch = self.resolve_paths(case)
+        fixture, patch = self.paths(case)
         with Sandbox.create(fixture, patch) as sandbox:
             deps = SandboxDeps(root=sandbox.root, script=case.script, log=ToolCallLog())
             agent = build_agent(

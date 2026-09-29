@@ -44,7 +44,7 @@ A case scores 0 to 100 across four axes, weighted like this:
 
 - **Contract** (0.5) — `Contract`, `ToolDiscipline` and `WorkspaceDiff`
 - **Cohesion** (0.2) — `Cohesion`, an LLM judge
-- **Speed** (0.15) — `MaxDuration` and `ToolBudget`
+- **Speed** (0.15) — `MaxDuration` and `MaxToolCalls`
 - **Reliability** (0.15) — the share of a case's runs that reached the pass
   score
 
@@ -98,7 +98,7 @@ cases:
           forbidden_paths: ['*']
       - MaxDuration:
           seconds: 150
-      - ToolBudget:
+      - MaxToolCalls:
           max_calls: 10
       - Cohesion: {}
 ```

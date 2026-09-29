@@ -1,6 +1,9 @@
 import os
 from pathlib import Path
 
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.trace import get_tracer_provider, set_tracer_provider
+
 from .agents import ModelConfig, build_model, load_agents
 from .container import build_image, in_container, launch
 from .evaluators import EVALUATORS, with_judge
@@ -58,6 +61,8 @@ def main() -> None:
         )
     if not in_container():
         raise SystemExit(launch(ROOT))
+    if not isinstance(get_tracer_provider(), TracerProvider):
+        set_tracer_provider(TracerProvider())
     model, judge, repeats = model_settings()
     before = baseline_report(model)
     dataset = CaseDataset.from_file(CASES_PATH, custom_evaluator_types=EVALUATORS)

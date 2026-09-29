@@ -20,7 +20,7 @@ AXIS_WEIGHTS: dict[str, float] = {
 AXIS_SIGNALS: dict[str, tuple[str, ...]] = {
     "contract": ("Contract", "ToolDiscipline", "WorkspaceDiff"),
     "cohesion": ("Cohesion",),
-    "speed": ("MaxDuration", "ToolBudget"),
+    "speed": ("MaxDuration", "MaxToolCalls"),
 }
 
 PASS_SCORE = 60.0

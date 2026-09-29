@@ -11,6 +11,7 @@ from pydantic_evals.evaluators import (
     EvaluatorContext,
     LLMJudge,
     MaxDuration,
+    MaxToolCalls,
     OutputConfig,
 )
 
@@ -127,22 +128,6 @@ class WorkspaceDiff(Evaluator):
         )
 
 
-@dataclass
-class ToolBudget(Evaluator):
-    """The number of tool calls a run may spend."""
-
-    max_calls: int = 12
-
-    def evaluate(
-        self, ctx: EvaluatorContext[CaseSpec, AgentRun, Any]
-    ) -> EvaluationReason:
-        count = len(ctx.output.tool_calls)
-        return EvaluationReason(
-            value=1.0 if count <= self.max_calls else 0.0,
-            reason=f"{count} calls of {self.max_calls}",
-        )
-
-
 DEFAULT_RUBRIC = (
     "Score how well the answer holds together as one piece of work for the task: does it answer "
     "the task, keep one goal and one voice, and read as a finished report instead of a pile of "
@@ -181,6 +166,6 @@ EVALUATORS: tuple[type[Evaluator], ...] = (
     ToolDiscipline,
     WorkspaceDiff,
     MaxDuration,
-    ToolBudget,
+    MaxToolCalls,
     Cohesion,
 )

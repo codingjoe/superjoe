@@ -77,21 +77,21 @@ cases:
       patch: change.diff
       script:
         bash:
-          'uv run pytest': |
+          uv run pytest: |
             ============ 1 passed in 0.05s ============
         web_search:
-          'pydantic': 'Pydantic v2 is current.'
-        answer: 'No, keep it simple.'
+          pydantic: Pydantic v2 is current.
+        answer: No, keep it simple.
     evaluators:
       - Contract:
           required_patterns:
-            - '(?i)(no-code|YAGNI|side quest)'
+            - (?i)(no-code|YAGNI|side quest)
           forbidden_patterns: []
       - ToolDiscipline:
           required_tools: [Read]
           forbidden_tools: [Write, Edit]
-          required_commands: ['pytest']
-          forbidden_commands: ['pre-commit']
+          required_commands: [pytest]
+          forbidden_commands: [pre-commit]
       - WorkspaceDiff:
           required_paths: []
           forbidden_paths: ['*']

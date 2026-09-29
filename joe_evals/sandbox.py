@@ -1,12 +1,9 @@
 import re
-import shutil
-import subprocess
-import tempfile
 import time
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Any, Self
+from typing import Any
 
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, AgentRetries, RunContext
@@ -94,7 +91,6 @@ class SandboxDeps:
 class AgentRun:
     text: str
     tool_calls: tuple[ToolCall, ...]
-    changed_paths: tuple[str, ...]
 
 
 def normalize_command(command: str) -> str:
@@ -291,54 +287,10 @@ def build_agent(
     return agent
 
 
-def read_tree(root: Path) -> dict[str, bytes]:
-    return {
-        str(path.relative_to(root)): path.readlink().encode()
-        if path.is_symlink()
-        else path.read_bytes()
-        for path in root.rglob("*")
-        if path.is_file() or path.is_symlink()
-    }
-
-
-@dataclass(frozen=True)
-class Sandbox:
-    root: Path
-    original: Mapping[str, bytes]
-    temporary: tempfile.TemporaryDirectory[str]
-
-    @classmethod
-    def create(cls, fixture: Path, patch: Path | None = None) -> Sandbox:
-        temporary = tempfile.TemporaryDirectory(prefix="joe-evals-")
-        root = Path(temporary.name)
-        shutil.copytree(fixture, root, dirs_exist_ok=True, symlinks=True)
-        if patch is not None:
-            subprocess.run(["git", "apply", str(patch.resolve())], cwd=root, check=True)
-        return cls(root=root, original=read_tree(root), temporary=temporary)
-
-    def changed_paths(self) -> tuple[str, ...]:
-        current = read_tree(self.root)
-        changed = (self.original.keys() ^ current.keys()) | {
-            path
-            for path in self.original.keys() & current.keys()
-            if self.original[path] != current[path]
-        }
-        return tuple(sorted(changed))
-
-    def __enter__(self) -> Self:
-        return self
-
-    def __exit__(self, *exc_info: object) -> None:
-        self.temporary.cleanup()
-
-
 class CaseSpec(BaseModel):
     agent: str = Field(description="Agent name, spelled as its frontmatter spells it.")
     prompt: str = Field(description="Task prompt handed to the agent.")
-    fixture: str = Field(description="Fixture directory copied into the sandbox.")
-    patch: str | None = Field(
-        default=None, description="Diff inside the fixture, applied to the copy."
-    )
+    fixture: str = Field(description="Fixture directory the agent works in.")
     script: ToolScript = Field(
         default_factory=ToolScript, description="Canned answers for the scripted tools."
     )
@@ -363,40 +315,31 @@ class CaseRunner:
         if broken:
             raise ValueError("cannot run these cases:\n" + "\n".join(broken))
 
-    def paths(self, case: CaseSpec) -> tuple[Path, Path | None]:
-        fixture = self.fixtures / case.fixture
-        return fixture, fixture / case.patch if case.patch else None
+    def fixture_path(self, case: CaseSpec) -> Path:
+        return self.fixtures / case.fixture
 
     def problem(self, case: Case[CaseSpec, AgentRun, Any]) -> str:
         if case.inputs.agent not in self.agents:
             return f"unknown agent {case.inputs.agent}"
-        fixture, patch = self.paths(case.inputs)
-        if not fixture.is_dir():
+        if not self.fixture_path(case.inputs).is_dir():
             return f"missing fixture {case.inputs.fixture}"
-        if patch is not None and not patch.is_file():
-            return f"missing patch {case.inputs.patch}"
         return ""
 
     def run(self, case: CaseSpec) -> AgentRun:
         try:
-            return self.run_in_sandbox(case)
+            return self.run_case(case)
         except AgentRunError:
             time.sleep(RETRY_DELAY_SECS)
-            return self.run_in_sandbox(case)
+            return self.run_case(case)
 
-    def run_in_sandbox(self, case: CaseSpec) -> AgentRun:
-        fixture, patch = self.paths(case)
-        with Sandbox.create(fixture, patch) as sandbox:
-            deps = SandboxDeps(root=sandbox.root, script=case.script, log=ToolCallLog())
-            agent = build_agent(
-                self.agents[case.agent],
-                build_model(self.model_name),
-                sandbox.root,
-                case.script,
-            )
-            result = agent.run_sync(case.prompt, deps=deps)
-            return AgentRun(
-                text=result.output,
-                tool_calls=tuple(deps.log.calls),
-                changed_paths=sandbox.changed_paths(),
-            )
+    def run_case(self, case: CaseSpec) -> AgentRun:
+        root = self.fixture_path(case)
+        deps = SandboxDeps(root=root, script=case.script, log=ToolCallLog())
+        agent = build_agent(
+            self.agents[case.agent],
+            build_model(self.model_name),
+            root,
+            case.script,
+        )
+        result = agent.run_sync(case.prompt, deps=deps)
+        return AgentRun(text=result.output, tool_calls=tuple(deps.log.calls))

@@ -66,7 +66,7 @@ def launch(root: Path) -> int:
     with docker_failure():
         container = DockerContainer(
             IMAGE,
-            volumes=[(str(root), WORKSPACE, "rw")],
+            volumes=[(str(root), WORKSPACE, "ro")],
             working_dir=WORKSPACE,
             user=container_user(),
             env=passed_env(),

@@ -38,9 +38,6 @@ cases:
             - pytest
             - prek
             - pre-commit
-      - WorkspaceDiff:
-          forbidden_paths:
-            - '*'
       - MaxDuration:
           seconds: 180
       - MaxToolCalls:

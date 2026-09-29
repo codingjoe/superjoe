@@ -1,4 +1,3 @@
-import fnmatch
 import re
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
@@ -30,10 +29,6 @@ def grade_checks(
         value=1.0 - len(missing) / len(required),
         reason=f"missing: {', '.join(missing)}",
     )
-
-
-def any_path_matches(names: Iterable[str], patterns: Iterable[str]) -> bool:
-    return any(fnmatch.fnmatch(name, pattern) for name in names for pattern in patterns)
 
 
 def run_commands(run: AgentRun) -> tuple[str, ...]:
@@ -100,28 +95,6 @@ class ToolDiscipline(Evaluator):
         return grade_checks(required, violations)
 
 
-@dataclass
-class WorkspaceDiff(Evaluator):
-    required_paths: tuple[str, ...] = ()
-    forbidden_paths: tuple[str, ...] = ()
-
-    def evaluate(
-        self, ctx: EvaluatorContext[CaseSpec, AgentRun, Any]
-    ) -> EvaluationReason:
-        changed = ctx.output.changed_paths
-        return grade_checks(
-            {
-                f"change {pattern}": any_path_matches(changed, (pattern,))
-                for pattern in self.required_paths
-            },
-            [
-                path
-                for path in changed
-                if any_path_matches((path,), self.forbidden_paths)
-            ],
-        )
-
-
 DEFAULT_RUBRIC = (
     "Score how well the answer holds together as one piece of work for the task: does it answer "
     "the task, keep one goal and one voice, and read as a finished report instead of a pile of "
@@ -156,7 +129,6 @@ def with_judge(
 EVALUATORS: tuple[type[Evaluator], ...] = (
     Contract,
     ToolDiscipline,
-    WorkspaceDiff,
     MaxDuration,
     MaxToolCalls,
     Cohesion,

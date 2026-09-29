@@ -25,8 +25,7 @@ export OLLAMA_API_KEY=...                       # Ollama Cloud key
 uv run joe_evals
 ```
 
-A local Ollama needs no key, and needs the daemon reachable from inside the
-container:
+A local Ollama needs no key:
 
 ```bash
 OLLAMA_BASE_URL=http://host.docker.internal:11434 \
@@ -34,12 +33,10 @@ OLLAMA_BASE_URL=http://host.docker.internal:11434 \
     JOE_EVALS_JUDGE=deepseek-v4.1-flash:cloud uv run joe_evals
 ```
 
-`joe_evals` mounts the repository at `/work` and executes the whole suite in the
-container, so no agent gets a shell on this machine; the image it runs has to
-exist, which is what `joe_evals_build` is for. `JOE_EVALS_MODEL`,
-`JOE_EVALS_JUDGE` and `JOE_EVALS_REPEATS` override `models.yaml`;
-`JOE_EVALS_REPORT`, `JOE_EVALS_BASELINE` and `JOE_EVALS_COMMENT` name the three
-files it writes, beside the sources.
+The image must exist first, and `joe_evals` then runs the whole suite in it.
+`JOE_EVALS_MODEL`, `JOE_EVALS_JUDGE` and `JOE_EVALS_REPEATS` override
+`models.yaml`; `JOE_EVALS_REPORT`, `JOE_EVALS_BASELINE` and `JOE_EVALS_COMMENT`
+name the three files it writes beside the sources.
 
 ### What a rating means
 

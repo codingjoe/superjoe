@@ -1,16 +1,3 @@
-"""The sandbox a case runs in: a fixture copy, the tools the agent gets, and the run it leaves.
-
-A case never touches the repository it was written for. `Sandbox` copies the fixture to a
-temporary directory, applies the case's patch, and hands that copy to the sandboxed tools.
-`Read`, `Grep`, `Write` and `Edit` work on the copy in this process; `Bash` runs in a throwaway
-container that testcontainers builds from the package's `Dockerfile` and starts per command,
-with no network, a non-root user, a read-only root filesystem with a writable `/tmp`, only the
-case workspace mounted, every capability dropped, and capped CPUs, memory, processes and wall
-clock. `WebSearch` and `AskUserQuestion` answer from the case data: no request leaves the
-process, no human is asked. Every call is recorded, so evaluators can assert tool discipline
-over the run.
-"""
-
 from __future__ import annotations
 
 import os
@@ -41,48 +28,34 @@ from testcontainers.core.image import DockerImage
 from .agents import AgentSpec, build_model
 
 SANDBOX_IMAGE = 'joe-evals-sandbox:latest'
-"""Tag of the image the package's `Dockerfile` builds."""
 
 WORKSPACE = '/workspace'
-"""Where the case workspace is mounted inside the container."""
 
 NOBODY_ID = '65534'
-"""UID and GID of `nobody`, adopted when the host user is root, so no command runs as root."""
 
-# joe: fixed wall-clock limit; make it a case field when a case needs longer
 TIMEOUT_SECS = 60
 
 TIMEOUT_EXIT_CODE = 124
-"""Exit code `timeout(1)` reports, so a killed command reads like any other timeout."""
 
-# joe: fixed resource caps; make them case fields when a case needs more room
 MEMORY_LIMIT = '512m'
 CPU_LIMIT_NANOS = 1_000_000_000
 PID_LIMIT = 128
 
-# joe: one more attempt and a fixed pause; make it a flag when a case needs more
 RETRY_DELAY_SECS = 5
 
-# joe: fixed read limit; make it a case field when a case needs more lines
 MAX_LINES = 2000
 
-# joe: fixed grep limit; make it a case field when a case needs more matches
 MAX_MATCHES = 200
 
 RUNNER_PREFIXES: tuple[str, ...] = ('uv run ', 'uvx ', 'python -m ', 'python3 -m ', 'sudo ', 'env ', 'time ')
-"""Command prefixes that still leave the command itself in charge: `uv run pytest` runs pytest."""
 
 UNKNOWN_SEARCH = 'No search results available in the eval sandbox.'
-"""Answer for a `WebSearch` query the case does not script."""
 
 UNKNOWN_ANSWER = 'No answer available in the eval sandbox.'
-"""Answer for a case that scripts no `AskUserQuestion` answer."""
 
 
 @dataclass(frozen=True)
 class AgentRun:
-    """Everything the evaluators inspect about one run."""
-
     text: str
     tool_calls: tuple[ToolCall, ...]
     duration: timedelta
@@ -91,11 +64,6 @@ class AgentRun:
 
 @contextmanager
 def build_sandbox_image() -> Iterator[None]:
-    """Build the sandbox image from the package's `Dockerfile`, unless a build already left the tag.
-
-    A CI step that builds the image with no secret in its environment leaves the tag in place, so
-    the run that holds the key never executes the branch's `Dockerfile` itself.
-    """
     try:
         DockerClient().client.images.get(SANDBOX_IMAGE)
     except ImageNotFound:
@@ -107,26 +75,16 @@ def build_sandbox_image() -> Iterator[None]:
 
 
 def container_user() -> str:
-    """The host user, so the workspace stays writable; `nobody` when that user is root."""
     return f'{os.getuid() or NOBODY_ID}:{os.getgid() or NOBODY_ID}'
 
 
 def render_result(stdout: str, stderr: str, exit_code: int) -> str:
-    """What the agent reads of a run: the exit code and both streams."""
     if exit_code == TIMEOUT_EXIT_CODE:
         stderr = f'killed after {TIMEOUT_SECS}s\n{stderr}'
     return f'exit code {exit_code}\nstdout:\n{stdout.rstrip()}\nstderr:\n{stderr.rstrip()}'
 
 
 def run_command(command: str, root: Path) -> str:
-    """Run one shell command in a fresh sandbox container over `root`.
-
-    `timeout(1)` inside the container holds the wall clock, so a command that outlives it is
-    killed with the container, not by this process.
-
-    Returns:
-        The exit code, stdout and stderr of the run, rendered for the agent.
-    """
     container = (
         DockerContainer(SANDBOX_IMAGE, command=['timeout', str(TIMEOUT_SECS), 'bash', '-c', command])
         .with_volume_mapping(root, WORKSPACE, 'rw')
@@ -150,7 +108,6 @@ def run_command(command: str, root: Path) -> str:
 
 
 def normalize_command(command: str) -> str:
-    """A command without the shell noise a spelling adds: whitespace collapsed, runner prefixes aside."""
     line = ' '.join(command.split())
     while runner := next((runner for runner in RUNNER_PREFIXES if line.startswith(runner)), None):
         line = line[len(runner) :].lstrip()
@@ -158,17 +115,10 @@ def normalize_command(command: str) -> str:
 
 
 def shell_commands(line: str) -> tuple[str, ...]:
-    """Every command a shell line runs: `cd /workspace && uv run pytest` reads as `pytest`."""
     return tuple(command for segment in re.split(r'[;&|\n]+', line) if (command := normalize_command(segment)))
 
 
 def scripted_output(script: ToolScript, command: str) -> str | None:
-    """The case's canned output for a command, or `None` when the case scripts nothing for it.
-
-    Matching is loose enough to survive a spelling the case did not think of: whitespace, a
-    `cd ... &&` in front, a runner prefix such as `uv run`. The longest scripted line the command
-    matches wins, so a scripted `pytest` still answers `pytest tests/test_pricing.py`.
-    """
     commands = shell_commands(command)
     entries = sorted(
         ((normalize_command(key), output) for key, output in script.bash.items()), key=lambda entry: -len(entry[0])
@@ -180,14 +130,6 @@ def scripted_output(script: ToolScript, command: str) -> str | None:
 
 
 class ToolScript(BaseModel):
-    """The scripted world a case runs in.
-
-    Attributes:
-        bash: Command line to its output; anything else runs in the container.
-        web_search: Query substring to the canned results it returns.
-        answer: Answer to every `AskUserQuestion` call.
-    """
-
     bash: dict[str, str] = Field(
         default_factory=dict, description='Command line to its output; anything else runs in the container.'
     )
@@ -199,8 +141,6 @@ class ToolScript(BaseModel):
 
 @dataclass(frozen=True)
 class ToolCall:
-    """One recorded tool call of a run."""
-
     name: str
     arguments: dict[str, Any]
     result: str
@@ -208,27 +148,20 @@ class ToolCall:
 
 @dataclass
 class ToolCallLog:
-    """Every tool call of one run, in order."""
-
     calls: list[ToolCall] = field(default_factory=list)
 
     def record(self, name: str, arguments: dict[str, Any], result: str) -> None:
-        """Append one call."""
         self.calls.append(ToolCall(name, arguments, result))
 
 
 @dataclass(frozen=True)
 class SandboxDeps:
-    """What the sandboxed tools work on: the workspace, the script and the call log."""
-
     root: Path
     script: ToolScript
     log: ToolCallLog
 
 
 def report_errors_to_model(tool: Callable[..., str]) -> Callable[..., str]:
-    """Let a workspace tool answer with its error, so the model can recover instead of ending the run."""
-
     @wraps(tool)
     def wrapper(*args: Any, **kwargs: Any) -> str:
         try:
@@ -240,11 +173,6 @@ def report_errors_to_model(tool: Callable[..., str]) -> Callable[..., str]:
 
 
 def resolve(root: Path, path: str) -> Path:
-    """Resolve `path` inside `root`.
-
-    Raises:
-        ValueError: When the path leaves the sandbox.
-    """
     resolved = (root / path).resolve()
     if not resolved.is_relative_to(root.resolve()):
         raise ValueError(f'{path} is outside the sandbox')
@@ -275,7 +203,6 @@ def grep(ctx: RunContext[SandboxDeps], pattern: str, path: str = '.') -> str:
     """
     root = ctx.deps.root.resolve()
     target = resolve(root, path)
-    # every hit is resolved again: a link the agent plants must never read past the sandbox root
     files = (
         [target]
         if target.is_file()
@@ -392,15 +319,9 @@ TOOLS: dict[str, Tool[SandboxDeps]] = {
         Tool(ask_user_question, name='AskUserQuestion'),
     )
 }
-"""Every sandbox tool, keyed by the name the agent frontmatter uses."""
 
 
 def build_agent(spec: AgentSpec, model: Model) -> Agent[SandboxDeps, str]:
-    """Wire one agent file into a pydantic-ai agent over the sandbox tools.
-
-    Raises:
-        KeyError: When the frontmatter names a tool the sandbox does not have.
-    """
     names = tuple(TOOLS) if spec.tools is None else spec.tools
     return Agent(
         model,
@@ -413,7 +334,6 @@ def build_agent(spec: AgentSpec, model: Model) -> Agent[SandboxDeps, str]:
 
 
 def read_tree(root: Path) -> dict[str, bytes]:
-    """Every file of a tree, as workspace-relative path to content; a symlink reads as the path it holds."""
     return {
         str(path.relative_to(root)): os.readlink(path).encode() if path.is_symlink() else path.read_bytes()
         for path in root.rglob('*')
@@ -423,24 +343,12 @@ def read_tree(root: Path) -> dict[str, bytes]:
 
 @dataclass(frozen=True)
 class Sandbox:
-    """A throwaway copy of a fixture that the agent may write to."""
-
     root: Path
     original: Mapping[str, bytes]
-    """The copy as it was handed to the agent, patch included."""
     temporary: tempfile.TemporaryDirectory[str]
-    """Owner of `root`; its cleanup deletes the copy."""
 
     @classmethod
     def create(cls, fixture: Path, patch: Path | None = None) -> Sandbox:
-        """Copy a fixture to a temporary directory and apply its patch.
-
-        Links are copied as links, and a fixture holding a link that leaves it is refused, so a
-        fixture can never pull a host file into the sandbox.
-
-        Raises:
-            ValueError: When the fixture holds a link that resolves outside it.
-        """
         fixture = fixture.resolve()
         escaping = [
             link for link in fixture.rglob('*') if link.is_symlink() and not link.resolve().is_relative_to(fixture)
@@ -456,7 +364,6 @@ class Sandbox:
         return cls(root=root, original=read_tree(root), temporary=temporary)
 
     def changed_paths(self) -> tuple[str, ...]:
-        """Workspace-relative paths the run changed, added or deleted."""
         current = read_tree(self.root)
         changed = (self.original.keys() ^ current.keys()) | {
             path for path in self.original.keys() & current.keys() if self.original[path] != current[path]
@@ -471,12 +378,6 @@ class Sandbox:
 
 
 class CaseSpec(BaseModel):
-    """One eval case: the agent, its prompt and the sandbox it runs in.
-
-    `fixture` is relative to the fixtures directory the runner was given, and `patch` to its
-    fixture; the runner refuses either path when it resolves outside that tree.
-    """
-
     agent: str = Field(description='Agent name, spelled as its frontmatter spells it.')
     prompt: str = Field(description='Task prompt handed to the agent.')
     fixture: str = Field(description='Fixture directory copied into the sandbox.')
@@ -485,15 +386,8 @@ class CaseSpec(BaseModel):
 
 
 class CaseDataset(Dataset[CaseSpec, AgentRun, Any]):
-    """The case files: typed inputs, the joe evaluators, one dataset per run."""
-
     @classmethod
     def read(cls, paths: Iterable[Path], evaluator_types: Sequence[type[Evaluator]]) -> CaseDataset:
-        """Read case files into one dataset.
-
-        Raises:
-            ValueError: When a case file grades nothing, so its runs could never score.
-        """
         datasets = [cls.from_file(path, custom_evaluator_types=evaluator_types) for path in paths]
         dataset = cls(
             name='superjoe',
@@ -508,37 +402,20 @@ class CaseDataset(Dataset[CaseSpec, AgentRun, Any]):
 
 @dataclass(frozen=True)
 class CaseRunner:
-    """Runs cases: fixture copy, sandboxed tools, agent, recorded run.
-
-    The model is built per run, because a provider client binds to the event loop that first
-    uses it and every run gets its own.
-    """
-
     agents: Mapping[str, AgentSpec]
     model_name: str
     fixtures: Path
 
     def validate(self, cases: Sequence[Case[CaseSpec, AgentRun, Any]]) -> None:
-        """Fail on every case this runner cannot resolve, before the first one runs.
-
-        Raises:
-            ValueError: One message naming every broken case.
-        """
         broken = [f'{case.name}: {problem}' for case in cases if (problem := self.problem(case))]
         if broken:
             raise ValueError('cannot run these cases:\n' + '\n'.join(broken))
 
     def resolve_paths(self, case: CaseSpec) -> tuple[Path, Path | None]:
-        """The case's fixture and its patch, resolved inside the fixtures tree.
-
-        Raises:
-            ValueError: When the fixture leaves the fixtures tree, or the patch leaves the fixture.
-        """
         fixture = resolve(self.fixtures, case.fixture)
         return fixture, resolve(fixture, case.patch) if case.patch else None
 
     def problem(self, case: Case[CaseSpec, AgentRun, Any]) -> str:
-        """What stops the runner from running a case: its agent, fixture or patch. Empty when nothing does."""
         if case.inputs.agent not in self.agents:
             return f'unknown agent {case.inputs.agent}'
         try:
@@ -552,11 +429,6 @@ class CaseRunner:
         return ''
 
     def run(self, case: CaseSpec) -> AgentRun:
-        """Run the case's agent in a fresh sandbox and record the run.
-
-        A run that raises gets one more attempt, so a transient error is not the case's fault.
-        The second raise lands in the report as a failed run.
-        """
         try:
             return self.run_in_sandbox(case)
         except Exception:
@@ -564,7 +436,6 @@ class CaseRunner:
             return self.run_in_sandbox(case)
 
     def run_in_sandbox(self, case: CaseSpec) -> AgentRun:
-        """Run the case's agent in a fresh sandbox over a copy of its fixture."""
         fixture, patch = self.resolve_paths(case)
         with Sandbox.create(fixture, patch) as sandbox:
             deps = SandboxDeps(root=sandbox.root, script=case.script, log=ToolCallLog())

@@ -1,5 +1,3 @@
-"""The `joe_evals` command line: run the cases, refresh the baseline, write the PR comment."""
-
 from __future__ import annotations
 
 import os
@@ -13,7 +11,6 @@ from .sandbox import CaseDataset, CaseRunner, build_sandbox_image
 from .scoring import RunReport, changed, rate, regressions, render_comment
 
 ROOT = Path(__file__).resolve().parent.parent
-"""The repository this package sits in."""
 
 AGENTS_DIR = ROOT / 'agents'
 CASES_DIR = ROOT / 'cases'
@@ -21,7 +18,6 @@ FIXTURES_DIR = ROOT / 'fixtures'
 BASELINE_PATH = ROOT / 'baseline.json'
 MODELS_PATH = ROOT / 'models.yaml'
 
-# joe: fixed concurrency, so a labeled run's 42 cases do not all hit the model at once
 MAX_CONCURRENCY = 4
 
 
@@ -49,10 +45,7 @@ def run(
     repeats: int,
     out: Path,
 ) -> None:
-    """Run every case and write the score artifact.
-
-    Exits non-zero, after writing the artifact, when a case run raised or nothing could be rated.
-    """
+    """Run every case and write the score artifact."""
     if not (os.environ.get('OLLAMA_API_KEY') or os.environ.get('OLLAMA_BASE_URL')):
         raise click.UsageError('set OLLAMA_API_KEY for Ollama Cloud, or OLLAMA_BASE_URL for a local Ollama')
     paths = sorted(cases.rglob('*.yaml'))
@@ -94,11 +87,7 @@ def baseline(report: Path, out: Path) -> None:
 )
 @click.option('--out', type=click.Path(path_type=Path), default=None, help='Write the comment to this file.')
 def comment(report: Path, baseline_path: Path, out: Path | None) -> None:
-    """Print the PR comment for a score artifact.
-
-    `--out` writes the comment to a file, and writes nothing when no rating moved and no case
-    regressed. Exits non-zero when a case dropped against the baseline.
-    """
+    """Print the PR comment for a score artifact."""
     before, current = RunReport.read(baseline_path), RunReport.read(report)
     body = render_comment(before, current)
     broken = regressions(before, current)

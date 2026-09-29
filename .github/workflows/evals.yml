@@ -34,30 +34,14 @@ jobs:
   evals:
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    permissions:
-      contents: read
     outputs:
-      ran: ${{ steps.key.outputs.ran }}
       commented: ${{ steps.comment.outputs.commented }}
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10
-      - name: Check for the API key
-        id: key
-        env:
-          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
-        run: |
-          if [ -z "$OLLAMA_API_KEY" ]; then
-            echo 'ran=false' >> "$GITHUB_OUTPUT"
-            echo 'OLLAMA_API_KEY is not configured; the eval run is skipped.' >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo 'ran=true' >> "$GITHUB_OUTPUT"
-          fi
       - name: Build the eval container
-        if: steps.key.outputs.ran == 'true'
         run: uv run --locked joe_evals build
       - name: Run the cases
-        if: steps.key.outputs.ran == 'true'
         env:
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
           FULL: ${{ contains(toJSON(github.event.pull_request.labels.*.name), 'run-evals-full') }}
@@ -76,7 +60,7 @@ jobs:
           done
       - name: Render the delta
         id: comment
-        if: always() && steps.key.outputs.ran == 'true' && github.event_name == 'pull_request'
+        if: always() && github.event_name == 'pull_request'
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
@@ -91,13 +75,13 @@ jobs:
           fi
           exit "$status"
       - name: Upload the scores
-        if: always() && steps.key.outputs.ran == 'true'
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: evals-scores
           path: scores-*.json
       - name: Upload the comment
-        if: always() && steps.key.outputs.ran == 'true'
+        if: always()
         uses: actions/upload-artifact@v7
         with:
           name: evals-comment
@@ -129,7 +113,7 @@ jobs:
           fi
   baseline:
     needs: evals
-    if: github.event_name == 'push' && needs.evals.outputs.ran == 'true'
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

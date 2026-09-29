@@ -128,10 +128,8 @@ of every swept model.
 
 `.github/workflows/evals.yml` runs on pull requests and on `main` pushes that
 touch `agents/`, `cases/`, `fixtures/`, `joe_evals/`, `models.yaml` or
-`pyproject.toml`. The run needs `OLLAMA_API_KEY`; without it the workflow skips
-the run, says so in the step summary, and leaves the baseline alone. A fork
-pull request gets no secret, so only a branch of this repository reaches a keyed
-run.
+`pyproject.toml`. The run needs `OLLAMA_API_KEY`; a fork pull request gets no
+secret, so only a branch of this repository reaches a keyed run.
 
 The run splits into jobs, so no single one holds both the branch's code and a
 write token. `evals` runs the branch's harness with `contents: read` and no

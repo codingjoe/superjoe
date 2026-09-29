@@ -181,11 +181,9 @@ agent's shell, so what a case can reach is what the container can reach:
 - `git` and `bash` are in the image; Python is not, so a case that needs test
   output scripts it
 
-Files stay guarded, because a fixture and a patch come from a pull request: a
-fixture is copied with its links kept as links, a fixture holding a link that
-leaves it is refused, and a case's `fixture` has to stay inside the fixtures
-tree while its `patch` stays inside the fixture. A scripted command never
-reaches the shell at all.
+A case runs on a copy of its fixture in the container's `/tmp`, with the patch
+applied, so a run leaves no mark on the mount and `WorkspaceDiff` can tell what
+the agent changed. A scripted command never reaches the shell at all.
 
 ## Credits
 

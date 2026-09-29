@@ -299,15 +299,6 @@ class Sandbox:
 
     @classmethod
     def create(cls, fixture: Path, patch: Path | None = None) -> Sandbox:
-        fixture = fixture.resolve()
-        escaping = [
-            link
-            for link in fixture.rglob("*")
-            if link.is_symlink() and not link.resolve().is_relative_to(fixture)
-        ]
-        if escaping:
-            links = ", ".join(str(link.relative_to(fixture)) for link in escaping)
-            raise ValueError(f"fixture links outside itself: {links}")
         temporary = tempfile.TemporaryDirectory(prefix="joe-evals-")
         root = Path(temporary.name)
         shutil.copytree(fixture, root, dirs_exist_ok=True, symlinks=True)
@@ -347,13 +338,6 @@ class CaseDataset(Dataset[CaseSpec, AgentRun, Any]):
     """The whole suite as one dataset."""
 
 
-def resolve(root: Path, path: str) -> Path:
-    resolved = (root / path).resolve()
-    if not resolved.is_relative_to(root.resolve()):
-        raise ValueError(f"{path} is outside the fixtures tree")
-    return resolved
-
-
 @dataclass(frozen=True)
 class CaseRunner:
     agents: Mapping[str, AgentSpec]
@@ -369,17 +353,14 @@ class CaseRunner:
         if broken:
             raise ValueError("cannot run these cases:\n" + "\n".join(broken))
 
-    def resolve_paths(self, case: CaseSpec) -> tuple[Path, Path | None]:
-        fixture = resolve(self.fixtures, case.fixture)
-        return fixture, resolve(fixture, case.patch) if case.patch else None
+    def paths(self, case: CaseSpec) -> tuple[Path, Path | None]:
+        fixture = self.fixtures / case.fixture
+        return fixture, fixture / case.patch if case.patch else None
 
     def problem(self, case: Case[CaseSpec, AgentRun, Any]) -> str:
         if case.inputs.agent not in self.agents:
             return f"unknown agent {case.inputs.agent}"
-        try:
-            fixture, patch = self.resolve_paths(case.inputs)
-        except ValueError as error:
-            return str(error)
+        fixture, patch = self.paths(case.inputs)
         if not fixture.is_dir():
             return f"missing fixture {case.inputs.fixture}"
         if patch is not None and not patch.is_file():

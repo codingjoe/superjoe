@@ -17,7 +17,8 @@ jobs:
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10
+      # setup-uv stopped publishing floating major tags after v7, so pin the release
+      - uses: astral-sh/setup-uv@v10.2.0
       - uses: docker/setup-buildx-action@v4
       - name: Build the eval container
         uses: docker/build-push-action@v7

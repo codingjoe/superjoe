@@ -4,7 +4,7 @@ from pathlib import Path
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.trace import get_tracer_provider, set_tracer_provider
 
-from .agents import ModelConfig, build_model, load_agents
+from .agents import DEFAULT_MODEL, build_model, load_agents
 from .container import build_image, in_container, launch
 from .evaluators import EVALUATORS, with_judge
 from .sandbox import CaseDataset, CaseRunner
@@ -15,7 +15,6 @@ ROOT = Path(os.environ.get("JOE_EVALS_ROOT") or Path(__file__).resolve().parent.
 AGENTS_DIR = ROOT / "agents"
 CASES_PATH = ROOT / "cases.yaml"
 FIXTURES_DIR = ROOT / "fixtures"
-MODELS_PATH = ROOT / "models.yaml"
 
 MAX_CONCURRENCY = 4
 
@@ -32,10 +31,10 @@ COMMENT = artifact("JOE_EVALS_COMMENT", "comment.md")
 
 def model_settings() -> tuple[str, str, int]:
     """Return the model, the judge and the repeat count this run uses."""
-    config = ModelConfig.read(MODELS_PATH)
+    model = os.environ.get("JOE_EVALS_MODEL") or DEFAULT_MODEL
     return (
-        os.environ.get("JOE_EVALS_MODEL") or config.default_model,
-        os.environ.get("JOE_EVALS_JUDGE") or config.judge_model,
+        model,
+        os.environ.get("JOE_EVALS_JUDGE") or model,
         int(os.environ.get("JOE_EVALS_REPEATS") or 1),
     )
 

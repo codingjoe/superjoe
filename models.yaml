@@ -1,4 +1,0 @@
-default_model: deepseek-v4.1-flash
-judge_model: deepseek-v4.1-flash
-sweep:
-  - deepseek-v4.1-flash

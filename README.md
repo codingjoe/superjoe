@@ -34,8 +34,8 @@ OLLAMA_BASE_URL=http://host.docker.internal:11434 \
 ```
 
 The image must exist first, and `joe_evals` then runs the whole suite in it.
-`JOE_EVALS_MODEL`, `JOE_EVALS_JUDGE` and `JOE_EVALS_REPEATS` override
-`models.yaml`; `JOE_EVALS_REPORT`, `JOE_EVALS_BASELINE` and `JOE_EVALS_COMMENT`
+`JOE_EVALS_MODEL`, `JOE_EVALS_JUDGE` and `JOE_EVALS_REPEATS` choose the models
+and the repeats; `JOE_EVALS_REPORT`, `JOE_EVALS_BASELINE` and `JOE_EVALS_COMMENT`
 name the three files it writes beside the sources.
 
 ### What a rating means
@@ -118,12 +118,12 @@ changes nothing.
 
 ### Add a model
 
-`models.yaml` pins three things: `default_model` runs the agents, `judge_model`
-scores cohesion (drop it and the judge falls back to the default model), and
-`sweep` lists the models a full run covers. Score another model locally with
-`JOE_EVALS_MODEL`, dispatch the `evals` workflow with its `model` input, or add
-the name to `sweep` and label a pull request `run-evals-full` to run three
-repeats of every swept model.
+`JOE_EVALS_MODEL` names the model the agents run with — `deepseek-v4.1-flash`
+when nothing sets it — and `JOE_EVALS_JUDGE` the one that scores cohesion, the
+model itself by default. Score another model by setting the variable, dispatch
+the `evals` workflow with its `model` input, or change the workflow's `SWEEP`
+and label a pull request `run-evals-full` to run three repeats of every model
+in it.
 
 ### What CI does
 

@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       model:
-        description: Ollama model to score with; defaults to models.yaml
+        description: Ollama model to score with; defaults to JOE_EVALS_MODEL
         default: ''
 permissions:
   contents: read
@@ -44,21 +44,23 @@ jobs:
       - name: Run the cases
         env:
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+          JOE_EVALS_MODEL: deepseek-v4.1-flash
+          JOE_EVALS_JUDGE: deepseek-v4.1-flash
+          SWEEP: deepseek-v4.1-flash
           FULL: ${{ contains(toJSON(github.event.pull_request.labels.*.name), 'run-evals-full') }}
           MODEL: ${{ inputs.model }}
         run: |
-          default=$(yq -r '.default_model' models.yaml)
           if [ "$FULL" = 'true' ]; then
             repeats=3
-            models=$(yq -r '.sweep[]' models.yaml)
+            models=$SWEEP
           else
             repeats=1
-            models=${MODEL:-$default}
+            models=${MODEL:-$JOE_EVALS_MODEL}
           fi
           for model in $models; do
             JOE_EVALS_MODEL="$model" JOE_EVALS_REPEATS="$repeats" \
               JOE_EVALS_REPORT="scores-$model.json" \
-              JOE_EVALS_BASELINE="baseline/scores-$default.json" \
+              JOE_EVALS_BASELINE="baseline/scores-$JOE_EVALS_MODEL.json" \
               uv run --locked joe_evals
           done
       - name: Note the comment

@@ -19,11 +19,6 @@ agents and skills, each representing a different alter ego of `codingjoe`.
 
 ## The crew, scored
 
-`joe_evals/` runs every joe agent against a throwaway copy of a fixture and
-grades the run. No case touches the repository it was written for: `run` builds
-the eval image, starts a container, and executes the whole suite inside it. The
-agents get a shell, and it is the container's.
-
 ```bash
 export OLLAMA_API_KEY=...                       # Ollama Cloud key
 uv run joe_evals run
@@ -37,11 +32,11 @@ OLLAMA_BASE_URL=http://host.docker.internal:11434 uv run joe_evals run \
     --model deepseek-v4.1-flash:cloud --judge deepseek-v4.1-flash:cloud
 ```
 
-`run` builds the image it needs, and `joe_evals build` builds it on its own —
-the way CI gets an image in a step that holds no key. `--model`, `--judge` and
+`run` builds the image, mounts the repository at `/work`, and executes the
+whole suite in the container, so no agent gets a shell on this machine.
+`joe_evals build` builds the image on its own. `--model`, `--judge` and
 `--repeats` override `models.yaml`; `--agents`, `--cases`, `--fixtures` and
-`--models` point the run at other directories inside the repository, since
-nothing outside it is mounted.
+`--models` point the run at other directories inside the repository.
 
 ### What a rating means
 

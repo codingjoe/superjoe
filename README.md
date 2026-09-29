@@ -178,8 +178,8 @@ agent's shell, so what a case can reach is what the container can reach:
   can write
 - the agent's shell cannot read `OLLAMA_API_KEY` or the other provider keys:
   the harness strips them from the environment it runs commands in
-- `git` and `bash` are in the image; Python is not, so a case that needs test
-  output scripts it
+- `git`, `bash`, `uv` and Python are in the image, but a fixture's own
+  dependencies are not installed, so a case scripts the test output it needs
 
 A case runs on a copy of its fixture in the container's `/tmp`, with the patch
 applied, so a run leaves no mark on the mount and `WorkspaceDiff` can tell what

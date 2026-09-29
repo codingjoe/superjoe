@@ -65,7 +65,7 @@ jobs:
         id: comment
         if: always() && github.event_name == 'pull_request'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           run=$(gh run list --workflow evals.yml --branch main --status success --limit 1 --json databaseId --jq '.[0].databaseId')
           gh run download "$run" --name evals-baseline ||
@@ -114,7 +114,7 @@ jobs:
           name: evals-comment
       - name: Post the sticky comment
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
           PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           comment_id=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PULL_REQUEST_NUMBER/comments" \

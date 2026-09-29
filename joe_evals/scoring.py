@@ -178,7 +178,10 @@ def score_run(
         agent=group.case.agent,
         repeat=repeat,
         signals=signals,
-        reasons={name: result.reason or "" for name, result in run.scores.items()},
+        reasons={
+            name: result.reason or ""
+            for name, result in (run.scores | run.assertions).items()
+        },
         axes=axes,
         total=total,
         duration_secs=run.task_duration,

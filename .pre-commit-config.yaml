@@ -16,6 +16,7 @@ repos:
     rev: 1.0.0
     hooks:
       - id: mdformat
+        exclude: ^fixtures/
         additional_dependencies:
           - mdformat-config
           - mdformat-beautysh
@@ -31,12 +32,19 @@ repos:
     rev: v0.21.0
     hooks:
       - id: yamlfmt
+        exclude: ^fixtures/
   - repo: https://github.com/btford/write-good
     rev: v1.0.8
     hooks:
       - id: write-good
         verbose: true
         entry: bash -c 'write-good "$@" || true' --
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.9
+    hooks:
+      - id: ruff-check
+      - id: ruff-format
+        args: [--check]
 ci:
   skip:
     - no-commit-to-branch

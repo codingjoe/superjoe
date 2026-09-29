@@ -1,0 +1,29 @@
+name: researchjoe
+cases:
+  - name: verify-pydantic-ai-harness
+    inputs: |
+      Work: pyproject.toml
+      Goal: decide whether pydantic-ai-harness still earns its place among the dependencies.
+      User said: "is pydantic-ai-harness maintained, or should we drop it?"
+    evaluators:
+      - Contains:
+          value: pydantic-ai-harness
+          evaluation_name: names-package
+      - ToolCorrectness:
+          expected_tools: [shell]
+          allow_extra: true
+      - MaxDuration:
+          seconds: 180
+      - MaxToolCalls:
+          max_calls: 20
+      - LLMJudge:
+          rubric: |
+            The answer must read as one finished report for the task: it answers whether
+            pydantic-ai-harness should stay a dependency, keeps one goal and one voice, and
+            grounds every claim in a lookup it performed. It must not claim to have changed,
+            added, or removed any code.
+          include_input: true
+          score:
+            evaluation_name: Cohesion
+            include_reason: true
+          assertion: false

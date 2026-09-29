@@ -17,6 +17,12 @@ agents and skills, each representing a different alter ego of `codingjoe`.
 - **secretjoe** — finds your vulnerabilities before the bad guys do (no cape required)
 - **researchjoe** — finds and evaluates packages so nobody re-implements one
 
+## The crew, scored
+
+Build the image once with `uv run joe_evals_build`, then run the suite with
+`uv run joe_evals` and `OLLAMA_API_KEY` set. A local Ollama needs no key, only
+`OLLAMA_BASE_URL=http://host.docker.internal:11434`.
+
 ## Credits
 
 The ladder, the strict review notation, and the debt-ledger concept are

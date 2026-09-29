@@ -1,0 +1,71 @@
+name: evals
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: Ollama model to score with
+        default: deepseek-v4.1-flash
+permissions:
+  contents: read
+concurrency:
+  group: evals-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      # setup-uv stopped publishing floating major tags after v7, so pin the release
+      - uses: astral-sh/setup-uv@v10.2.0
+      - uses: docker/setup-buildx-action@v4
+      - name: Build the eval container
+        uses: docker/build-push-action@v7
+        with:
+          load: true
+          tags: joe-evals:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Run the cases
+        env:
+          OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
+          JOE_EVALS_MODEL: ${{ inputs.model || 'deepseek-v4.1-flash' }}
+        run: uv run --locked joe_evals | tee report.txt
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: evals-report
+          path: report.txt
+  comment:
+    needs: evals
+    if: always() && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          name: evals-report
+      - name: Post the report
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          {
+            echo '## superjoe evals'
+            echo
+            echo '```text'
+            cat report.txt
+            echo '```'
+          } > body.md
+          comment_id=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PULL_REQUEST_NUMBER/comments" \
+            --jq '.[] | select(.user.login == "github-actions[bot]") | select(.body | startswith("## superjoe evals")) | .id' \
+            | tail -1)
+          if [ -n "$comment_id" ]; then
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$comment_id" -F body=@body.md > /dev/null
+          else
+            gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PULL_REQUEST_NUMBER/comments" -F body=@body.md > /dev/null
+          fi

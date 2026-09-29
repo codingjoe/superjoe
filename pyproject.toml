@@ -1,0 +1,46 @@
+[project]
+name = "joe-evals"
+version = "0.1.0"
+description = "Eval harness for the superjoe crew: contract, cohesion, speed and reliability scores."
+requires-python = ">=3.14"
+dependencies = [
+    "pydantic-ai-slim[openai]>=1.0.0",
+    "pydantic-evals>=1.0.0",
+    "pyyaml>=6.0",
+    "pydantic-ai-harness[coder,researcher]>=0.36.0",
+    "opentelemetry-sdk>=1.44",
+    "testcontainers>=4.15",
+]
+
+[project.scripts]
+joe_evals = "joe_evals.__main__:main"
+joe_evals_build = "joe_evals.__main__:build"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["joe_evals"]
+
+[tool.ruff.lint]
+extend-select = [
+    "C90",
+    "D",
+    "DJ",
+    "E",
+    "G",
+    "N",
+    "PERF",
+    "PT",
+    "PTH",
+    "RET",
+    "SIM",
+    "SLOT",
+    "T20",
+    "TRY",
+    "UP",
+    "W",
+]
+
+ignore = ["D1", "D203", "D212", "E501", "RUF01"]

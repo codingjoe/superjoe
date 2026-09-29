@@ -1,10 +1,7 @@
-# The virtual environment uv creates at the repository root
 .venv/
 
-# Caches
 __pycache__/
 .ruff_cache/
 
-# Scores and reports the CLI writes
 evals-report.json
 scores-*.json

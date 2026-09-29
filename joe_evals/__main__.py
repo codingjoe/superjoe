@@ -6,6 +6,7 @@ from pathlib import Path
 import click
 
 from .agents import ModelConfig, build_model, load_agents
+from .container import WORKSPACE, ensure_image, in_container, launch
 from .evaluators import EVALUATORS, with_judge
 from .sandbox import CaseDataset, CaseRunner
 from .scoring import RunReport, changed, rate, regressions, render_comment
@@ -20,25 +21,50 @@ MODELS_PATH = ROOT / "models.yaml"
 
 MAX_CONCURRENCY = 4
 
-CONTAINER_MARKER = "JOE_EVALS_CONTAINER"
 
-CONTAINER_COMMAND = (
-    'docker run --rm -v "$PWD:/work" -w /work -e OLLAMA_API_KEY joe-evals run'
-)
+def workspace_path(path: Path) -> str:
+    """Return the in-container path of `path`, which must live under the repo root."""
+    root, resolved = ROOT.resolve(), path.resolve()
+    if not resolved.is_relative_to(root):
+        raise click.UsageError(f"{path} is outside {root}, the only tree mounted")
+    return str(Path(WORKSPACE) / resolved.relative_to(root))
 
 
-def require_container() -> None:
-    """Refuse to run the agents anywhere but inside the eval container."""
-    if os.environ.get(CONTAINER_MARKER) != "1":
-        raise click.UsageError(
-            "the agents run their own shell, so run the suite in the container: "
-            f"docker build -t joe-evals . && {CONTAINER_COMMAND}"
-        )
+def container_args(
+    agents: Path,
+    cases: Path,
+    fixtures: Path,
+    models_path: Path,
+    model: str | None,
+    judge: str | None,
+    repeats: int,
+    out: Path,
+) -> list[str]:
+    """Return the container command line for the host's own options."""
+    args = ["run", "--repeats", str(repeats)]
+    for option, path in (
+        ("--agents", agents),
+        ("--cases", cases),
+        ("--fixtures", fixtures),
+        ("--models", models_path),
+        ("--out", out),
+    ):
+        args += [option, workspace_path(path)]
+    for option, value in (("--model", model), ("--judge", judge)):
+        if value is not None:
+            args += [option, value]
+    return args
 
 
 @click.group()
 def main() -> None:
     """Score the superjoe crew on contract, cohesion, speed and reliability."""
+
+
+@main.command()
+def build() -> None:
+    """Build the eval image."""
+    click.echo(ensure_image(ROOT, force=True))
 
 
 @main.command()
@@ -89,11 +115,16 @@ def run(
     out: Path,
 ) -> None:
     """Run every case and write the score artifact."""
-    require_container()
     if not (os.environ.get("OLLAMA_API_KEY") or os.environ.get("OLLAMA_BASE_URL")):
         raise click.UsageError(
             "set OLLAMA_API_KEY for Ollama Cloud, or OLLAMA_BASE_URL for a local Ollama"
         )
+    if not in_container():
+        ensure_image(ROOT)
+        argv = container_args(
+            agents, cases, fixtures, models_path, model, judge, repeats, out
+        )
+        raise SystemExit(launch(ROOT, argv))
     paths = sorted(cases.rglob("*.yaml"))
     if not paths:
         raise click.UsageError(f"no case files under {cases}")

@@ -16,7 +16,6 @@ repos:
     rev: 1.0.0
     hooks:
       - id: mdformat
-        # Fixtures are case input, not docs under test; mdformat must never rewrite them.
         exclude: ^fixtures/
         additional_dependencies:
           - mdformat-config
@@ -33,7 +32,6 @@ repos:
     rev: v0.21.0
     hooks:
       - id: yamlfmt
-        # Same exclusion as above: a fixture's YAML is case input, not config under test.
         exclude: ^fixtures/
   - repo: https://github.com/btford/write-good
     rev: v1.0.8

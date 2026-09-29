@@ -8,7 +8,6 @@ cases:
         Goal: cover the ledger entries and report every branch coverage cannot reach.
         User said: "run the hooks and the coverage on ledger, then tell me what is left."
       fixture: ghost-branch
-      # joe: the likely spellings are scripted; anything else runs in the container and is marked in the call log
       script:
         bash:
           'prek run --all-files': |

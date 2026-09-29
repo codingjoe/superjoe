@@ -8,7 +8,6 @@ cases:
         Goal: decide whether ledger-retry replaces the hand-rolled retry loop.
         User said: "is ledger-retry worth adding, or do we keep our own retry loop?"
       fixture: retry-client
-      # joe: the likely spellings are scripted; anything else runs in the container and is marked in the call log
       script:
         bash:
           'curl -s https://pypi.org/pypi/ledger-retry/json': |

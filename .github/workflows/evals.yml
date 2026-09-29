@@ -1,7 +1,6 @@
 name: evals
 on:
   pull_request:
-    # labeled, so applying the run-evals-full label starts the full run
     types: [opened, synchronize, reopened, labeled]
     paths:
       - .github/workflows/evals.yml
@@ -12,7 +11,6 @@ on:
       - models.yaml
       - pyproject.toml
   push:
-    # a main commit refreshes the baseline; a baseline commit alone matches none of these paths
     branches: [main]
     paths:
       - .github/workflows/evals.yml
@@ -36,10 +34,6 @@ jobs:
   evals:
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    # This job runs the branch's own harness, so it holds no write scope and reaches no API beyond
-    # the artifacts it uploads. The boundary it works within: a fork pull request gets no secrets,
-    # so only a branch of this repository reaches a keyed run at all, and even that run cannot
-    # comment, label or push - the `comment` job below owns the write token instead.
     permissions:
       contents: read
     outputs:
@@ -51,7 +45,6 @@ jobs:
       - name: Check for the API key
         id: key
         env:
-          # the key sits on the steps that need it, never on the job: see the build step below
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
         run: |
           if [ -z "$OLLAMA_API_KEY" ]; then
@@ -61,17 +54,12 @@ jobs:
             echo 'ran=true' >> "$GITHUB_OUTPUT"
           fi
       - name: Build the eval container
-        # The branch's Dockerfile runs here, in a step with no secret in its environment and no write
-        # scope: its `RUN` lines reach nothing this workflow holds. The image is what isolates the
-        # run - the agents execute their own shell inside it, not on the runner.
         if: steps.key.outputs.ran == 'true'
-        run: docker build --tag joe-evals .
+        run: uv run --locked joe_evals build
       - name: Run the cases
         if: steps.key.outputs.ran == 'true'
         env:
-          # only the steps that talk to a model carry the key
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
-          # toJSON keeps the label lookup valid for push and dispatch runs, which carry no labels
           FULL: ${{ contains(toJSON(github.event.pull_request.labels.*.name), 'run-evals-full') }}
           MODEL: ${{ inputs.model }}
         run: |
@@ -83,23 +71,15 @@ jobs:
             models=${MODEL:-$(yq -r '.default_model' models.yaml)}
           fi
           for model in $models; do
-            docker run --rm --user "$(id -u):$(id -g)" -v "$PWD:/work" -w /work \
-              -e OLLAMA_API_KEY -e OLLAMA_BASE_URL \
-              joe-evals run --agents /work/agents --cases /work/cases \
-              --fixtures /work/fixtures --models /work/models.yaml \
-              --repeats "$repeats" --model "$model" --out "/work/scores-$model.json"
+            uv run --locked joe_evals run \
+              --repeats "$repeats" --model "$model" --out "scores-$model.json"
           done
       - name: Render the delta
-        # Rendering is local work on the uploaded report, and a regression fails the run here. The
-        # `comment` job posts the result, because posting needs a token this job must not hold.
         id: comment
         if: always() && steps.key.outputs.ran == 'true' && github.event_name == 'pull_request'
         env:
           BASE_REF: ${{ github.base_ref }}
         run: |
-          # The gate reads the baseline off the base branch, never the copy this pull request
-          # carries: a branch must not be judged against a file it can edit. A base branch without
-          # one yet - the pull request that first adds the harness - reads as no baseline at all.
           git fetch --depth=1 origin "$BASE_REF"
           git show FETCH_HEAD:baseline.json > "$RUNNER_TEMP/baseline.json" ||
             echo '{"model":"","created_at":"1970-01-01T00:00:00Z","cases":[],"ratings":{}}' > "$RUNNER_TEMP/baseline.json"
@@ -124,8 +104,6 @@ jobs:
           path: comment.md
           if-no-files-found: ignore
   comment:
-    # The write token lives here and nowhere else. No branch code is checked out: the job downloads
-    # the rendered comment and posts it through workflow-inline `gh` calls.
     needs: evals
     if: ${{ !cancelled() && needs.evals.outputs.commented == 'true' }}
     runs-on: ubuntu-latest
@@ -141,7 +119,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          # the marker alone would match a bystander comment that quotes it, so match the author too
           comment_id=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PULL_REQUEST_NUMBER/comments" \
             --jq '.[] | select(.user.login == "github-actions[bot]") | select(.body | startswith("## superjoe evals")) | .id' \
             | tail -1)
@@ -151,7 +128,6 @@ jobs:
             gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PULL_REQUEST_NUMBER/comments" -F body=@comment.md > /dev/null
           fi
   baseline:
-    # a skipped run uploads no scores, so a main push without the key leaves the baseline alone
     needs: evals
     if: github.event_name == 'push' && needs.evals.outputs.ran == 'true'
     runs-on: ubuntu-latest

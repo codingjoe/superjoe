@@ -20,28 +20,28 @@ agents and skills, each representing a different alter ego of `codingjoe`.
 ## The crew, scored
 
 `joe_evals/` runs every joe agent against a throwaway copy of a fixture and
-grades the run. No case touches the repository it was written for, and the
-agents never run a shell on your machine: the suite runs in a container.
+grades the run. No case touches the repository it was written for: `run` builds
+the eval image, starts a container, and executes the whole suite inside it. The
+agents get a shell, and it is the container's.
 
 ```bash
-docker build -t joe-evals .
 export OLLAMA_API_KEY=...                       # Ollama Cloud key
-docker run --rm -v "$PWD:/work" -w /work -e OLLAMA_API_KEY joe-evals run
+uv run joe_evals run
 ```
 
 A local Ollama needs no key, and needs the daemon reachable from inside the
 container:
 
 ```bash
-docker run --rm -v "$PWD:/work" -w /work \
-    -e OLLAMA_BASE_URL=http://host.docker.internal:11434 \
-    joe-evals run --model deepseek-v4.1-flash:cloud --judge deepseek-v4.1-flash:cloud
+OLLAMA_BASE_URL=http://host.docker.internal:11434 uv run joe_evals run \
+    --model deepseek-v4.1-flash:cloud --judge deepseek-v4.1-flash:cloud
 ```
 
-`run` refuses to start outside the container, so the guarantee cannot be
-skipped by accident. `--model`, `--judge` and `--repeats` override
-`models.yaml`; `--agents`, `--cases`, `--fixtures` and `--models` point the run
-at other directories.
+`run` builds the image it needs, and `joe_evals build` builds it on its own —
+the way CI gets an image in a step that holds no key. `--model`, `--judge` and
+`--repeats` override `models.yaml`; `--agents`, `--cases`, `--fixtures` and
+`--models` point the run at other directories inside the repository, since
+nothing outside it is mounted.
 
 ### What a rating means
 
@@ -146,9 +146,10 @@ calls. It finds its own sticky comment by the `## superjoe evals` marker and the
 `github-actions[bot]` author, so a comment that merely quotes the marker is
 never patched.
 
-The eval image builds in the workflow, in a step with no secret in that step's
-environment. A pull request's `Dockerfile` therefore runs where it can reach
-nothing the job holds, and the cases afterwards run inside the image it built.
+The eval image builds in the workflow through `joe_evals build`, in a step with
+no secret in that step's environment. A pull request's `Dockerfile` therefore
+runs where it can reach nothing the job holds, and the cases afterwards run in
+the container `joe_evals run` starts from that image.
 
 The scores upload as the `evals-scores` artifact, one `scores-<model>.json` per
 model. On a pull request the `comment` job posts or patches the
@@ -163,8 +164,12 @@ loop.
 ### The container
 
 The whole run happens in the image built from the root `Dockerfile`: the
-harness, the model calls, and every command an agent runs. That is the
-boundary, and `run` refuses to start outside it.
+harness, the model calls, and every command an agent runs. `run` starts that
+container itself — the repository mounted at `/work`, the Ollama variables,
+and nothing else of yours — and removes it when the run ends. That is the
+boundary, and no invocation of the suite happens outside it. The paths in the
+container's output are that mount: `/work/evals-report.json` is
+`evals-report.json` beside the sources.
 
 Inside the container the agents get
 [pydantic-ai-harness](https://pydantic.dev/docs/ai/harness/): `FileSystem`
@@ -172,7 +177,8 @@ under the names the prompts use (`Read`, `Grep`, `Write`, `Edit`) and `Shell`
 as `Bash`. There is no per-command container and no network restriction on the
 agent's shell, so what a case can reach is what the container can reach:
 
-- the repository is mounted at `/work`, and nothing else of yours is
+- the repository at `/work` is everything of yours a case can read, and all it
+  can write
 - the agent's shell cannot read `OLLAMA_API_KEY` or the other provider keys:
   the harness strips them from the environment it runs commands in
 - `git` and `bash` are in the image; Python is not, so a case that needs test

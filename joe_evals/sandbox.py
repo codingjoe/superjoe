@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 from pydantic_ai import Agent, AgentRetries, RunContext
 from pydantic_ai.capabilities import AbstractCapability
 from pydantic_ai.capabilities.hooks import Hooks
+from pydantic_ai.exceptions import AgentRunError
 from pydantic_ai.messages import ToolCallPart
 from pydantic_ai.models import Model
 from pydantic_ai.tools import Tool, ToolDefinition
@@ -413,7 +414,7 @@ class CaseRunner:
     def run(self, case: CaseSpec) -> AgentRun:
         try:
             return self.run_in_sandbox(case)
-        except Exception:  # noqa: BLE001
+        except AgentRunError:
             time.sleep(RETRY_DELAY_SECS)
             return self.run_in_sandbox(case)
 

@@ -8,7 +8,6 @@ cases:
         Goal: run the hooks and the suite, then report every finding.
         User said: "run the pre-commit hooks and the tests on pricing, fix nothing, just report."
       fixture: hook-findings
-      # joe: the likely spellings are scripted; anything else runs in the container and is marked in the call log
       script:
         bash:
           'prek run --all-files': |

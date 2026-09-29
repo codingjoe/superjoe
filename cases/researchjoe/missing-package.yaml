@@ -8,7 +8,6 @@ cases:
         Goal: decide whether csv-warp is worth adding for the export path.
         User said: "is csv-warp still the thing to use for writing CSV?"
       fixture: csv-export
-      # joe: the likely spellings are scripted; anything else runs in the container and is marked in the call log
       script:
         bash:
           'curl -s https://pypi.org/pypi/csv-warp/json': |

@@ -230,7 +230,7 @@ def render_comment(baseline: RunReport, current: RunReport) -> str:
         lines += ['### Regressions', '', *render_case_table(broken)]
     elif not current.ratings:
         lines += ['No case produced a rating; every case run failed.', '']
-    elif current.cases:
+    else:
         lines += ['No regressions.', '', '### Cases', '', *render_case_table(deltas)]
     return '\n'.join(lines) + '\n'
 

@@ -9,7 +9,6 @@ import time
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from contextlib import contextmanager, nullcontext
 from dataclasses import dataclass, field
-from datetime import timedelta
 from functools import wraps
 from pathlib import Path
 from typing import Any
@@ -58,7 +57,6 @@ UNKNOWN_ANSWER = 'No answer available in the eval sandbox.'
 class AgentRun:
     text: str
     tool_calls: tuple[ToolCall, ...]
-    duration: timedelta
     changed_paths: tuple[str, ...]
 
 
@@ -439,12 +437,9 @@ class CaseRunner:
         fixture, patch = self.resolve_paths(case)
         with Sandbox.create(fixture, patch) as sandbox:
             deps = SandboxDeps(root=sandbox.root, script=case.script, log=ToolCallLog())
-            started_at = time.monotonic()
             result = build_agent(self.agents[case.agent], build_model(self.model_name)).run_sync(case.prompt, deps=deps)
-            duration = timedelta(seconds=time.monotonic() - started_at)
             return AgentRun(
                 text=result.output,
                 tool_calls=tuple(deps.log.calls),
-                duration=duration,
                 changed_paths=sandbox.changed_paths(),
             )

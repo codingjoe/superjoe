@@ -12,10 +12,31 @@ cases:
       - ToolCorrectness:
           expected_tools: [shell]
           allow_extra: true
+      - PromptContract
+      - MinCalls:
+          min_calls: 2
+      - NoRepeatCalls:
+          max_repeats: 1
+      - ForbiddenCalls:
+          patterns:
+            - '\b(pytest|unittest|pre-commit|prek|ruff|mypy|tox|nox)\b'
+            - '\brm -[rf]|\bchmod\b|\btruncate\b|sed -i|git (commit|push|checkout|reset|clean|stash)|(uv|poetry) add\b'
       - MaxDuration:
           seconds: 180
       - MaxToolCalls:
           max_calls: 20
+      - MaxWords:
+          words: 250
+      - MaxLines:
+          lines: 40
+      - NoFiller
+      - NotMatches:
+          patterns:
+            - '(?i)\bi (added|removed|changed|deleted|edited|applied|ran|executed)\b'
+      - Speed:
+          target_seconds: 90
+      - Brevity:
+          target_words: 180
       - LLMJudge:
           rubric: |
             The answer must read as one finished report for the task: it answers whether

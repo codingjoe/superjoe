@@ -14,6 +14,7 @@ from pydantic_evals.reporting import EvaluationReport
 
 from .agents import DEFAULT_MODEL, AgentSpec, build_agent, build_model
 from .container import build_image, in_container, launch
+from .evaluators import RULES
 
 ROOT = Path(os.environ.get("JOE_EVALS_ROOT") or Path(__file__).resolve().parent.parent)
 
@@ -44,7 +45,7 @@ def task(agent: Agent[None, str]) -> Callable[[str], str]:
 
 
 def evaluate(path: Path, model: Model, repeats: int) -> EvaluationReport[str, str, Any]:
-    dataset = Dataset[str, str, Any].from_file(path)
+    dataset = Dataset[str, str, Any].from_file(path, custom_evaluator_types=RULES)
     agent = build_agent(AgentSpec.read(AGENTS_DIR / f"{path.stem}.md"), model, ROOT)
     return dataset.evaluate_sync(
         task(agent), repeat=repeats, max_concurrency=MAX_CONCURRENCY, progress=False

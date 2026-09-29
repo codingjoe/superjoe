@@ -1,0 +1,55 @@
+diff --git a/src/legacy.py b/src/legacy.py
+index 870c579..b06381d 100644
+--- a/src/legacy.py
++++ b/src/legacy.py
+@@ -1,2 +1,8 @@
++from src.reporting import ReportFormatter
++
++
+ def render(rows: list[dict[str, int]]) -> str:
+-    return "\n".join(", ".join(str(v) for v in row.values()) for row in rows)
++    formatter = ReportFormatter()
++    for row in rows:
++        formatter.add(row)
++    return formatter.flush()
+diff --git a/src/reporting.py b/src/reporting.py
+new file mode 100644
+index 0000000..e13373f
+--- /dev/null
++++ b/src/reporting.py
+@@ -0,0 +1,35 @@
++import json
++import math
++
++
++class ReportFormatter:
++    """Format the rows of one report."""
++
++    def __init__(self, separator: str = ", ", sort_keys: bool = False):
++        self.separator = separator
++        self.sort_keys = sort_keys
++        self.buffer: list[str] = []
++
++    def add(self, row: dict[str, int]) -> None:
++        self.buffer.append(self._join(row))
++
++    def _join(self, row: dict[str, int]) -> str:
++        parts = []
++        for key in row.keys():
++            parts.append(str(row[key]))
++        return self.separator.join(parts)
++
++    def flush(self) -> str:
++        if self.buffer is None:
++            return ""
++        text = ""
++        for part in self.buffer:
++            text += part + "\n"
++        return text
++
++    def to_json(self) -> str:
++        return json.dumps(self.buffer)
++
++
++def distance(left: list[float], right: list[float]) -> float:
++    return math.sqrt(sum((a - b) ** 2 for a, b in zip(left, right)))

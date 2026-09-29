@@ -5,9 +5,14 @@ cases:
       Work: fixtures/bloat.diff
       Goal: keep the reporting patch from landing as more code than the job needs.
       Mode: full
+      Phase: triage
+      Ledger: none
       User said: "review this patch and tell me what to cut"
     evaluators:
-      - PromptContract
+      - PromptContract:
+          extra: [Phase, Ledger]
+      - FindingContract:
+          min_findings: 2
       - Matches:
           patterns:
             - '(?m)(yeet|duh|NPC|cringe|glow up):'
@@ -41,15 +46,16 @@ cases:
           target_words: 140
       - LLMJudge:
           rubric: |
-            The answer must be one cut list for the patch: every finding names the line,
-            tags it (`yeet:`, `duh:`, `NPC:`, `cringe:`, `glow up:`), names the
-            replacement, and the list ends on the weight line. The cuts available in this
-            patch include the `ReportFormatter` class that replaced a one-line
-            comprehension, the `separator` and `sort_keys` options nothing sets, `to_json`
-            that nothing calls, the `if self.buffer is None` branch that cannot run, the
-            `flush` loop `str.join` replaces, and `distance` the patch never uses. The list
-            must name at least one, with the rung it should have stopped at. It must edit
-            nothing and run no tests, linters, or hooks.
+            The answer must be one cut list for the patch: every finding names the `bloat`
+            lane, its key (`[path:L<line>]`), a tag (`yeet:`, `duh:`, `NPC:`, `cringe:`,
+            `glow up:`), and the replacement, and the list ends on the weight line. The cuts
+            available in this patch include the `ReportFormatter` class that replaced a
+            one-line comprehension, the `separator` and `sort_keys` options nothing sets,
+            `to_json` that nothing calls, the `if self.buffer is None` branch that cannot
+            run, the `flush` loop `str.join` replaces, and `distance` the patch never uses.
+            The list must name at least one, with the rung it should have stopped at, and
+            must never emit one key twice. It must edit nothing and run no tests, linters,
+            or hooks.
           include_input: true
           score:
             evaluation_name: Cohesion

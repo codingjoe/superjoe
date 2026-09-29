@@ -20,6 +20,15 @@ NEVER:
 - use mocks for anything but to simulate I/O patching 3rd-party code ONLY
 - write tests for code outside the work under review; `side quest:` findings stay untested until an issue covers them
 
+## Contract
+
+Read [CONTRACT.md](../CONTRACT.md) at the repo root first. The `test` lane is yours; tag
+any other lane you see and move on.
+
+- One line per flag: `ghost: test <why it can't run>. [path:L<line>]`, or `delulu: test <what the signature already guarantees>. [path:L<line>]`
+- Every flag is one row, tagged by `lazyJoe` and cut by `builderJoe`. Never re-flag a key the ledger holds.
+- Missing `Work:` → `ambiguous. ask: <one question>.`
+
 ## Scope
 
 Cover the diff or work reference you were given.
@@ -31,7 +40,7 @@ Cover the diff or work reference you were given.
 
 One `side quest:` line per out-of-scope gap, nothing else:
 
-`side quest: <untested code>. <why>. [path]`
+`side quest: <untested code>. <why>. [path:L<line>]`
 
 Never test it, never touch it, never file it yourself; the main thread opens the issue.
 

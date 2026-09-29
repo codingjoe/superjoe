@@ -4,10 +4,14 @@ cases:
     inputs: |
       Work: fixtures/review.diff
       Goal: catch what the patch introduces before it lands.
-      Phase: triage only, investigate nothing.
+      Phase: triage
+      Ledger: none
       User said: "review this patch"
     evaluators:
-      - PromptContract
+      - PromptContract:
+          extra: [Phase, Ledger]
+      - FindingContract:
+          min_findings: 2
       - Matches:
           patterns:
             - '(?m)^\s*sus:'
@@ -43,13 +47,72 @@ cases:
       - LLMJudge:
           rubric: |
             The answer must be a triage and nothing more: one `sus:` line per candidate the
-            patch raises, each naming the file and line, and a question asking which to
-            investigate. The candidates in this patch include the bare `except:` that hides
-            every failure in `label`, the `tmp = {}` nothing reads, `is_zero` testing a
+            patch raises, each naming its lane, the file, and the line, and a question asking
+            which to investigate. The candidates in this patch include the bare `except:` that
+            hides every failure in `label`, the `tmp = {}` nothing reads, `is_zero` testing a
             string's length instead of the value, the O(n^2) `pairs` loop, and `cheapest`
-            nesting three levels deep. The triage must name at least one of them. It must
-            rate nothing (`bet:`, `cooked:`), confirm nothing (`cap:`), fix nothing, review
-            nothing outside the patch, and run no tests, linters, or hooks.
+            nesting three levels deep. The triage must name at least one of them, with the
+            lane it belongs to (`bug`, `perf`, or `naming` for its own; any lane for a
+            neighbour's). It must rate nothing (`bet:`, `cooked:`), confirm nothing (`cap:`),
+            fix nothing, review nothing outside the patch, and run no tests, linters, or hooks.
+          include_input: true
+          score:
+            evaluation_name: Cohesion
+            include_reason: true
+          assertion: false
+  - name: triage-past-a-claimed-key
+    inputs: |
+      Work: fixtures/review.diff
+      Goal: catch what the patch introduces without redoing a key the run already owns.
+      Phase: triage
+      Ledger: fixtures/ledger.md
+      User said: "review this patch"
+    evaluators:
+      - PromptContract:
+          extra: [Phase, Ledger]
+      - FindingContract:
+          min_findings: 2
+      - Matches:
+          patterns:
+            - '(?m)^\s*sus:'
+            - '(?m)^\s*cap:'
+            - 'orders\.py:L38'
+      - NotMatches:
+          patterns:
+            - '(?m)^\s*sus:.*orders\.py:L38'
+            - '(?i)\bi (fixed|patched|applied|changed|edited|corrected|ran)\b'
+      - ToolCorrectness:
+          expected_tools: [read_file]
+          allow_extra: true
+      - MinCalls:
+          min_calls: 2
+      - NoRepeatCalls:
+          max_repeats: 1
+      - ForbiddenCalls:
+          patterns:
+            - '\b(pytest|unittest|pre-commit|prek|ruff|mypy|tox|nox)\b'
+            - '\brm -[rf]|\bchmod\b|\btruncate\b|sed -i|git (commit|push|checkout|reset|clean|stash)|(uv|poetry) add\b'
+      - MaxToolCalls:
+          max_calls: 15
+      - MaxDuration:
+          seconds: 180
+      - MaxWords:
+          words: 200
+      - MaxLines:
+          lines: 24
+      - NoFiller
+      - Speed:
+          target_seconds: 90
+      - Brevity:
+          target_words: 120
+      - LLMJudge:
+          rubric: |
+            The answer must triage the patch and honour the ledger it was handed: the ledger
+            already holds `src/orders.py:L38` under the `sec` lane, so the bare `except:` comes
+            back as a `cap:` line naming that key, never as a fresh `sus:`. The rest of the
+            patch may still raise `sus:` lines, each with a lane, a file, and a line. It must
+            prove nothing, rate nothing (`bet:`, `cooked:`), fix nothing, re-read nothing the
+            ledger answers, and run no tests, linters, or hooks.
           include_input: true
           score:
             evaluation_name: Cohesion

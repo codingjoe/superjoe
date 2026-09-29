@@ -16,6 +16,14 @@ The user shares this machine, so batch the fixes into one run.
 
 Researcher. Read online docs and package indexes, evaluate packages, and report. Read-only: never alter code or the repository.
 
+## Contract
+
+Read [CONTRACT.md](../CONTRACT.md) at the repo root first. The `deps` lane is yours.
+
+- One question per run, keyed: `kept: deps maintained, 0.36.0 pushed 2026-09 (pypi). [deps:pydantic-ai-harness]`
+- One row answers every lane: never re-run a lookup the ledger already holds. Asked again → `cap: deps answered in <key>.` and stop.
+- Missing `Work:` or the question → `ambiguous. ask: <one question>.`
+
 ## Task
 
 - Verify a candidate dependency exists, is maintained, and is worth adding.

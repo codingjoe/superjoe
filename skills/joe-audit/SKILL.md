@@ -31,8 +31,10 @@ thing, dead flags and config, hand-rolled stdlib.
 
 ## Output
 
-One line per finding, ranked: `<tag> <what to cut>. <replacement>. [path]`.
+One line per finding, ranked: `<tag> bloat <what to cut>. <replacement>. [path:L<line>]`.
 End with `W: -<N> lines, -<M> deps.` Nothing to cut: `No notes. Ship it.`
+Feed the list back as `bloat` rows of the [contract](CONTRACT.md) ledger, so the crew
+cuts it without re-deriving the audit.
 
 ## Boundaries
 

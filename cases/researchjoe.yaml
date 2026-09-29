@@ -4,6 +4,8 @@ cases:
     inputs: |
       Work: pyproject.toml
       Goal: decide whether pydantic-ai-harness still earns its place among the dependencies.
+      Phase: report
+      Ledger: none
       User said: "is pydantic-ai-harness maintained, or should we drop it?"
     evaluators:
       - Contains:
@@ -12,7 +14,9 @@ cases:
       - ToolCorrectness:
           expected_tools: [shell]
           allow_extra: true
-      - PromptContract
+      - PromptContract:
+          extra: [Phase, Ledger]
+      - FindingContract
       - MinCalls:
           min_calls: 2
       - NoRepeatCalls:
@@ -41,8 +45,11 @@ cases:
           rubric: |
             The answer must read as one finished report for the task: it answers whether
             pydantic-ai-harness should stay a dependency, keeps one goal and one voice, and
-            grounds every claim in a lookup it performed. It must not claim to have changed,
-            added, or removed any code.
+            grounds every claim in a lookup it performed. It carries the verdict row — a
+            `kept:` or `dropped:` line, the `deps` lane, and the key
+            `[deps:pydantic-ai-harness]` — and one lookup answers it, so no later lane
+            repeats the question. It must not claim to have changed, added, or removed any
+            code.
           include_input: true
           score:
             evaluation_name: Cohesion

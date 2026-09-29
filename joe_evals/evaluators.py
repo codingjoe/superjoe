@@ -49,6 +49,36 @@ _PROMPT_LINES = ("Work:", "User said:")
 
 _PROMPT_ALTERNATIVES = ("Goal:", "Steps:")
 
+# The lane table of CONTRACT.md: the lane on a finding routes it to its owner.
+_LANES = frozenset(("sec", "bug", "perf", "naming", "bloat", "doc", "test", "deps"))
+
+# The tags a finding line may open with, longest first so `glow up` wins over `glow`.
+_FINDING_TAGS = (
+    "glow up",
+    "deferred",
+    "dropped",
+    "delulu",
+    "cringe",
+    "fixed",
+    "sus",
+    "cap",
+    "real",
+    "yeet",
+    "duh",
+    "npc",
+    "ghost",
+    "kept",
+)
+
+_FINDING = re.compile(
+    r"^(?P<tag>" + "|".join(_FINDING_TAGS) + r"):\s*(?P<lane>[A-Za-z]+)\b",
+    re.IGNORECASE,
+)
+
+# One atomic key per finding: `[src/orders.py:L38]`, `[deps:pydantic-ai-harness]`.
+# Key-shaped means a colon and no whitespace, so `list[dict]` in the prose is not one.
+_KEY = re.compile(r"\[(?P<key>[^\[\]\s:]+:[^\[\]\s]+)\]")
+
 
 def _starts(lines: Sequence[str], prefix: str) -> bool:
     return any(line.startswith(prefix) for line in lines)
@@ -102,14 +132,21 @@ class PromptContract(Evaluator[object, object, object]):
     Assert the case input carries the crew's prompt shape.
 
     Every prompt a joe receives is a work reference, a goal or QED steps, and the
-    user's own words. A case that skips one scores a prompt nobody would send.
+    user's own words. A case that skips one scores a prompt nobody would send. A
+    phase that maps or proves adds its own fields through `extra`.
     """
+
+    extra: Sequence[str] = ()
+
+    def __post_init__(self) -> None:
+        self.extra = _listed(self.extra) if self.extra else ()
 
     def evaluate(
         self, ctx: EvaluatorContext[object, object, object]
     ) -> EvaluationReason:
         lines = [line.strip() for line in str(ctx.inputs).splitlines()]
-        missing = [prefix for prefix in _PROMPT_LINES if not _starts(lines, prefix)]
+        wanted = (*_PROMPT_LINES, *(f"{field.rstrip(':')}:" for field in self.extra))
+        missing = [prefix for prefix in wanted if not _starts(lines, prefix)]
         if not any(_starts(lines, prefix) for prefix in _PROMPT_ALTERNATIVES):
             missing.append(" or ".join(_PROMPT_ALTERNATIVES))
         if missing:
@@ -117,6 +154,57 @@ class PromptContract(Evaluator[object, object, object]):
                 value=False, reason=f"prompt is missing {', '.join(missing)}"
             )
         return EvaluationReason(value=True)
+
+
+@dataclass(repr=False)
+class FindingContract(Evaluator[object, object, object]):
+    """
+    Assert every finding line carries a lane and its own key.
+
+    A finding is one line: the lane routes it to an owner, the key keeps two
+    agents off the same line. A line that drops either one cannot join the ledger,
+    and a key that repeats is the same work done twice.
+    """
+
+    min_findings: int = 1
+
+    def evaluate(
+        self, ctx: EvaluatorContext[object, object, object]
+    ) -> EvaluationReason:
+        findings = [
+            (line.strip(), match)
+            for line in str(ctx.output).splitlines()
+            if (match := _FINDING.match(line.strip()))
+        ]
+        if len(findings) < self.min_findings:
+            return EvaluationReason(
+                value=False,
+                reason=f"{len(findings)} finding line(s), min={self.min_findings}",
+            )
+        stray = sorted(
+            {
+                match.group("lane").lower()
+                for _, match in findings
+                if match.group("lane").lower() not in _LANES
+            }
+        )
+        if stray:
+            return EvaluationReason(
+                value=False, reason=f"lanes off the table: {', '.join(stray)}"
+            )
+        keyed = [
+            (line, keys[-1]) for line, _ in findings if (keys := _KEY.findall(line))
+        ]
+        if len(keyed) != len(findings):
+            line = next(line for line, _ in findings if not _KEY.search(line))
+            return EvaluationReason(value=False, reason=f"no key: {line!r}")
+        counted = Counter(key for _, key in keyed)
+        repeated = sorted(key for key, count in counted.items() if count > 1)
+        if repeated:
+            return EvaluationReason(
+                value=False, reason=f"repeated key: {', '.join(repeated)}"
+            )
+        return EvaluationReason(value=True, reason=f"{len(keyed)} keyed finding(s)")
 
 
 @dataclass(repr=False)
@@ -351,6 +439,7 @@ class MinCalls(Evaluator[object, object, object]):
 
 RULES = (
     Brevity,
+    FindingContract,
     ForbiddenCalls,
     MaxLines,
     MaxWords,

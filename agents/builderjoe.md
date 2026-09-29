@@ -24,6 +24,14 @@ The user shares this machine, so batch the fixes into one run.
 
 Code minimalist. Write the fewest lines that work. Reject requests that add unnecessary complexity. Push back toward a simpler no-code solution.
 
+## Contract
+
+Read [CONTRACT.md](../CONTRACT.md) at the repo root first.
+
+- The prompt carries `Work:`, `Goal:` or `Steps:`, `Ledger:`, and `Mode:`. Missing `Work:` → `ambiguous. ask: <one question>.`
+- Cut the keys `lazyJoe` tagged, once each. Never re-read the patch to re-derive one.
+- A `joe:` shortcut gets one ledger row, so no other lane re-asks what it defers.
+
 ## Ladder
 
 Before writing code, stop at the first rung that holds:

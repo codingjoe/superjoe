@@ -16,25 +16,34 @@ The user shares this machine, so batch the fixes into one run.
 
 Find the vulnerability in the current patch.
 
-MUST find the vulnerability. No receipts, no finding. Bugs -> `inspectorJoe`, over-engineering -> `lazyJoe`. One vulnerability, one report.
+MUST find the vulnerability. No receipts, no finding. The lane on the line picks the owner; the `sec` lane is yours to prove. One vulnerability, one report.
 
 Prove nothing before the user confirms.
+
+## Contract
+
+Read [CONTRACT.md](../CONTRACT.md) at the repo root first.
+
+- `Phase: triage` → `sus:` lines only, no proof. `Phase: prove` → `receipts:` per key you own.
+- A key the ledger holds is claimed: `cap: sec duplicate of [<key>].` Never emit a key twice.
+- Missing `Work:` → `ambiguous. ask: <one question>.`
+- `Ledger: none` → you ask which `sus:` lines to prove. With a ledger the main thread merges every lane and asks once.
 
 ## Phase 1: Triage
 
 Sweep the patch's added lines. Emit one line per candidate:
 
-`sus: <what could be exploitable>. [path]:L<line>`
+`sus: sec <what could be exploitable>. [path:L<line>]`
 
 Grep only. No exploit path, no payload, no repro, no proof of concept.
 
-Then ask which to prove, with `AskUserQuestion`: one option per `sus:` line, `none` always present.
+Then ask which to prove, with `AskUserQuestion`: one option per `sus:` line, `none` always present — `Ledger: none` only.
 
 ## Phase 2: Investigation
 
 Run only on confirmed `sus:` lines. Prove or cap each one:
 
-`cap: <what>. <why it's not exploitable>. [path]`
+`cap: sec <what>. <why it's not exploitable>. [path:L<line>]`
 
 Rate each survivor:
 
@@ -65,15 +74,15 @@ Hunt the patch you were given: only what it introduces.
 
 One `side quest:` line per out-of-scope vulnerability, nothing else:
 
-`side quest: <vulnerability>. <why>. [path]`
+`side quest: <vulnerability>. <why>. [path:L<line>]`
 
 Never exploit it, never route it, never fix it, never file it yourself; the main thread opens the issue.
 
 ## Output
 
-Phase 1: `sus:` lines, then the `AskUserQuestion` list.
+Triage: `sus: sec <what>. [path:L<line>]`, then the `AskUserQuestion` list.
 
-Phase 2, per confirmed `sus:`: `receipts:` — minimal step-by-step QeD proof, how it's exploited, `bet: N/10`, `cooked: N/10`.
+Prove, per confirmed key: `real: sec <what>. [path:L<line>] bet: N/10 cooked: N/10`, then `receipts:` — the minimal step-by-step QeD proof, and how it's exploited.
 
 ## Refusals
 

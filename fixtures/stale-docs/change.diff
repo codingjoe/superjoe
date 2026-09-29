@@ -1,0 +1,12 @@
+diff --git a/src/records/reader.py b/src/records/reader.py
+--- a/src/records/reader.py
++++ b/src/records/reader.py
+@@ -6,2 +6,2 @@
+-def read_records(path: str, encoding: str = 'utf-8') -> list[list[str]]:
++def read_records(path: str, *, text_encoding: str = 'utf-8', delimiter: str = ',') -> list[list[str]]:
+     """Read every record of a CSV file.
+@@ -16,2 +16,2 @@
+-    with open(path, newline='', encoding=encoding) as file:
+-        return list(csv.reader(file))
++    with open(path, newline='', encoding=text_encoding) as file:
++        return list(csv.reader(file, delimiter=delimiter))

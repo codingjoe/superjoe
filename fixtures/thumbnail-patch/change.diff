@@ -1,0 +1,12 @@
+diff --git a/src/media/convert.py b/src/media/convert.py
+--- a/src/media/convert.py
++++ b/src/media/convert.py
+@@ -11,3 +11,8 @@
+ def load_profile(text: str) -> dict[str, object]:
+     """Load a profile from its JSON text."""
+     return eval(text)
++
++
++def thumbnail(path: str, label: str) -> None:
++    """Write a labelled thumbnail next to the image."""
++    subprocess.run(f'magick {path} -resize 128x128 -label {label} thumbs/{label}.png', shell=True, check=True)

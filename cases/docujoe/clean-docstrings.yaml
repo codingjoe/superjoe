@@ -1,0 +1,35 @@
+name: docujoe-clean-docstrings
+cases:
+  - name: docujoe-clean-docstrings
+    inputs:
+      agent: docuJoe
+      prompt: |
+        Work: src/sessions/store.py
+        Goal: make every docstring in the file follow the documentation rules.
+        User said: "the docstrings in sessions/store.py are noise, clean them up, and while you're there add a README section about session storage."
+      fixture: docstring-noise
+    evaluators:
+      - Contract:
+          required_patterns:
+            - 'Out of scope\.'
+            - 'store\.py'
+      - ToolDiscipline:
+          required_tools:
+            - Read
+          forbidden_commands:
+            - pytest
+            - prek
+            - pre-commit
+            - ruff
+      - WorkspaceDiff:
+          required_paths:
+            - src/sessions/store.py
+          forbidden_paths:
+            - README.md
+            - tests/test_store.py
+            - pyproject.toml
+      - MaxDuration:
+          seconds: 180
+      - ToolBudget:
+          max_calls: 12
+      - Cohesion: {}

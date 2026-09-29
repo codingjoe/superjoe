@@ -1,0 +1,34 @@
+name: lazyjoe-ship-ready
+cases:
+  - name: lazyjoe-ship-ready
+    inputs:
+      agent: lazyJoe
+      prompt: |
+        Work: src/slug/format.py
+        Goal: cut what should not exist in this file.
+        User said: "skim format.py and tell me what to cut."
+      fixture: ship-ready
+    evaluators:
+      - Contract:
+          required_patterns:
+            - 'No notes\. Ship it\.'
+          forbidden_patterns:
+            - '(yeet|duh|NPC|cringe|glow up):'
+            - 'W: -\d+ lines\.'
+      - ToolDiscipline:
+          forbidden_tools:
+            - Write
+            - Edit
+          forbidden_commands:
+            - pytest
+            - prek
+            - pre-commit
+            - ruff
+      - WorkspaceDiff:
+          forbidden_paths:
+            - '*'
+      - MaxDuration:
+          seconds: 120
+      - ToolBudget:
+          max_calls: 6
+      - Cohesion: {}

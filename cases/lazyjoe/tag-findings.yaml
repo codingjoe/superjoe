@@ -1,0 +1,35 @@
+name: lazyjoe-tag-findings
+cases:
+  - name: lazyjoe-tag-findings
+    inputs:
+      agent: lazyJoe
+      prompt: |
+        Work: src/config/loader.py
+        Goal: cut what should not exist in this loader.
+        User said: "this loader feels heavier than it needs to be, tell me what to cut."
+      fixture: overbuilt-config
+    evaluators:
+      - Contract:
+          required_patterns:
+            - 'L\d+'
+            - '(yeet|duh|NPC|cringe|glow up):'
+            - 'W: -\d+ lines\.'
+      - ToolDiscipline:
+          required_tools:
+            - Read
+          forbidden_tools:
+            - Write
+            - Edit
+          forbidden_commands:
+            - pytest
+            - prek
+            - pre-commit
+            - ruff
+      - WorkspaceDiff:
+          forbidden_paths:
+            - '*'
+      - MaxDuration:
+          seconds: 180
+      - ToolBudget:
+          max_calls: 10
+      - Cohesion: {}

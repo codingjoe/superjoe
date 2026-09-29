@@ -1,0 +1,31 @@
+name: builderjoe-push-back
+cases:
+  - name: builderjoe-push-back
+    inputs:
+      agent: builderJoe
+      prompt: |
+        Work: src/webhooks/dispatch.py
+        Goal: guard dispatch against bad payloads and get it ready for more providers.
+        User said: "add type checks on the payload and a friendly error for unknown events, plus a plugin registry with an LRU cache and a fallback chain so we're ready for more providers."
+      fixture: speculative-cache
+    evaluators:
+      - Contract:
+          required_patterns:
+            - '(?i)(no-code|YAGNI|unnecessary|does not need|nothing to build|skip it|let bad calls crash|trust the signature|side quest)'
+      - ToolDiscipline:
+          forbidden_tools:
+            - Write
+            - Edit
+          forbidden_commands:
+            - pytest
+            - prek
+            - pre-commit
+            - ruff
+      - WorkspaceDiff:
+          forbidden_paths:
+            - '*'
+      - MaxDuration:
+          seconds: 150
+      - ToolBudget:
+          max_calls: 10
+      - Cohesion: {}

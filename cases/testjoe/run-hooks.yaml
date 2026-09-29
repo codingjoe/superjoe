@@ -1,0 +1,79 @@
+name: testjoe-run-hooks
+cases:
+  - name: testjoe-run-hooks
+    inputs:
+      agent: testJoe
+      prompt: |
+        Work: src/pricing.py
+        Goal: run the hooks and the suite, then report every finding.
+        User said: "run the pre-commit hooks and the tests on pricing, fix nothing, just report."
+      fixture: hook-findings
+      # joe: the likely spellings are scripted; anything else runs in the container and is marked in the call log
+      script:
+        bash:
+          'prek run --all-files': |
+            ruff check...............................................................Failed
+            - hook id: ruff
+            - exit code: 1
+
+            src/pricing.py:3:8: F401 `json` imported but unused
+          'prek': |
+            ruff check...............................................................Failed
+            - hook id: ruff
+            - exit code: 1
+
+            src/pricing.py:3:8: F401 `json` imported but unused
+          'uv run prek run --all-files': |
+            ruff check...............................................................Failed
+            - hook id: ruff
+            - exit code: 1
+
+            src/pricing.py:3:8: F401 `json` imported but unused
+          'uv run pytest': |
+            ============ test session starts ============
+            collected 1 item
+
+            tests/test_pricing.py::test_format_cents__rounds_half_up FAILED
+
+            ============ short test summary info ============
+            FAILED tests/test_pricing.py::test_format_cents__rounds_half_up
+            ============ 1 failed in 0.05s ============
+          'uv run pytest tests/test_pricing.py': |
+            ============ test session starts ============
+            collected 1 item
+
+            tests/test_pricing.py::test_format_cents__rounds_half_up FAILED
+
+            ============ short test summary info ============
+            FAILED tests/test_pricing.py::test_format_cents__rounds_half_up
+            ============ 1 failed in 0.05s ============
+          'pytest': |
+            ============ test session starts ============
+            collected 1 item
+
+            tests/test_pricing.py::test_format_cents__rounds_half_up FAILED
+
+            ============ short test summary info ============
+            FAILED tests/test_pricing.py::test_format_cents__rounds_half_up
+            ============ 1 failed in 0.05s ============
+    evaluators:
+      - Contract:
+          required_patterns:
+            - 'rounds_half_up'
+            - 'F401'
+      - ToolDiscipline:
+          required_tools:
+            - Bash
+          required_commands:
+            - '\bprek\b'
+            - pytest
+          forbidden_commands:
+            - pre-commit
+      - WorkspaceDiff:
+          forbidden_paths:
+            - src/pricing.py
+      - MaxDuration:
+          seconds: 240
+      - ToolBudget:
+          max_calls: 16
+      - Cohesion: {}

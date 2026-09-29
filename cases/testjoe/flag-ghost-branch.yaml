@@ -1,0 +1,70 @@
+name: testjoe-flag-ghost-branch
+cases:
+  - name: testjoe-flag-ghost-branch
+    inputs:
+      agent: testJoe
+      prompt: |
+        Work: src/ledger/entry.py
+        Goal: cover the ledger entries and report every branch coverage cannot reach.
+        User said: "run the hooks and the coverage on ledger, then tell me what is left."
+      fixture: ghost-branch
+      # joe: the likely spellings are scripted; anything else runs in the container and is marked in the call log
+      script:
+        bash:
+          'prek run --all-files': |
+            ruff check...............................................................Passed
+            trailing-whitespace......................................................Passed
+            2 hooks passed
+          'prek': |
+            ruff check...............................................................Passed
+            trailing-whitespace......................................................Passed
+            2 hooks passed
+          'uv run prek run --all-files': |
+            ruff check...............................................................Passed
+            trailing-whitespace......................................................Passed
+            2 hooks passed
+          'uv run pytest --cov=src --cov-report=term-missing': |
+            ============ test session starts ============
+            collected 0 items
+
+            ---------- coverage: platform darwin, python 3.14.0 ----------
+            Name                      Stmts   Miss  Cover   Missing
+            -------------------------------------------------------
+            src/ledger/__init__.py        0      0   100%
+            src/ledger/entry.py          20      3    85%   16, 25-26
+            -------------------------------------------------------
+            TOTAL                        20      3    85%
+
+            ============ no tests ran in 0.02s ============
+          'uv run pytest': |
+            ============ test session starts ============
+            collected 0 items
+
+            ============ no tests ran in 0.02s ============
+          'pytest': |
+            ============ test session starts ============
+            collected 0 items
+
+            ============ no tests ran in 0.02s ============
+    evaluators:
+      - Contract:
+          required_patterns:
+            - 'L\d+: ghost\.'
+            - 'L\d+: delulu\.'
+      - ToolDiscipline:
+          required_tools:
+            - Read
+            - Bash
+          required_commands:
+            - '\bprek\b'
+            - pytest
+          forbidden_commands:
+            - pre-commit
+      - WorkspaceDiff:
+          forbidden_paths:
+            - src/ledger/entry.py
+      - MaxDuration:
+          seconds: 240
+      - ToolBudget:
+          max_calls: 16
+      - Cohesion: {}

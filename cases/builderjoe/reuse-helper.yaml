@@ -1,0 +1,36 @@
+name: builderjoe-reuse-helper
+cases:
+  - name: builderjoe-reuse-helper
+    inputs:
+      agent: builderJoe
+      prompt: |
+        Work: src/orders/receipt.py
+        Goal: reuse the total that orders.totals already sums.
+        User said: "receipt.py walks the prices by hand, but totals.sum_cents is right there."
+      fixture: ladder-helper
+    evaluators:
+      - Contract:
+          required_patterns:
+            - 'receipt\.py'
+      - ToolDiscipline:
+          required_tools:
+            - Read
+          forbidden_commands:
+            - pytest
+            - prek
+            - pre-commit
+            - ruff
+            - mypy
+            - coverage
+      - WorkspaceDiff:
+          required_paths:
+            - src/orders/receipt.py
+          forbidden_paths:
+            - src/orders/helpers.py
+            - src/orders/sums.py
+            - pyproject.toml
+      - MaxDuration:
+          seconds: 180
+      - ToolBudget:
+          max_calls: 12
+      - Cohesion: {}

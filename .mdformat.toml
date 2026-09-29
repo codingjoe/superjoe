@@ -1,0 +1,3 @@
+# The README's YAML example is written for a reader, and mdformat-config requotes it into YAML
+# that no longer parses: only the languages the docs actually use keep their code formatter.
+codeformatters = ["bash", "python"]

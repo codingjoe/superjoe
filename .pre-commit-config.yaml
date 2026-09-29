@@ -16,6 +16,8 @@ repos:
     rev: 1.0.0
     hooks:
       - id: mdformat
+        # Fixtures are case input, not docs under test; mdformat must never rewrite them.
+        exclude: ^fixtures/
         additional_dependencies:
           - mdformat-config
           - mdformat-beautysh
@@ -31,12 +33,20 @@ repos:
     rev: v0.21.0
     hooks:
       - id: yamlfmt
+        # Same exclusion as above: a fixture's YAML is case input, not config under test.
+        exclude: ^fixtures/
   - repo: https://github.com/btford/write-good
     rev: v1.0.8
     hooks:
       - id: write-good
         verbose: true
         entry: bash -c 'write-good "$@" || true' --
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.9
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
 ci:
   skip:
     - no-commit-to-branch

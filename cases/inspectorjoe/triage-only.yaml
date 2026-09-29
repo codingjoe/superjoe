@@ -1,0 +1,41 @@
+name: inspectorjoe-triage-only
+cases:
+  - name: inspectorjoe-triage-only
+    inputs:
+      agent: inspectorJoe
+      prompt: |
+        Work: change.diff
+        Goal: triage the patch before anyone spends time investigating it.
+        User said: "sweep the added lines and tell me what smells off."
+      fixture: journal-patch
+      patch: change.diff
+      script:
+        answer: 'None. Triage only for now.'
+    evaluators:
+      - Contract:
+          required_patterns:
+            - 'sus: '
+            - 'L\d+'
+          forbidden_patterns:
+            - 'cap: '
+            - 'bet: '
+            - 'cooked: '
+      - ToolDiscipline:
+          required_tools:
+            - Read
+            - AskUserQuestion
+          forbidden_tools:
+            - Write
+            - Edit
+          forbidden_commands:
+            - pytest
+            - prek
+            - pre-commit
+      - WorkspaceDiff:
+          forbidden_paths:
+            - '*'
+      - MaxDuration:
+          seconds: 150
+      - ToolBudget:
+          max_calls: 8
+      - Cohesion: {}

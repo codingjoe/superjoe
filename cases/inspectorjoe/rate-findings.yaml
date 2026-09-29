@@ -1,0 +1,37 @@
+name: inspectorjoe-rate-findings
+cases:
+  - name: inspectorjoe-rate-findings
+    inputs:
+      agent: inspectorJoe
+      prompt: |
+        Work: change.diff
+        Goal: investigate the confirmed suspicion and rate what it would cost us.
+        User said: "triage the new lines, then ask me which one to dig into."
+      fixture: journal-patch
+      patch: change.diff
+      script:
+        answer: '1: the mutable default in Journal.total'
+    evaluators:
+      - Contract:
+          required_patterns:
+            - 'bet: \d+/10'
+            - 'cooked: \d+/10'
+      - ToolDiscipline:
+          required_tools:
+            - Read
+            - AskUserQuestion
+          forbidden_tools:
+            - Write
+            - Edit
+          forbidden_commands:
+            - pytest
+            - prek
+            - pre-commit
+      - WorkspaceDiff:
+          forbidden_paths:
+            - '*'
+      - MaxDuration:
+          seconds: 180
+      - ToolBudget:
+          max_calls: 10
+      - Cohesion: {}

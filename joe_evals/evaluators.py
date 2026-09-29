@@ -14,7 +14,7 @@ from pydantic_evals.evaluators import (
     OutputConfig,
 )
 
-from .sandbox import AgentRun, CaseSpec, shell_commands
+from .cases import AgentRun, CaseSpec, shell_commands
 
 
 def grade_checks(

@@ -1,5 +1,4 @@
 import re
-import time
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from pathlib import Path
@@ -9,7 +8,6 @@ from pydantic import BaseModel, Field
 from pydantic_ai import Agent, AgentRetries, RunContext
 from pydantic_ai.capabilities import AbstractCapability, WebSearch
 from pydantic_ai.capabilities.hooks import Hooks
-from pydantic_ai.exceptions import AgentRunError
 from pydantic_ai.messages import ToolCallPart
 from pydantic_ai.models import Model
 from pydantic_ai.tools import Tool, ToolDefinition
@@ -24,8 +22,6 @@ from .agents import AgentSpec, build_model
 
 COMMAND_TIMEOUT_SECS = 60
 
-RETRY_DELAY_SECS = 5
-
 RUNNER_PREFIXES: tuple[str, ...] = (
     "uv run ",
     "uvx ",
@@ -36,9 +32,6 @@ RUNNER_PREFIXES: tuple[str, ...] = (
     "time ",
 )
 
-UNKNOWN_SEARCH = "No search results available in the eval sandbox."
-
-UNKNOWN_ANSWER = "No answer available in the eval sandbox."
 
 HARNESS_TOOLS: dict[str, str] = {
     "Read": "read_file",
@@ -51,6 +44,16 @@ HARNESS_TOOLS: dict[str, str] = {
 DENIED_SHELL_ENV: tuple[str, ...] = (*LLM_API_KEY_ENV_PATTERNS, "OLLAMA_*")
 
 
+class MissingScriptError(Exception):
+    def __init__(self, what: str) -> None:
+        super().__init__(f"nothing scripted for {what}")
+
+
+class MissingAnswerError(MissingScriptError):
+    def __init__(self) -> None:
+        super().__init__("the user's answer")
+
+
 class ToolScript(BaseModel):
     bash: dict[str, str] = Field(
         default_factory=dict,
@@ -60,8 +63,8 @@ class ToolScript(BaseModel):
         default_factory=dict,
         description="Query substring to the canned results it returns.",
     )
-    answer: str = Field(
-        default=UNKNOWN_ANSWER, description="Answer to every AskUserQuestion call."
+    answer: str | None = Field(
+        default=None, description="Answer to every AskUserQuestion call."
     )
 
 
@@ -162,14 +165,10 @@ def web_search(ctx: RunContext[SandboxDeps], query: str) -> str:
         query: Search query.
 
     """
-    return next(
-        (
-            text
-            for key, text in ctx.deps.script.web_search.items()
-            if key.lower() in query.lower()
-        ),
-        UNKNOWN_SEARCH,
-    )
+    for key, answers in ctx.deps.script.web_search.items():
+        if key.lower() in query.lower():
+            return answers
+    raise MissingScriptError(query)
 
 
 def rename_map(tools: Sequence[str]) -> dict[str, str]:
@@ -236,6 +235,8 @@ def scripted_answerer(
     script: ToolScript,
 ) -> Callable[[AskUserRequest], Awaitable[AskUserResponse]]:
     async def answers(request: AskUserRequest) -> AskUserResponse:
+        if script.answer is None:
+            raise MissingAnswerError
         return AskUserResponse(
             answers=tuple(
                 AskUserAnswer(header=question.header, custom_answer=script.answer)
@@ -281,7 +282,7 @@ def build_agent(
         description=spec.description,
         instructions=spec.instructions,
         capabilities=[*capabilities, Hooks(tool_execute=record_tool_call)],
-        retries=AgentRetries(tools=3),
+        retries=AgentRetries(tools=0),
     )
     agent.instrument = True
     return agent
@@ -326,13 +327,6 @@ class CaseRunner:
         return ""
 
     def run(self, case: CaseSpec) -> AgentRun:
-        try:
-            return self.run_case(case)
-        except AgentRunError:
-            time.sleep(RETRY_DELAY_SECS)
-            return self.run_case(case)
-
-    def run_case(self, case: CaseSpec) -> AgentRun:
         root = self.fixture_path(case)
         deps = SandboxDeps(root=root, script=case.script, log=ToolCallLog())
         agent = build_agent(

@@ -6,9 +6,9 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.trace import get_tracer_provider, set_tracer_provider
 
 from .agents import DEFAULT_MODEL, build_model, load_agents
+from .cases import CaseDataset, CaseRunner
 from .container import build_image, in_container, launch
 from .evaluators import EVALUATORS, with_judge
-from .sandbox import CaseDataset, CaseRunner
 
 ROOT = Path(os.environ.get("JOE_EVALS_ROOT") or Path(__file__).resolve().parent.parent)
 

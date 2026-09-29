@@ -6,7 +6,7 @@ import shutil
 import subprocess
 import tempfile
 import time
-from collections.abc import Awaitable, Callable, Iterable, Mapping, Sequence
+from collections.abc import Awaitable, Callable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any, Self
@@ -23,7 +23,6 @@ from pydantic_ai.toolsets import AbstractToolset, ToolsetTool, WrapperToolset
 from pydantic_ai_harness.filesystem import FileSystem
 from pydantic_ai_harness.shell import LLM_API_KEY_ENV_PATTERNS, Shell
 from pydantic_evals import Case, Dataset
-from pydantic_evals.evaluators import Evaluator
 
 from .agents import AgentSpec, build_model
 
@@ -347,29 +346,7 @@ class CaseSpec(BaseModel):
 
 
 class CaseDataset(Dataset[CaseSpec, AgentRun, Any]):
-    @classmethod
-    def read(
-        cls, paths: Iterable[Path], evaluator_types: Sequence[type[Evaluator]]
-    ) -> CaseDataset:
-        datasets = [
-            cls.from_file(path, custom_evaluator_types=evaluator_types)
-            for path in paths
-        ]
-        dataset = cls(
-            name="superjoe",
-            cases=[case for source in datasets for case in source.cases],
-            evaluators=[
-                evaluator for source in datasets for evaluator in source.evaluators
-            ],
-        )
-        ungraded = [
-            case.name
-            for case in dataset.cases
-            if not case.evaluators and not dataset.evaluators
-        ]
-        if ungraded:
-            raise ValueError(f"cases without a single evaluator: {', '.join(ungraded)}")
-        return dataset
+    """The whole suite as one dataset."""
 
 
 def resolve(root: Path, path: str) -> Path:

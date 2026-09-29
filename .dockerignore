@@ -4,8 +4,9 @@ __pycache__/
 .ruff_cache/
 
 agents/
-cases/
+cases.yaml
 fixtures/
 
 evals-report.json
+baseline.json
 scores-*.json

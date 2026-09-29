@@ -14,7 +14,7 @@ from .scoring import RunReport, changed, rate, regressions, render_comment
 ROOT = Path(os.environ.get("JOE_EVALS_ROOT") or Path(__file__).resolve().parent.parent)
 
 AGENTS_DIR = ROOT / "agents"
-CASES_DIR = ROOT / "cases"
+CASES_PATH = ROOT / "cases.yaml"
 FIXTURES_DIR = ROOT / "fixtures"
 BASELINE_PATH = ROOT / "baseline.json"
 MODELS_PATH = ROOT / "models.yaml"
@@ -31,25 +31,10 @@ def workspace_path(path: Path) -> str:
 
 
 def container_args(
-    agents: Path,
-    cases: Path,
-    fixtures: Path,
-    models_path: Path,
-    model: str | None,
-    judge: str | None,
-    repeats: int,
-    out: Path,
+    model: str | None, judge: str | None, repeats: int, out: Path
 ) -> list[str]:
     """Return the container command line for the host's own options."""
-    args = ["run", "--repeats", str(repeats)]
-    for option, path in (
-        ("--agents", agents),
-        ("--cases", cases),
-        ("--fixtures", fixtures),
-        ("--models", models_path),
-        ("--out", out),
-    ):
-        args += [option, workspace_path(path)]
+    args = ["run", "--repeats", str(repeats), "--out", workspace_path(out)]
     for option, value in (("--model", model), ("--judge", judge)):
         if value is not None:
             args += [option, value]
@@ -69,25 +54,6 @@ def build() -> None:
 
 @main.command()
 @click.option(
-    "--agents", type=click.Path(path_type=Path), default=AGENTS_DIR, show_default=True
-)
-@click.option(
-    "--cases", type=click.Path(path_type=Path), default=CASES_DIR, show_default=True
-)
-@click.option(
-    "--fixtures",
-    type=click.Path(path_type=Path),
-    default=FIXTURES_DIR,
-    show_default=True,
-)
-@click.option(
-    "--models",
-    "models_path",
-    type=click.Path(path_type=Path),
-    default=MODELS_PATH,
-    show_default=True,
-)
-@click.option(
     "--model",
     default=None,
     help="Model to run the agents with; defaults to models.yaml.",
@@ -104,16 +70,7 @@ def build() -> None:
     default=Path("evals-report.json"),
     show_default=True,
 )
-def run(
-    agents: Path,
-    cases: Path,
-    fixtures: Path,
-    models_path: Path,
-    model: str | None,
-    judge: str | None,
-    repeats: int,
-    out: Path,
-) -> None:
+def run(model: str | None, judge: str | None, repeats: int, out: Path) -> None:
     """Run every case and write the score artifact."""
     if not (os.environ.get("OLLAMA_API_KEY") or os.environ.get("OLLAMA_BASE_URL")):
         raise click.UsageError(
@@ -121,22 +78,16 @@ def run(
         )
     if not in_container():
         ensure_image(ROOT)
-        argv = container_args(
-            agents, cases, fixtures, models_path, model, judge, repeats, out
-        )
-        raise SystemExit(launch(ROOT, argv))
-    paths = sorted(cases.rglob("*.yaml"))
-    if not paths:
-        raise click.UsageError(f"no case files under {cases}")
-    config = ModelConfig.read(models_path)
-    dataset = CaseDataset.read(paths, EVALUATORS)
+        raise SystemExit(launch(ROOT, container_args(model, judge, repeats, out)))
+    config = ModelConfig.read(MODELS_PATH)
+    dataset = CaseDataset.from_file(CASES_PATH, custom_evaluator_types=EVALUATORS)
     judge_model = build_model(judge or config.judge_model)
     for case in dataset.cases:
         case.evaluators = with_judge(case.evaluators, judge_model)
     runner = CaseRunner(
-        agents=load_agents(agents),
+        agents=load_agents(AGENTS_DIR),
         model_name=model or config.default_model,
-        fixtures=fixtures,
+        fixtures=FIXTURES_DIR,
     )
     runner.validate(dataset.cases)
     report = dataset.evaluate_sync(
@@ -155,7 +106,7 @@ def run(
     "--out", type=click.Path(path_type=Path), default=BASELINE_PATH, show_default=True
 )
 def baseline(report: Path, out: Path) -> None:
-    """Refresh the committed baseline from a score artifact."""
+    """Refresh the baseline from a score artifact."""
     RunReport.read(report).summary().save(out)
     click.echo(f"baseline -> {out}")
 

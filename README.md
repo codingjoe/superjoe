@@ -35,8 +35,7 @@ OLLAMA_BASE_URL=http://host.docker.internal:11434 uv run joe_evals run \
 `run` builds the image, mounts the repository at `/work`, and executes the
 whole suite in the container, so no agent gets a shell on this machine.
 `joe_evals build` builds the image on its own. `--model`, `--judge` and
-`--repeats` override `models.yaml`; `--agents`, `--cases`, `--fixtures` and
-`--models` point the run at other directories inside the repository.
+`--repeats` override `models.yaml`.
 
 ### What a rating means
 
@@ -61,7 +60,8 @@ failure.
 
 ### Add a case
 
-A case file lives under `cases/<agent>/`, next to the fixtures it names:
+The suite is `cases.yaml`, one pydantic-evals `Dataset` the CLI loads with
+`Dataset.from_file`. A case is one entry, next to the fixtures it names:
 
 ```yaml
 name: builderjoe-push-back
@@ -127,7 +127,7 @@ of every swept model.
 ### What CI does
 
 `.github/workflows/evals.yml` runs on pull requests and on `main` pushes that
-touch `agents/`, `cases/`, `fixtures/`, `joe_evals/`, `models.yaml` or
+touch `agents/`, `cases.yaml`, `fixtures/`, `joe_evals/`, `models.yaml` or
 `pyproject.toml`. The run needs `OLLAMA_API_KEY`; a fork pull request gets no
 secret, so only a branch of this repository reaches a keyed run.
 

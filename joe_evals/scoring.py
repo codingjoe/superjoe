@@ -59,13 +59,6 @@ class RunReport(BaseModel):
     def read(cls, path: Path) -> RunReport:
         return cls.model_validate_json(path.read_text(encoding="utf-8"))
 
-    def summary(self) -> RunReport:
-        return self.model_copy(
-            update={
-                "cases": [case.model_copy(update={"text": ""}) for case in self.cases]
-            }
-        )
-
     def failure(self) -> str | None:
         broken = [
             f"{case.name} (run {case.repeat}): {case.failure}"

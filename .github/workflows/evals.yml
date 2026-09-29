@@ -43,40 +43,41 @@ jobs:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10
       - name: Build the eval container
-        run: uv run --locked joe_evals build
+        run: uv run --locked joe_evals_build
+      - name: Restore the baseline
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          run=$(gh run list --workflow evals.yml --branch main --status success --limit 1 --json databaseId --jq '.[0].databaseId')
+          gh run download "$run" --name evals-scores --dir baseline || true
       - name: Run the cases
         env:
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
           FULL: ${{ contains(toJSON(github.event.pull_request.labels.*.name), 'run-evals-full') }}
           MODEL: ${{ inputs.model }}
         run: |
+          default=$(yq -r '.default_model' models.yaml)
           if [ "$FULL" = 'true' ]; then
             repeats=3
             models=$(yq -r '.sweep[]' models.yaml)
           else
             repeats=1
-            models=${MODEL:-$(yq -r '.default_model' models.yaml)}
+            models=${MODEL:-$default}
           fi
           for model in $models; do
-            uv run --locked joe_evals run \
-              --repeats "$repeats" --model "$model" --out "scores-$model.json"
+            JOE_EVALS_MODEL="$model" JOE_EVALS_REPEATS="$repeats" \
+              JOE_EVALS_REPORT="scores-$model.json" \
+              JOE_EVALS_BASELINE="baseline/scores-$default.json" \
+              uv run --locked joe_evals
           done
-      - name: Render the delta
+      - name: Note the comment
         id: comment
         if: always() && github.event_name == 'pull_request'
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
-          run=$(gh run list --workflow evals.yml --branch main --status success --limit 1 --json databaseId --jq '.[0].databaseId')
-          gh run download "$run" --name evals-baseline ||
-            echo '{"model":"","created_at":"1970-01-01T00:00:00Z","cases":[],"ratings":{}}' > baseline.json
-          report="scores-$(yq -r '.default_model' models.yaml).json"
-          status=0
-          uv run --locked joe_evals comment --report "$report" --baseline baseline.json --out comment.md || status=$?
           if [ -s comment.md ]; then
             echo 'commented=true' >> "$GITHUB_OUTPUT"
           fi
-          exit "$status"
       - name: Upload the scores
         if: always()
         uses: actions/upload-artifact@v7
@@ -90,17 +91,6 @@ jobs:
           name: evals-comment
           path: comment.md
           if-no-files-found: ignore
-      - name: Score the baseline
-        if: github.event_name == 'push'
-        run: |
-          report="scores-$(yq -r '.default_model' models.yaml).json"
-          uv run --locked joe_evals baseline --report "$report" --out baseline.json
-      - name: Keep the baseline
-        if: github.event_name == 'push'
-        uses: actions/upload-artifact@v7
-        with:
-          name: evals-baseline
-          path: baseline.json
   comment:
     needs: evals
     if: ${{ !cancelled() && needs.evals.outputs.commented == 'true' }}

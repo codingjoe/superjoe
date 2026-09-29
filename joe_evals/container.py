@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import os
 import sys
-from collections.abc import Iterator, Sequence
+from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 
-import click
 from docker.errors import DockerException
 from testcontainers.core.container import DockerContainer
 from testcontainers.core.docker_client import DockerClient
@@ -19,7 +18,16 @@ WORKSPACE = "/work"
 
 CONTAINER_MARKER = "JOE_EVALS_CONTAINER"
 
-PASSTHROUGH = ("OLLAMA_API_KEY", "OLLAMA_BASE_URL")
+PASSTHROUGH = (
+    "OLLAMA_API_KEY",
+    "OLLAMA_BASE_URL",
+    "JOE_EVALS_MODEL",
+    "JOE_EVALS_JUDGE",
+    "JOE_EVALS_REPEATS",
+    "JOE_EVALS_REPORT",
+    "JOE_EVALS_BASELINE",
+    "JOE_EVALS_COMMENT",
+)
 
 NOBODY = 65534
 
@@ -62,7 +70,7 @@ def docker_failure() -> Iterator[None]:
     try:
         yield
     except DockerException as error:
-        raise click.ClickException(
+        raise SystemExit(
             f"docker is unavailable: {error}; install Docker or start its daemon,"
             " then retry"
         ) from error
@@ -86,12 +94,11 @@ def ensure_image(root: Path, force: bool = False) -> str:
     return IMAGE
 
 
-def launch(root: Path, args: Sequence[str]) -> int:
+def launch(root: Path) -> int:
     """Run the eval image over `root` and return the container's exit code."""
     with docker_failure():
         container = DockerContainer(
             IMAGE,
-            command=list(args),
             volumes=[(str(root), WORKSPACE, "rw")],
             working_dir=WORKSPACE,
             user=container_user(),

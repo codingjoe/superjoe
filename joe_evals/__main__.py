@@ -3,10 +3,8 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-import click
-
 from .agents import ModelConfig, build_model, load_agents
-from .container import WORKSPACE, ensure_image, in_container, launch
+from .container import ensure_image, in_container, launch
 from .evaluators import EVALUATORS, with_judge
 from .sandbox import CaseDataset, CaseRunner
 from .scoring import RunReport, changed, rate, regressions, render_comment
@@ -16,130 +14,79 @@ ROOT = Path(os.environ.get("JOE_EVALS_ROOT") or Path(__file__).resolve().parent.
 AGENTS_DIR = ROOT / "agents"
 CASES_PATH = ROOT / "cases.yaml"
 FIXTURES_DIR = ROOT / "fixtures"
-BASELINE_PATH = ROOT / "baseline.json"
 MODELS_PATH = ROOT / "models.yaml"
 
 MAX_CONCURRENCY = 4
 
 
-def workspace_path(path: Path) -> str:
-    """Return the in-container path of `path`, which must live under the repo root."""
-    root, resolved = ROOT.resolve(), path.resolve()
-    if not resolved.is_relative_to(root):
-        raise click.UsageError(f"{path} is outside {root}, the only tree mounted")
-    return str(Path(WORKSPACE) / resolved.relative_to(root))
+def artifact(name: str, default: str) -> Path:
+    """Return the artifact path the environment names, beside the sources."""
+    return ROOT / (os.environ.get(name) or default)
 
 
-def container_args(
-    model: str | None, judge: str | None, repeats: int, out: Path
-) -> list[str]:
-    """Return the container command line for the host's own options."""
-    args = ["run", "--repeats", str(repeats), "--out", workspace_path(out)]
-    for option, value in (("--model", model), ("--judge", judge)):
-        if value is not None:
-            args += [option, value]
-    return args
+REPORT = artifact("JOE_EVALS_REPORT", "evals-report.json")
+BASELINE = artifact("JOE_EVALS_BASELINE", "baseline.json")
+COMMENT = artifact("JOE_EVALS_COMMENT", "comment.md")
 
 
-@click.group()
-def main() -> None:
-    """Score the superjoe crew on contract, cohesion, speed and reliability."""
+def model_settings() -> tuple[str, str, int]:
+    """Return the model, the judge and the repeat count this run uses."""
+    config = ModelConfig.read(MODELS_PATH)
+    return (
+        os.environ.get("JOE_EVALS_MODEL") or config.default_model,
+        os.environ.get("JOE_EVALS_JUDGE") or config.judge_model,
+        int(os.environ.get("JOE_EVALS_REPEATS") or 1),
+    )
 
 
-@main.command()
+def baseline_report(model: str) -> RunReport | None:
+    """Return the baseline to compare against, when it scored the same model."""
+    if not BASELINE.exists():
+        return None
+    before = RunReport.read(BASELINE)
+    return before if before.model == model else None
+
+
 def build() -> None:
     """Build the eval image."""
-    click.echo(ensure_image(ROOT, force=True))
+    print(ensure_image(ROOT, force=True))
 
 
-@main.command()
-@click.option(
-    "--model",
-    default=None,
-    help="Model to run the agents with; defaults to models.yaml.",
-)
-@click.option(
-    "--judge", default=None, help="Model that scores cohesion; defaults to models.yaml."
-)
-@click.option(
-    "--repeats", type=int, default=1, show_default=True, help="Runs per case."
-)
-@click.option(
-    "--out",
-    type=click.Path(path_type=Path),
-    default=Path("evals-report.json"),
-    show_default=True,
-)
-def run(model: str | None, judge: str | None, repeats: int, out: Path) -> None:
-    """Run every case and write the score artifact."""
+def main() -> None:
+    """Score the suite in the eval image and write the report and the comment."""
     if not (os.environ.get("OLLAMA_API_KEY") or os.environ.get("OLLAMA_BASE_URL")):
-        raise click.UsageError(
+        raise SystemExit(
             "set OLLAMA_API_KEY for Ollama Cloud, or OLLAMA_BASE_URL for a local Ollama"
         )
     if not in_container():
         ensure_image(ROOT)
-        raise SystemExit(launch(ROOT, container_args(model, judge, repeats, out)))
-    config = ModelConfig.read(MODELS_PATH)
+        raise SystemExit(launch(ROOT))
+    model, judge, repeats = model_settings()
+    before = baseline_report(model)
     dataset = CaseDataset.from_file(CASES_PATH, custom_evaluator_types=EVALUATORS)
-    judge_model = build_model(judge or config.judge_model)
+    judge_model = build_model(judge)
     for case in dataset.cases:
         case.evaluators = with_judge(case.evaluators, judge_model)
     runner = CaseRunner(
-        agents=load_agents(AGENTS_DIR),
-        model_name=model or config.default_model,
-        fixtures=FIXTURES_DIR,
+        agents=load_agents(AGENTS_DIR), model_name=model, fixtures=FIXTURES_DIR
     )
     runner.validate(dataset.cases)
     report = dataset.evaluate_sync(
         runner.run, repeat=repeats, max_concurrency=MAX_CONCURRENCY, progress=False
     )
-    artifact = rate(report, model=model or config.default_model)
-    artifact.save(out)
-    click.echo(f"{len(artifact.cases)} case runs -> {out}")
-    if reason := artifact.failure():
-        raise click.ClickException(reason)
-
-
-@main.command()
-@click.option("--report", type=click.Path(path_type=Path, exists=True), required=True)
-@click.option(
-    "--out", type=click.Path(path_type=Path), default=BASELINE_PATH, show_default=True
-)
-def baseline(report: Path, out: Path) -> None:
-    """Refresh the baseline from a score artifact."""
-    RunReport.read(report).summary().save(out)
-    click.echo(f"baseline -> {out}")
-
-
-@main.command()
-@click.option("--report", type=click.Path(path_type=Path, exists=True), required=True)
-@click.option(
-    "--baseline",
-    "baseline_path",
-    type=click.Path(path_type=Path, exists=True),
-    default=BASELINE_PATH,
-    show_default=True,
-)
-@click.option(
-    "--out",
-    type=click.Path(path_type=Path),
-    default=None,
-    help="Write the comment to this file.",
-)
-def comment(report: Path, baseline_path: Path, out: Path | None) -> None:
-    """Print the PR comment for a score artifact."""
-    before, current = RunReport.read(baseline_path), RunReport.read(report)
-    body = render_comment(before, current)
-    broken = regressions(before, current)
-    if out is None:
-        click.echo(body)
-    elif changed(before, current):
-        out.write_text(body, encoding="utf-8")
-        click.echo(f"comment -> {out}")
-    else:
-        click.echo("no rating changed, no comment written")
+    scored = rate(report, model=model)
+    scored.save(REPORT)
+    print(f"{len(scored.cases)} case runs -> {REPORT}")
+    broken: list[str] = []
+    if before is not None:
+        if changed(before, scored):
+            COMMENT.write_text(render_comment(before, scored), encoding="utf-8")
+            print(f"comment -> {COMMENT}")
+        broken = [delta.case for delta in regressions(before, scored)]
+    if reason := scored.failure():
+        raise SystemExit(reason)
     if broken:
-        raise SystemExit(1)
+        raise SystemExit(f"regressions: {', '.join(broken)}")
 
 
 if __name__ == "__main__":

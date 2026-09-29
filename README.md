@@ -21,21 +21,24 @@ agents and skills, each representing a different alter ego of `codingjoe`.
 
 ```bash
 export OLLAMA_API_KEY=...                       # Ollama Cloud key
-uv run joe_evals run
+uv run joe_evals
 ```
 
 A local Ollama needs no key, and needs the daemon reachable from inside the
 container:
 
 ```bash
-OLLAMA_BASE_URL=http://host.docker.internal:11434 uv run joe_evals run \
-    --model deepseek-v4.1-flash:cloud --judge deepseek-v4.1-flash:cloud
+OLLAMA_BASE_URL=http://host.docker.internal:11434 \
+    JOE_EVALS_MODEL=deepseek-v4.1-flash:cloud \
+    JOE_EVALS_JUDGE=deepseek-v4.1-flash:cloud uv run joe_evals
 ```
 
-`run` builds the image, mounts the repository at `/work`, and executes the
-whole suite in the container, so no agent gets a shell on this machine.
-`joe_evals build` builds the image on its own. `--model`, `--judge` and
-`--repeats` override `models.yaml`.
+That is the one command. It builds the image, mounts the repository at
+`/work`, and executes the whole suite in the container, so no agent gets a
+shell on this machine. `joe_evals_build` builds the image on its own.
+`JOE_EVALS_MODEL`, `JOE_EVALS_JUDGE` and `JOE_EVALS_REPEATS` override
+`models.yaml`; `JOE_EVALS_REPORT`, `JOE_EVALS_BASELINE` and
+`JOE_EVALS_COMMENT` name the three files it writes, beside the sources.
 
 ### What a rating means
 
@@ -120,9 +123,9 @@ changes nothing.
 `models.yaml` pins three things: `default_model` runs the agents, `judge_model`
 scores cohesion (drop it and the judge falls back to the default model), and
 `sweep` lists the models a full run covers. Score another model locally with
-`--model`, dispatch the `evals` workflow with its `model` input, or add the
-name to `sweep` and label a pull request `run-evals-full` to run three repeats
-of every swept model.
+`JOE_EVALS_MODEL`, dispatch the `evals` workflow with its `model` input, or add
+the name to `sweep` and label a pull request `run-evals-full` to run three
+repeats of every swept model.
 
 ### What CI does
 
@@ -139,29 +142,29 @@ calls. It finds its own sticky comment by the `## superjoe evals` marker and the
 `github-actions[bot]` author, so a comment that merely quotes the marker is
 never patched.
 
-The eval image builds in the workflow through `joe_evals build`, in a step with
+The eval image builds in the workflow through `joe_evals_build`, in a step with
 no secret in that step's environment. A pull request's `Dockerfile` therefore
 runs where it can reach nothing the job holds, and the cases afterwards run in
-the container `joe_evals run` starts from that image.
+the container `joe_evals` starts from that image.
 
 The scores upload as the `evals-scores` artifact, one `scores-<model>.json` per
 model. On a pull request the `comment` job posts or patches the
 `## superjoe evals` comment — only when a rating moved or a case regressed —
 and the `evals` job fails on a regression. The gate reads the baseline from the
-`evals-baseline` artifact of the last successful `main` run, so no branch
-carries one and there is nothing in the repository to edit. A push to `main`
-scores the run it just made and uploads that artifact, so the next pull request
-diffs against a current baseline.
+`evals-scores` artifact of the last successful `main` run, so no branch carries
+one and there is nothing in the repository to edit. A push to `main` uploads
+the scores it just produced, so the next pull request diffs against a current
+baseline.
 
 ### The container
 
 The whole run happens in the image built from the root `Dockerfile`: the
-harness, the model calls, and every command an agent runs. `run` starts that
-container itself — the repository mounted at `/work`, the Ollama variables,
-and nothing else of yours — and removes it when the run ends. That is the
-boundary, and no invocation of the suite happens outside it. The paths in the
-container's output are that mount: `/work/evals-report.json` is
-`evals-report.json` beside the sources.
+harness, the model calls, and every command an agent runs. `joe_evals` starts
+that container itself — the repository mounted at `/work`, the Ollama
+variables, the `JOE_EVALS_*` overrides, and nothing else of yours — and removes
+it when the run ends. That is the boundary, and no invocation of the suite
+happens outside it. The paths in the container's output are that mount:
+`/work/evals-report.json` is `evals-report.json` beside the sources.
 
 Inside the container the agents get
 [pydantic-ai-harness](https://pydantic.dev/docs/ai/harness/): `FileSystem`

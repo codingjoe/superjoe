@@ -68,7 +68,7 @@ def main() -> None:
         evaluate(path, model, repeats) for path in sorted(CASES_DIR.glob("*.yaml"))
     ]
     for report in reports:
-        report.print(width=200, include_output=False, include_reasons=True)
+        report.print(width=80, include_output=False, include_reasons=True)
         for failure in report.failures:
             sys.stdout.write(f"{failure.name}: {failure.error_message}\n")
     if any(report.failures for report in reports):

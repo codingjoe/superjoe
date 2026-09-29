@@ -1,10 +1,8 @@
-from __future__ import annotations
-
 import fnmatch
 import re
 from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
-from typing import TYPE_CHECKING, Any, Literal
+from typing import Any, Literal
 
 from pydantic_ai.models import Model
 from pydantic_evals.evaluators import (
@@ -16,10 +14,7 @@ from pydantic_evals.evaluators import (
     OutputConfig,
 )
 
-from .sandbox import AgentRun, shell_commands
-
-if TYPE_CHECKING:
-    from .sandbox import CaseSpec
+from .sandbox import AgentRun, CaseSpec, shell_commands
 
 
 def grade_checks(

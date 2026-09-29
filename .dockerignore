@@ -1,0 +1,11 @@
+.venv/
+.git/
+__pycache__/
+.ruff_cache/
+
+agents/
+cases/
+fixtures/
+
+evals-report.json
+scores-*.json

@@ -147,12 +147,11 @@ the container `joe_evals run` starts from that image.
 The scores upload as the `evals-scores` artifact, one `scores-<model>.json` per
 model. On a pull request the `comment` job posts or patches the
 `## superjoe evals` comment — only when a rating moved or a case regressed —
-and the `evals` job fails on a regression. The gate reads `baseline.json` off
-the base branch, never the one the pull request carries, so a branch cannot
-edit the file it is judged against. A push to `main` refreshes `baseline.json`
-from the artifact and commits it, so the next pull request diffs against a
-current one. That commit alone matches no trigger path, so it cannot start a
-loop.
+and the `evals` job fails on a regression. The gate reads the baseline from the
+`evals-baseline` artifact of the last successful `main` run, so no branch
+carries one and there is nothing in the repository to edit. A push to `main`
+scores the run it just made and uploads that artifact, so the next pull request
+diffs against a current baseline.
 
 ### The container
 

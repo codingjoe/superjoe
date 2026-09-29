@@ -4,4 +4,5 @@ __pycache__/
 .ruff_cache/
 
 evals-report.json
+baseline.json
 scores-*.json

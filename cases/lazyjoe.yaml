@@ -1,0 +1,52 @@
+name: lazyjoe
+cases:
+  - name: cut-the-rule-module
+    inputs: |
+      Work: joe_evals/evaluators.py
+      Goal: keep the rule module from carrying more code than its rules need.
+      Mode: full
+      User said: "review this module and tell me what to cut"
+    evaluators:
+      - PromptContract
+      - Matches:
+          patterns:
+            - '(W: -\d+ lines\.|No notes\. Ship it\.)'
+      - ToolCorrectness:
+          expected_tools: [read_file]
+          allow_extra: true
+      - MinCalls:
+          min_calls: 1
+      - NoRepeatCalls:
+          max_repeats: 1
+      - ForbiddenCalls:
+          patterns:
+            - '\b(pytest|unittest|pre-commit|prek|ruff|mypy|tox|nox)\b'
+            - '\brm -[rf]|\bchmod\b|\btruncate\b|sed -i|git (commit|push|checkout|reset|clean|stash)|(uv|poetry) add\b'
+      - MaxToolCalls:
+          max_calls: 15
+      - MaxDuration:
+          seconds: 180
+      - MaxWords:
+          words: 220
+      - MaxLines:
+          lines: 30
+      - NoFiller
+      - NotMatches:
+          patterns:
+            - '(?i)\bi (added|removed|changed|deleted|edited|applied|fixed|ran|cut|rewrote)\b'
+      - Speed:
+          target_seconds: 90
+      - Brevity:
+          target_words: 140
+      - LLMJudge:
+          rubric: |
+            The answer must be one cut list for the given module: every finding names the
+            line, tags it (`yeet:`, `duh:`, `NPC:`, `cringe:`, `glow up:`), names the
+            replacement, and the list ends on the weight line. A clean verdict is only
+            allowed as `No notes. Ship it.` It must review nothing outside the module, edit
+            nothing, and run no tests, linters, or hooks.
+          include_input: true
+          score:
+            evaluation_name: Cohesion
+            include_reason: true
+          assertion: false

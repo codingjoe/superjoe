@@ -4,11 +4,11 @@ from pathlib import Path
 
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.trace import get_tracer_provider, set_tracer_provider
+from pydantic_evals.evaluators.llm_as_a_judge import set_default_judge_model
 
 from .agents import DEFAULT_MODEL, build_model, load_agents
 from .cases import CaseDataset, CaseRunner
 from .container import build_image, in_container, launch
-from .evaluators import EVALUATORS, with_judge
 
 ROOT = Path(os.environ.get("JOE_EVALS_ROOT") or Path(__file__).resolve().parent.parent)
 
@@ -43,10 +43,8 @@ def main() -> None:
     if not isinstance(get_tracer_provider(), TracerProvider):
         set_tracer_provider(TracerProvider())
     model, judge, repeats = model_settings()
-    dataset = CaseDataset.from_file(CASES_PATH, custom_evaluator_types=EVALUATORS)
-    judge_model = build_model(judge)
-    for case in dataset.cases:
-        case.evaluators = with_judge(case.evaluators, judge_model)
+    dataset = CaseDataset.from_file(CASES_PATH)
+    set_default_judge_model(build_model(judge))
     runner = CaseRunner(
         agents=load_agents(AGENTS_DIR), model_name=model, fixtures=FIXTURES_DIR
     )

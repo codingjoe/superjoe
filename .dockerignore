@@ -6,7 +6,4 @@ __pycache__/
 agents/
 cases.yaml
 fixtures/
-
-evals-report.json
-baseline.json
-scores-*.json
+report.txt

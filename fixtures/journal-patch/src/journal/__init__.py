@@ -1,1 +1,0 @@
-"""Journal storage."""

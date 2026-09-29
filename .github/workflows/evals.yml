@@ -1,14 +1,11 @@
 name: evals
 on:
   pull_request:
-    types: [opened, synchronize, reopened, labeled]
-  push:
-    branches: [main]
   workflow_dispatch:
     inputs:
       model:
-        description: Ollama model to score with; defaults to JOE_EVALS_MODEL
-        default: ''
+        description: Ollama model to score with
+        default: deepseek-v4.1-flash
 permissions:
   contents: read
 concurrency:
@@ -18,11 +15,6 @@ jobs:
   evals:
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    permissions:
-      contents: read
-      actions: read
-    outputs:
-      commented: ${{ steps.comment.outputs.commented }}
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v10
@@ -34,58 +26,20 @@ jobs:
           tags: joe-evals:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      - name: Restore the baseline
-        if: github.event_name == 'pull_request'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          run=$(gh run list --workflow evals.yml --branch main --status success --limit 1 --json databaseId --jq '.[0].databaseId')
-          gh run download "$run" --name evals-scores --dir baseline || true
       - name: Run the cases
         env:
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
-          JOE_EVALS_MODEL: deepseek-v4.1-flash
-          JOE_EVALS_JUDGE: deepseek-v4.1-flash
-          SWEEP: deepseek-v4.1-flash
-          FULL: ${{ contains(toJSON(github.event.pull_request.labels.*.name), 'run-evals-full') }}
-          MODEL: ${{ inputs.model }}
-        run: |
-          if [ "$FULL" = 'true' ]; then
-            repeats=3
-            models=$SWEEP
-          else
-            repeats=1
-            models=${MODEL:-$JOE_EVALS_MODEL}
-          fi
-          for model in $models; do
-            JOE_EVALS_MODEL="$model" JOE_EVALS_REPEATS="$repeats" \
-              JOE_EVALS_REPORT="scores-$model.json" \
-              JOE_EVALS_BASELINE="baseline/scores-$JOE_EVALS_MODEL.json" \
-              uv run --locked joe_evals
-          done
-      - name: Note the comment
-        id: comment
-        if: always() && github.event_name == 'pull_request'
-        run: |
-          if [ -s comment.md ]; then
-            echo 'commented=true' >> "$GITHUB_OUTPUT"
-          fi
-      - name: Upload the scores
+          JOE_EVALS_MODEL: ${{ inputs.model || 'deepseek-v4.1-flash' }}
+        run: uv run --locked joe_evals | tee report.txt
+      - name: Upload the report
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: evals-scores
-          path: scores-*.json
-      - name: Upload the comment
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: evals-comment
-          path: comment.md
-          if-no-files-found: ignore
+          name: evals-report
+          path: report.txt
   comment:
     needs: evals
-    if: ${{ !cancelled() && needs.evals.outputs.commented == 'true' }}
+    if: always() && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -93,17 +47,24 @@ jobs:
     steps:
       - uses: actions/download-artifact@v8
         with:
-          name: evals-comment
-      - name: Post the sticky comment
+          name: evals-report
+      - name: Post the report
         env:
           GH_TOKEN: ${{ github.token }}
           PULL_REQUEST_NUMBER: ${{ github.event.pull_request.number }}
         run: |
+          {
+            echo '## superjoe evals'
+            echo
+            echo '```text'
+            cat report.txt
+            echo '```'
+          } > body.md
           comment_id=$(gh api --paginate "repos/$GITHUB_REPOSITORY/issues/$PULL_REQUEST_NUMBER/comments" \
             --jq '.[] | select(.user.login == "github-actions[bot]") | select(.body | startswith("## superjoe evals")) | .id' \
             | tail -1)
           if [ -n "$comment_id" ]; then
-            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$comment_id" -F body=@comment.md > /dev/null
+            gh api --method PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$comment_id" -F body=@body.md > /dev/null
           else
-            gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PULL_REQUEST_NUMBER/comments" -F body=@comment.md > /dev/null
+            gh api --method POST "repos/$GITHUB_REPOSITORY/issues/$PULL_REQUEST_NUMBER/comments" -F body=@body.md > /dev/null
           fi

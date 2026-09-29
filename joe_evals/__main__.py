@@ -9,7 +9,6 @@ from .agents import DEFAULT_MODEL, build_model, load_agents
 from .container import build_image, in_container, launch
 from .evaluators import EVALUATORS, with_judge
 from .sandbox import CaseDataset, CaseRunner
-from .scoring import RunReport, changed, rate, regressions, render_comment
 
 ROOT = Path(os.environ.get("JOE_EVALS_ROOT") or Path(__file__).resolve().parent.parent)
 
@@ -20,15 +19,6 @@ FIXTURES_DIR = ROOT / "fixtures"
 MAX_CONCURRENCY = 4
 
 
-def artifact(name: str, default: str) -> Path:
-    return ROOT / (os.environ.get(name) or default)
-
-
-REPORT = artifact("JOE_EVALS_REPORT", "evals-report.json")
-BASELINE = artifact("JOE_EVALS_BASELINE", "baseline.json")
-COMMENT = artifact("JOE_EVALS_COMMENT", "comment.md")
-
-
 def model_settings() -> tuple[str, str, int]:
     model = os.environ.get("JOE_EVALS_MODEL") or DEFAULT_MODEL
     return (
@@ -36,13 +26,6 @@ def model_settings() -> tuple[str, str, int]:
         os.environ.get("JOE_EVALS_JUDGE") or model,
         int(os.environ.get("JOE_EVALS_REPEATS") or 1),
     )
-
-
-def baseline_report(model: str) -> RunReport | None:
-    if not BASELINE.exists():
-        return None
-    before = RunReport.read(BASELINE)
-    return before if before.model == model else None
 
 
 def build() -> None:
@@ -60,7 +43,6 @@ def main() -> None:
     if not isinstance(get_tracer_provider(), TracerProvider):
         set_tracer_provider(TracerProvider())
     model, judge, repeats = model_settings()
-    before = baseline_report(model)
     dataset = CaseDataset.from_file(CASES_PATH, custom_evaluator_types=EVALUATORS)
     judge_model = build_model(judge)
     for case in dataset.cases:
@@ -72,20 +54,10 @@ def main() -> None:
     report = dataset.evaluate_sync(
         runner.run, repeat=repeats, max_concurrency=MAX_CONCURRENCY, progress=False
     )
-    scored = rate(report, model=model)
-    scored.save(REPORT)
-    sys.stdout.write(f"{len(scored.cases)} case runs -> {REPORT}\n")
-    broken: list[str] = []
-    if before is not None:
-        if changed(before, scored):
-            COMMENT.write_text(render_comment(before, scored), encoding="utf-8")
-            sys.stdout.write(f"comment -> {COMMENT}\n")
-        broken = [delta.case for delta in regressions(before, scored)]
-    if reason := scored.failure():
-        sys.stderr.write(f"{reason}\n")
-        raise SystemExit(1)
-    if broken:
-        sys.stderr.write(f"regressions: {', '.join(broken)}\n")
+    report.print(width=200, include_output=False, include_reasons=True)
+    for failure in report.failures:
+        sys.stdout.write(f"{failure.name}: {failure.error_message}\n")
+    if report.failures:
         raise SystemExit(1)
 
 

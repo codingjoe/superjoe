@@ -13,6 +13,7 @@ A prompt is an envelope, nothing else.
 | `Phase:`     | `triage`, `prove`, or `report`                    |
 | `Shard:`     | the chunk this worker owns: `1/2 src/money.py`    |
 | `Ledger:`    | the run's ledger path, or `none`                  |
+| `Note:`      | where the reference note goes, or `none`          |
 | `Mode:`      | `lite`, `full`, `ultra` for builders and trimmers |
 | `User said:` | the user's own words, verbatim                    |
 
@@ -78,6 +79,54 @@ one line, emit it and move on.
 | `test`   | testJoe      | `ghost` `delulu`                      | coverage, ghost and delulu branches |
 | `deps`   | researchJoe  | `kept` `dropped`                      | packages, APIs, upstream docs       |
 
+## Reference notes
+
+Thorough research nobody can read again is work repeated twice. `researchJoe` writes what
+it learns into `.claude/skills/joe-deps/`, so the crew stops re-asking and the repo keeps
+the knowledge as a skill the next session loads.
+
+- `SKILL.md` — the index, one line per subject: `pkg@version: verdict. what it solves.`
+- `<subject>.md` — the note: `Verdict`, `API`, `Gotchas`, `Evidence`.
+- Keyed `[deps:<pkg>]` or `[docs:<topic>]`, like its ledger row. One subject, one note:
+  update it, never open a second.
+- `Note: <path>` carries the subject's path. `Note: none` means the workspace is read-only,
+  so hand the note back in the answer instead of writing it.
+
+```markdown
+# pydantic-ai-harness
+
+## Verdict
+
+Kept at 0.36.0, pushed 2026-09-12.
+
+## API
+
+`Coder(root)`, `Researcher()`, mounted as capabilities.
+
+## Gotchas
+
+Reads the whole tree unless the capability is scoped.
+
+## Evidence
+
+PyPI json, 2026-09-30.
+```
+
+The index opens with the skill's frontmatter, so the note set is discoverable:
+
+```markdown
+---
+name: joe-deps
+description: Vetted packages, APIs, and upstream docs for this repo, with the verdict and the calls that matter. Read before adding, hand-rolling, or reporting on one.
+---
+
+- pydantic-ai-harness@0.36.0: kept. Coder and Researcher capabilities. [note](pydantic-ai-harness.md)
+```
+
+`builderJoe` and `inspectorJoe` read the note before either of them researches, hand-rolls,
+or reports on that subject: rung 5 of the ladder is the note, not a memory. No note and no
+verdict? One `deps` request to `researchJoe`, once.
+
 ## The ledger
 
 The main thread owns `.joe/ledger.md`, gitignored, one per run. Every joe reads it, no
@@ -90,7 +139,7 @@ sus  bug  src/orders.py:L27          bare except hides every failure
 cap  sec  src/auth.py:L12            parameterized, `%` never sees user input
 real bug  src/orders.py:L27          label returns str, caller unpacks a tuple   bet: 9/10 cooked: 8/10
 clear bug shard:src/money.py         mapped clean
-kept deps deps:pydantic-ai-harness   maintained, 0.36.0 pushed 2026-09 (pypi)
+kept deps deps:pydantic-ai-harness   maintained, 0.36.0 pushed 2026-09 (pypi)   note: .claude/skills/joe-deps/pydantic-ai-harness.md
 ```
 
 Rows: `<tag> <lane> <key> <what>.` One patch, one lookup, one row. A `side quest:` line

@@ -31,6 +31,7 @@ Read [CONTRACT.md](../skills/superjoe/CONTRACT.md) before you cut.
 - The prompt carries `Work:`, `Goal:` or `Steps:`, `Ledger:`, and `Mode:`. Missing `Work:` → `ambiguous. ask: <one question>.`
 - Cut the keys `lazyJoe` tagged, once each. Never re-read the patch to re-derive one.
 - A `joe:` shortcut gets one ledger row, so no other lane re-asks what it defers.
+- Rung 5 is the note, not a memory: read `.claude/skills/joe-deps/<subject>.md` before using or questioning a dependency. No note? Ask `researchJoe` once, then build.
 
 ## Ladder
 

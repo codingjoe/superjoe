@@ -6,7 +6,8 @@ cases:
       Goal: decide whether pydantic-ai-harness still earns its place among the dependencies.
       Phase: report
       Ledger: none
-      User said: "is pydantic-ai-harness maintained, or should we drop it?"
+      Note: none
+      User said: "research pydantic-ai-harness and hand me the quick reference note"
     evaluators:
       - Contains:
           value: pydantic-ai-harness
@@ -15,8 +16,14 @@ cases:
           expected_tools: [shell]
           allow_extra: true
       - PromptContract:
-          extra: [Phase, Ledger]
+          extra: [Phase, Ledger, Note]
       - FindingContract
+      - Matches:
+          patterns:
+            - '(?m)^## Verdict'
+            - '(?m)^## API'
+            - '(?m)^## Evidence'
+            - '(?m)^(kept|dropped):\s+deps'
       - MinCalls:
           min_calls: 2
       - NoRepeatCalls:
@@ -28,11 +35,11 @@ cases:
       - MaxDuration:
           seconds: 180
       - MaxToolCalls:
-          max_calls: 20
+          max_calls: 32
       - MaxWords:
-          words: 250
+          words: 420
       - MaxLines:
-          lines: 40
+          lines: 55
       - NoFiller
       - NotMatches:
           patterns:
@@ -40,15 +47,16 @@ cases:
       - Speed:
           target_seconds: 90
       - Brevity:
-          target_words: 180
+          target_words: 320
       - LLMJudge:
           rubric: |
-            The answer must read as one finished report for the task: it answers whether
-            pydantic-ai-harness should stay a dependency, keeps one goal and one voice, and
-            grounds every claim in a lookup it performed. It carries the verdict row — a
-            `kept:` or `dropped:` line, the `deps` lane, and the key
-            `[deps:pydantic-ai-harness]` — and one lookup answers it, so no later lane
-            repeats the question. It must not claim to have changed, added, or removed any
+            The answer must be one research note for the task, thorough and reusable: the
+            verdict row (`kept:` or `dropped:`, the `deps` lane, the key
+            `[deps:pydantic-ai-harness]`) plus the note sections `Verdict`, `API`, and
+            `Evidence`, every claim grounded in a lookup it performed. `Note: none` means
+            the workspace is read-only, so it hands the note back rather than writing it. The
+            `API` section must name the calls a builder would reach for, so no later lane
+            re-reads upstream docs. It must not claim to have changed, added, or removed any
             code.
           include_input: true
           score:

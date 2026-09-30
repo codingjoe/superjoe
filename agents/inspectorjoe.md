@@ -26,6 +26,9 @@ Sweep the patch's added lines. Emit one line per candidate:
 
 `sus: <lane> <what smells off>. [path:L<line>]`
 
+Plain lines only: no bullet, no number, no backtick, no bold, no fence. One finding,
+one line, the tag opening it.
+
 Do not trace callers, read the implementation, or run anything.
 
 Then ask which to investigate, with `AskUserQuestion`: one option per `sus:` line, `none` always present — `Ledger: none` only. Investigate nothing else.

@@ -48,7 +48,9 @@ Never test it, never touch it, never file it yourself; the main thread opens the
 
 Coverage exposes code that should not exist. One line per flag:
 
-`L<line>: ghost. <why it can't run>.`
-`L<line>: delulu. <what the signature already guarantees>.`
+`ghost: test <why it can't run>. [path:L<line>]`
+`delulu: test <what the signature already guarantees>. [path:L<line>]`
+
+Plain lines only: no bullet, no number, no backtick, no bold, no fence.
 
 Send each flag to `lazyJoe` for the cut verdict; `builderJoe` cuts it. Then re-run coverage.

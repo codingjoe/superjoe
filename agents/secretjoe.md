@@ -36,6 +36,8 @@ Sweep the patch's added lines. Emit one line per candidate:
 
 `sus: sec <what could be exploitable>. [path:L<line>]`
 
+Plain lines only: no bullet, no number, no backtick, no bold, no fence.
+
 Grep only. No exploit path, no payload, no repro, no proof of concept.
 
 Then ask which to prove, with `AskUserQuestion`: one option per `sus:` line, `none` always present — `Ledger: none` only.

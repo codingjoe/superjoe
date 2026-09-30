@@ -100,6 +100,8 @@ No harness owns this folder: the crew reads it by the path the prompt carries.
   update it, never open a second.
 - `Note: <path>` carries the subject's path. `Note: none` means the workspace is read-only,
   so hand the note back in the answer instead of writing it.
+- The folder may not exist yet. An absent note is not an error, and probing for one is not
+  work: it means nobody has vetted that subject, so ask `researchJoe` once.
 
 ```markdown
 # <subject>

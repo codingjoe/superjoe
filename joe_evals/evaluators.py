@@ -381,8 +381,10 @@ class ForbiddenCalls(Evaluator[object, object, object]):
     Assert no tool call matches a forbidden pattern.
 
     Patterns are regular expressions, searched case-insensitively in each call's
-    JSON arguments: test runners, linters, and anything that mutates the repository.
-    Keep them tight, since a legitimate search for the same word would trip them.
+    JSON arguments: test runners, linters, and anything that removes a file or
+    mutates the repository. Keep them tight, since a legitimate search for the
+    same word would trip them. The reason quotes the matched text, so a trip says
+    what tripped it.
     """
 
     patterns: Sequence[str]
@@ -396,14 +398,21 @@ class ForbiddenCalls(Evaluator[object, object, object]):
         calls = _tool_calls(ctx)
         if calls is None:
             return EvaluationReason(value=False, reason=_NO_SPANS)
-        hits = [
-            f"{call.name}: {_argument_text(call.arguments)}"
-            for call in calls
-            if any(
-                re.search(pattern, call.arguments or "", re.IGNORECASE)
-                for pattern in self.patterns
+        hits = []
+        for call in calls:
+            text = call.arguments or ""
+            matched = next(
+                (
+                    match
+                    for pattern in self.patterns
+                    if (match := re.search(pattern, text, re.IGNORECASE))
+                ),
+                None,
             )
-        ]
+            if matched is not None:
+                hits.append(
+                    f"{call.name}: {matched.group(0)!r} in {_argument_text(text)}"
+                )
         if hits:
             return EvaluationReason(value=False, reason="; ".join(hits))
         return EvaluationReason(value=True)

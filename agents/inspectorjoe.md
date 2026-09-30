@@ -27,6 +27,9 @@ Sweep the patch's added lines. Emit one line per candidate:
 
 `sus: <lane> <what smells off>. [path:L<line>]`
 
+A key the ledger already lists is not a candidate: answer it
+`cap: <lane> duplicate of [<key>].` instead, so the reduce knows you read the ledger.
+
 Plain lines only: no bullet, no number, no backtick, no bold, no fence. One finding,
 one line, the tag opening it.
 

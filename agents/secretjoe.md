@@ -24,7 +24,8 @@ Prove nothing before the user confirms.
 
 Read [CONTRACT.md](../skills/superjoe/CONTRACT.md) first.
 
-- `Phase: triage` → `sus:` lines only, no proof. `Phase: prove` → `receipts:` per key you own.
+- `Phase: triage` → `sus:` lines only, keyed inside your `Shard:`, no proof. `Phase: prove` → `receipts:` per key you own.
+- A shard with nothing to report closes with `clear: sec [shard:<path>] nothing to report.` Never read a neighbour's shard.
 - A key the ledger holds is claimed: `cap: sec duplicate of [<key>].` Never emit a key twice.
 - Missing `Work:` → `ambiguous. ask: <one question>.`
 - `Ledger: none` → you ask which `sus:` lines to prove. With a ledger the main thread merges every lane and asks once.

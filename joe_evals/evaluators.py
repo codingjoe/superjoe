@@ -60,6 +60,7 @@ _FINDING_TAGS = (
     "delulu",
     "cringe",
     "fixed",
+    "clear",
     "sus",
     "cap",
     "real",
@@ -69,6 +70,13 @@ _FINDING_TAGS = (
     "ghost",
     "kept",
 )
+
+# The map outputs, which a shard keeps to its own lines. Proving may follow a call.
+_LOCAL_TAGS = frozenset(
+    ("sus", "clear", "yeet", "duh", "npc", "cringe", "glow up", "ghost", "delulu")
+)
+
+_SHARD = re.compile(r"(?m)^\s*Shard:\s*(?P<id>\d+\s*/\s*\d+)\s+(?P<path>\S+)")
 
 _FINDING = re.compile(
     r"^(?P<tag>" + "|".join(_FINDING_TAGS) + r"):\s*(?P<lane>[A-Za-z]+)\b",
@@ -437,6 +445,42 @@ class MinCalls(Evaluator[object, object, object]):
         )
 
 
+@dataclass(repr=False)
+class ShardScope(Evaluator[object, object, object]):
+    """
+    Assert a shard's map lines stay inside its own chunk.
+
+    A shard exists so one worker loads one chunk: candidates, cuts, and coverage
+    flags are local, and a line outside the shard means a worker read past its
+    boundary. Proving may follow a call, so `real:` and `cap:` lines are exempt.
+    """
+
+    def evaluate(
+        self, ctx: EvaluatorContext[object, object, object]
+    ) -> EvaluationReason:
+        shard = _SHARD.search(str(ctx.inputs))
+        if shard is None:
+            return EvaluationReason(value=False, reason="prompt carries no Shard: line")
+        path = shard.group("path").rsplit("/", 1)[-1]
+        outside: list[str] = []
+        for raw in str(ctx.output).splitlines():
+            line = raw.strip()
+            match = _FINDING.match(line)
+            if match is None or match.group("tag").lower() not in _LOCAL_TAGS:
+                continue
+            keys = _KEY.findall(line)
+            if not keys:
+                continue
+            key = keys[-1]
+            if ":L" in key and not key.rsplit("/", 1)[-1].startswith(f"{path}:"):
+                outside.append(key)
+        if outside:
+            return EvaluationReason(
+                value=False, reason=f"outside {path}: {', '.join(outside)}"
+            )
+        return EvaluationReason(value=True, reason=f"mapped inside {path}")
+
+
 RULES = (
     Brevity,
     FindingContract,
@@ -449,6 +493,7 @@ RULES = (
     NoRepeatCalls,
     NotMatches,
     PromptContract,
+    ShardScope,
     Speed,
 )
 """Every rule the cases may use."""

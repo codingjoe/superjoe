@@ -1,0 +1,14 @@
+diff --git a/src/money.py b/src/money.py
+index 7d13a2f..e6fed0f 100644
+--- a/src/money.py
++++ b/src/money.py
+@@ -5,5 +5,9 @@ def parse(text: str) -> Decimal:
+     return Decimal(text)
+ 
+ 
++def is_zero(value: Decimal) -> bool:
++    return len(str(value)) == 1 and str(value) == "0"
++
++
+ def format_text(value: Decimal) -> str:
+     return f"{value:.2f}"

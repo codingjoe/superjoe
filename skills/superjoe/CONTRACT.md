@@ -11,6 +11,7 @@ A prompt is an envelope, nothing else.
 | `Work:`      | the diff, file, PR, or branch to work             |
 | `Goal:`      | one user story, or `Steps:` for a QED repro       |
 | `Phase:`     | `triage`, `prove`, or `report`                    |
+| `Shard:`     | the chunk this worker owns: `1/2 src/money.py`    |
 | `Ledger:`    | the run's ledger path, or `none`                  |
 | `Mode:`      | `lite`, `full`, `ultra` for builders and trimmers |
 | `User said:` | the user's own words, verbatim                    |
@@ -23,15 +24,40 @@ One line per finding. No preamble, no summary, no prose between lines.
 
 `<tag>: <lane> <what>. [<key>]`
 
-| Field    | Carries                                                                             |
-| -------- | ----------------------------------------------------------------------------------- |
-| `<tag>`  | the verb, from the lane's own vocabulary: `sus`, `cap`, `real`, `fixed`, `deferred` |
-| `<lane>` | the routing key, one lane from the table below                                      |
-| `<key>`  | one line, one finding: `[src/orders.py:L38]`, `[deps:pydantic-ai-harness]`          |
+| Field    | Carries                                                                                      |
+| -------- | -------------------------------------------------------------------------------------------- |
+| `<tag>`  | the verb, from the lane's own vocabulary: `sus`, `cap`, `real`, `fixed`, `deferred`, `clear` |
+| `<lane>` | the routing key, one lane from the table below                                               |
+| `<key>`  | one line, one finding: `[src/orders.py:L38]`, `[deps:pydantic-ai-harness]`                   |
 
 Ratings ride the same line: `real: bug <what>. <why>. [src/orders.py:L38] bet: 9/10 cooked: 8/10`.
 A `receipts:` block opens under the `real:` line above it and carries neither lane nor key.
 A finding with no file, like a dependency, keys on its subject: `[deps:<pkg>]`, `[docs:<topic>]`.
+A shard that maps clean closes with `clear: <lane> [shard:<path>] nothing to report.`, so
+the reduce can prove every shard answered.
+
+## Sharding
+
+One shard, one worker, one context. A shard is a chunk a joe judges on its own, so no
+worker loads what another worker loads.
+
+- Unit: one file. Split a file only past ~200 changed lines, by function or region.
+- Bundle: files under ~40 changed lines, so a shard earns its own prompt.
+- Budget: 4 shards per lane, 6 workers in flight. Each worker pays prompt and ledger
+  overhead, and the machine is shared. Raise it only for a genuinely big patch.
+- Threshold: under 2 files or ~150 changed lines, do not shard; one prompt holds the lot.
+
+`Shard: <n>/<total> <path>` names the chunk, and `Work:` points at that chunk's own
+frozen diff. Read your diff and the file it touches. Never open a neighbour's shard: the
+signatures you call are enough to judge your own lines.
+
+- Triage stays in the shard: every `sus:`, `yeet:`, and `ghost:` line keys on a line the
+  shard owns. Found something outside it? That is the neighbour's row, so leave it.
+- Prove may leave it: a confirmed key may follow a call into another shard, and the
+  reduce routes that finding to the shard that owns its key.
+- A key outside every shard is out of scope: `side quest:`.
+- A worker who must read three files to judge one line is in the wrong shard: move the
+  boundary, or hand that key to the shard that owns it.
 
 ## Lanes
 
@@ -55,10 +81,12 @@ The main thread owns `.joe/ledger.md`, gitignored, one per run. Every joe reads 
 joe but the main thread writes it.
 
 ```text
-# work: main...feat base: 4f2a1b head: 9c3d2e patch: 1 file, +38
+# work: main...feat base: 4f2a1b head: 9c3d2e patch: 2 files, +38
+# shards: 1/2 src/money.py | 2/2 src/orders.py
 sus  bug  src/orders.py:L27          bare except hides every failure
 cap  sec  src/auth.py:L12            parameterized, `%` never sees user input
 real bug  src/orders.py:L27          label returns str, caller unpacks a tuple   bet: 9/10 cooked: 8/10
+clear bug shard:src/money.py         mapped clean
 kept deps deps:pydantic-ai-harness   maintained, 0.36.0 pushed 2026-09 (pypi)
 ```
 
@@ -74,7 +102,8 @@ becomes a `deferred` row; a fix flips its row to `fixed`.
 
 ## No repeat work
 
-- The patch is frozen once. Every mapper works the same reference; nobody re-derives it.
+- The patch is frozen once, one diff per shard. Every worker reads its own chunk; nobody
+  re-derives it, and nobody loads a chunk another worker already holds.
 - One research request per question, keyed `[deps:<pkg>]` or `[docs:<topic>]`. Everyone
   else reads the row; nobody re-asks what the ledger answers.
 - A fix re-opens its line and the lanes those lines open. Rows outside the fix stay valid.

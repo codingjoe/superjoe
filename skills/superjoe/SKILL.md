@@ -15,20 +15,21 @@ Route every test run to `testJoe`.
 Ask for the smallest selection that covers the change.
 The user shares this machine, and test runs eat CPU.
 
-Fan out LLM work; serialize CPU work. One prompt per lane, four lanes at most, and never start a test run beside another.
+Fan out LLM work; serialize CPU work. Workers run in parallel up to the budget, and no test run ever shares the machine with another.
 
 ## The architecture loop
 
-A map over the lanes, then a reduce over their keys.
+A map over lane x shard, then a reduce over the keys.
 
-1. **Freeze** — pin the work once: `git diff <ref> > .joe/patch.diff`, or `gh pr diff <n>` for a PR. Open `.joe/ledger.md` with the run header. Every later prompt points at those two files, so no joe re-derives the patch.
-1. **Map** — hand the frozen patch to every lane in ONE parallel batch: `inspectorJoe` (`bug`, `perf`, `naming`), `secretJoe` (`sec`), `lazyJoe` (`bloat`), `docuJoe` (`doc`). A mapper emits `sus:` lines only: it proves nothing, fixes nothing, traces nothing.
-1. **Reduce** — merge the `sus:` lines on the key. One key, one owner, the highest lane wins. Write the rows to the ledger, then ask the user once for the whole map with `AskUserQuestion`: one option per merged key, `none` always present.
+1. **Freeze** — pin the work once, as one diff per shard: `git diff <ref> -- <paths> > .joe/shard-1.diff`, or `gh pr diff <n>` split the same way. Open `.joe/ledger.md` with the run header and the shard map. Every later prompt points at its own shard diff, so no joe re-derives the patch and no two workers load the same chunk.
+1. **Plan shards** — one file per shard, bundled under ~40 changed lines and split past ~200, inside the budget: 4 shards per lane, 6 workers in flight. Under 2 files or ~150 changed lines, skip sharding and hand the whole patch to one worker per lane.
+1. **Map** — hand each (lane, shard) one prompt, in parallel: `inspectorJoe` (`bug`, `perf`, `naming`), `secretJoe` (`sec`), `lazyJoe` (`bloat`), `docuJoe` (`doc`). A mapper emits `sus:` lines only, keyed inside its shard: it proves nothing, fixes nothing, traces nothing.
+1. **Reduce** — merge on the key, shards first, then lanes. One key, one owner, the highest lane wins. Write the rows to the ledger, then ask the user once for the whole map with `AskUserQuestion`: one option per merged key, `none` always present.
 1. **Prove** — one parallel prompt per lane owner, carrying the keys it owns and nothing else. Every key comes back `real:` with `bet: N/10 cooked: N/10`, or `cap:`.
 1. **Route** — `>= 8` on both axes goes to its fixer. Everything else is reported, asked, or deferred.
-1. **Re-map** — a fix re-opens its line and the lanes those lines open. Re-run those lanes on the frozen patch plus the fix; rows outside the fix stay valid, and nothing else is re-read, re-asked, or re-researched.
+1. **Re-map** — a fix re-opens its line, its shard, and the lanes those lines open. Re-run those shards on the frozen diff plus the fix; rows outside them stay valid, and nothing else is re-read, re-asked, or re-researched.
 
-A mapper with no candidates says so in one line and stops.
+A shard with no candidates closes with `clear: <lane> [shard:<path>] nothing to report.`, so the reduce can prove every shard answered.
 
 ## Exit gates
 
@@ -44,8 +45,8 @@ Only `8/10` or above on both `bet` and `cooked` blocks the gate. Everything else
 
 The mappers triage without proving. The user sits between the map and the prove.
 
-1. **Map** — `sus:` lines only. `secretJoe` proves nothing here.
-1. **Reduce** — the main thread merges every lane's lines on the key and asks one question: which keys to prove. Nothing runs unconfirmed.
+1. **Map** — `sus:` lines only, inside the shard. `secretJoe` proves nothing here.
+1. **Reduce** — the main thread merges every shard and lane on the key and asks one question: which keys to prove. Nothing runs unconfirmed.
 1. **Prove** — the owner confirms or caps each of its keys, then rates the survivors.
 
 | bet    | cooked | Action                                |
@@ -119,9 +120,10 @@ Outside the loop, on request:
 
 Prompt = the envelope, nothing else:
 
-- `Work:` the frozen patch, or the file, PR, or branch
+- `Work:` the shard's frozen diff, or the file, PR, or branch
 - `Goal:` one user story sentence, or `Steps:` QED for a bug
 - `Phase:` `triage` to map, `prove` to investigate, `report` for one-shot work
+- `Shard:` `1/2 src/money.py` for a sharded map, omitted otherwise
 - `Ledger:` `.joe/ledger.md`, or `none`
 - `Mode:` the user's mode, to `builderJoe` and `lazyJoe` in every prompt
 - `User said:` the user's own words, verbatim
@@ -129,9 +131,10 @@ Prompt = the envelope, nothing else:
 No task lists, no step-by-step, no restating the output contract: it lives in the agent's own file. The work reference bounds the scope, and anything outside it gets a `side quest:` line.
 
 ```text
-Work: .joe/patch.diff
+Work: .joe/shard-1.diff
 Goal: As a <role>, I want <capability>, so that <benefit>.
 Phase: triage
+Shard: 1/2 src/money.py
 Ledger: .joe/ledger.md
 User said: <explicit instruction, verbatim>
 ```
@@ -139,10 +142,11 @@ User said: <explicit instruction, verbatim>
 or
 
 ```text
-Work: .joe/patch.diff
+Work: .joe/shard-1.diff
 Goal: Should return boolean
 Steps: 1. click this 2. click that 3. boom! QED
 Phase: prove
+Shard: 1/2 src/money.py
 Ledger: .joe/ledger.md
 User said: <explicit instruction, verbatim>
 ```
@@ -164,6 +168,8 @@ task -> agent
 
 Rule: main thread loops; each agent does one step. Spawn `researchJoe` from any step when a dependency or fact needs checking; it never edits. Ask it once per question — the ledger row is the answer every other lane reads.
 
+One agent, many shards: the same joe runs once per chunk, so a 12-file patch maps as 12 small contexts instead of four whole-patch loads.
+
 ## Flow
 
 ```mermaid
@@ -177,17 +183,19 @@ sequenceDiagram
     participant T as testJoe
     participant U as user
 
-    Main->>Main: freeze the patch, open the ledger
-    par map bug, perf, naming
-        Main->>I: triage
-    and map sec
-        Main->>S: triage
-    and map bloat
-        Main->>L: triage
-    and map doc
-        Main->>D: triage
+    Main->>Main: freeze one diff per shard, open the ledger
+    par map shard 1
+        Main->>I: triage bug, perf, naming
+        Main->>S: triage sec
+        Main->>L: triage bloat
+        Main->>D: triage doc
+    and map shard 2
+        Main->>I: triage bug, perf, naming
+        Main->>S: triage sec
+        Main->>L: triage bloat
+        Main->>D: triage doc
     end
-    Main->>Main: reduce on key, one owner per finding
+    Main->>Main: reduce on key, shards then lanes, one owner per finding
     Main->>U: one question, every merged key
     U->>Main: confirm
     par prove
@@ -197,7 +205,7 @@ sequenceDiagram
     end
     Main->>Main: rate bet and cooked
     alt 8/10 or above on both
-        Main->>B: fix, then re-map the changed lines
+        Main->>B: fix, then re-map the shards the fix touches
     else below, or out of scope
         Main->>U: ask, or file an issue
     end

@@ -21,7 +21,8 @@ The laziest engineer on the crew. Do nothing unless a task requires it. Find cod
 Read [CONTRACT.md](../skills/superjoe/CONTRACT.md) first. The `bloat` lane is yours;
 tag any other lane you see and move on.
 
-- One line per cut, keyed: `yeet: bloat tmp = {} nothing reads. [path:L<line>]`
+- One line per cut, keyed inside your `Shard:`: `yeet: bloat tmp = {} nothing reads. [path:L<line>]`
+- A shard with nothing to cut closes with `clear: bloat [shard:<path>] nothing to report.` Never read a neighbour's shard.
 - A key the ledger holds is claimed: `cap: bloat duplicate of [<key>].` Never emit a key twice.
 - Missing `Work:` → `ambiguous. ask: <one question>.`
 

@@ -14,7 +14,8 @@ Code reviewer for intentional architecture. Report findings only; the lane on th
 Read [CONTRACT.md](../skills/superjoe/CONTRACT.md) first. Its lanes `bug`, `perf`, and
 `naming` are yours to prove; tag any other lane you see and move on.
 
-- `Phase: triage` → `sus:` lines only. `Phase: prove` → `real:` or `cap:` per key you own.
+- `Phase: triage` → `sus:` lines only, keyed inside your `Shard:`. `Phase: prove` → `real:` or `cap:` per key you own.
+- A shard with nothing to report closes with `clear: bug [shard:<path>] nothing to report.` Never read a neighbour's shard.
 - A key the ledger holds is claimed: `cap: bug duplicate of [<key>].` Never emit a key twice.
 - Missing `Work:` → `ambiguous. ask: <one question>.`
 - `Ledger: none` → you ask which `sus:` lines to run. With a ledger the main thread merges every lane and asks once.

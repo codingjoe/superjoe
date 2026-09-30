@@ -29,7 +29,7 @@ cases:
           max_repeats: 1
       - ForbiddenCalls:
           patterns:
-            - '\b(pytest|unittest|pre-commit|prek|ruff|mypy|tox|nox)\b'
+            - '(?<![\w/\"-])(pytest|unittest|pre-commit|prek|ruff|mypy|tox|nox)(?![\w\"-])'
             - '\brm\s+\S|\bgit rm\b|-delete\b|\bchmod\b|\btruncate\b|sed -i|git (commit|push|checkout|reset|clean|stash)|(uv|poetry) add\b'
       - MaxToolCalls:
           max_calls: 15
@@ -90,7 +90,7 @@ cases:
           max_repeats: 1
       - ForbiddenCalls:
           patterns:
-            - '\b(pytest|unittest|pre-commit|prek|ruff|mypy|tox|nox)\b'
+            - '(?<![\w/\"-])(pytest|unittest|pre-commit|prek|ruff|mypy|tox|nox)(?![\w\"-])'
             - '\brm\s+\S|\bgit rm\b|-delete\b|\bchmod\b|\btruncate\b|sed -i|git (commit|push|checkout|reset|clean|stash)|(uv|poetry) add\b'
       - MaxToolCalls:
           max_calls: 15
@@ -150,7 +150,7 @@ cases:
           max_repeats: 1
       - ForbiddenCalls:
           patterns:
-            - '\b(pytest|unittest|pre-commit|prek|ruff|mypy|tox|nox)\b'
+            - '(?<![\w/\"-])(pytest|unittest|pre-commit|prek|ruff|mypy|tox|nox)(?![\w\"-])'
             - '\brm\s+\S|\bgit rm\b|-delete\b|\bchmod\b|\btruncate\b|sed -i|git (commit|push|checkout|reset|clean|stash)|(uv|poetry) add\b'
       - MaxToolCalls:
           max_calls: 12

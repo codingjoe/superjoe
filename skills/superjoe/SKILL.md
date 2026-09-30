@@ -104,7 +104,7 @@ The crew simplifies at one of three levels. Default: **full**. The user sets it 
 Outside the loop, on request:
 
 - `joe-audit` — whole-repo over-engineering audit, ranked list of what to delete.
-- `joe-debt` — harvest `joe:` shortcut comments into a tracked ledger.
+- `joe-debt` — harvest `todo:` shortcut comments into a tracked ledger.
 
 ## Prompting agents
 

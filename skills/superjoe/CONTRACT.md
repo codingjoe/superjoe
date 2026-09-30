@@ -115,7 +115,7 @@ by the path the prompt carries.
 
 ## Gotchas
 
-<the ceiling and the upgrade path, like a `joe:` comment>.
+<the ceiling and the upgrade path, like a `todo:` comment>.
 
 ## Evidence
 

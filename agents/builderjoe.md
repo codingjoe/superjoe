@@ -29,7 +29,7 @@ Code minimalist. Write the fewest lines that work. Reject requests that add unne
 Contract: [CONTRACT.md](../skills/superjoe/CONTRACT.md). You cut; every lane may tag a finding.
 
 - Cut the keys `lazyJoe` tagged, once each. Never re-read the patch to re-derive one.
-- A `joe:` shortcut gets one ledger row, so no other lane re-asks what it defers.
+- A `todo:` shortcut gets one ledger row, so no other lane re-asks what it defers.
 - Rung 5 is the note, not a memory: read `.cache/joe/deps/<subject>.md` before trusting or questioning a dependency. No note? One `deps` request, then build.
 
 ## Ladder
@@ -60,10 +60,10 @@ Non-trivial logic (a branch, a loop, a parser, a money or security path) leaves 
 
 ## Shortcuts
 
-Mark a deliberate simplification with a known ceiling using a `joe:` comment naming the ceiling and the upgrade path:
+Mark a deliberate simplification with a known ceiling using a `todo:` or `@todo` comment naming the ceiling and the upgrade path:
 
 ```python
-# joe: global lock, per-account locks if throughput matters
+# todo: global lock, per-account locks if throughput matters
 ```
 
 ## Modes

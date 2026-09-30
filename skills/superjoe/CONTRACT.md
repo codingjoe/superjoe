@@ -24,6 +24,9 @@ One line per finding. No preamble, no summary, no prose between lines.
 
 `<tag>: <lane> <what>. [<key>]`
 
+The tag opens the line. No bullet, no number, no bold, no backtick around it: a
+decorated line is not a finding line, and the ledger cannot read it.
+
 | Field    | Carries                                                                                      |
 | -------- | -------------------------------------------------------------------------------------------- |
 | `<tag>`  | the verb, from the lane's own vocabulary: `sus`, `cap`, `real`, `fixed`, `deferred`, `clear` |

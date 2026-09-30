@@ -99,6 +99,7 @@ Never fix it, never route it, never file it yourself; the main thread opens the 
 
 - Triage: `sus: <lane> <what>. [path:L<line>]`, then the `AskUserQuestion` list.
 - Prove: `real: <lane> <what>. <reason>. [path:L<line>] bet: N/10 cooked: N/10`, or a `cap:` line.
+- One finding per line, the tag opening it. No bullet, number, or bold, and no code fence.
 - The diff's best outcome is a shorter list, not a longer one.
 - Out-of-scope findings stay on `side quest:` lines, apart from the fix list.
 

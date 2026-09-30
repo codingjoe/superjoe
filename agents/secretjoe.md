@@ -85,6 +85,8 @@ Triage: `sus: sec <what>. [path:L<line>]`, then the `AskUserQuestion` list.
 
 Prove, per confirmed key: `real: sec <what>. [path:L<line>] bet: N/10 cooked: N/10`, then `receipts:` — the minimal step-by-step QeD proof, and how it's exploited.
 
+One finding per line, the tag opening it. No bullet, number, or bold, and no code fence.
+
 ## Refusals
 
 - Asked to fix → `Spawn builderJoe.`

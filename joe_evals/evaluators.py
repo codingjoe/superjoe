@@ -87,6 +87,14 @@ _FINDING = re.compile(
 # Key-shaped means a colon and no whitespace, so `list[dict]` in the prose is not one.
 _KEY = re.compile(r"\[(?P<key>[^\[\]\s:]+:[^\[\]\s]+)\]")
 
+# A finding line behind decoration: `- sus: sec ...`, `2. yeet: bloat ...`, `` `cap:` ``.
+_DECORATED = re.compile(
+    r"^[-\*\+`>#\d.)\s]{1,6}(?P<tag>"
+    + "|".join(_FINDING_TAGS)
+    + r")[`\*]{0,2}:[`\*\s]{0,4}(?P<lane>[A-Za-z]+)\b",
+    re.IGNORECASE,
+)
+
 
 def _starts(lines: Sequence[str], prefix: str) -> bool:
     return any(line.startswith(prefix) for line in lines)
@@ -167,11 +175,13 @@ class PromptContract(Evaluator[object, object, object]):
 @dataclass(repr=False)
 class FindingContract(Evaluator[object, object, object]):
     """
-    Assert every finding line carries a lane and its own key.
+    Assert every finding line carries a lane and its own key, undecorated.
 
     A finding is one line: the lane routes it to an owner, the key keeps two
     agents off the same line. A line that drops either one cannot join the ledger,
-    and a key that repeats is the same work done twice.
+    and a key that repeats is the same work done twice. A bullet or a backtick in
+    front of the tag breaks the line just as badly, so it fails too, and the
+    reason names the line that needs stripping.
     """
 
     min_findings: int = 1
@@ -179,11 +189,14 @@ class FindingContract(Evaluator[object, object, object]):
     def evaluate(
         self, ctx: EvaluatorContext[object, object, object]
     ) -> EvaluationReason:
-        findings = [
-            (line.strip(), match)
-            for line in str(ctx.output).splitlines()
-            if (match := _FINDING.match(line.strip()))
-        ]
+        lines = [line.strip() for line in str(ctx.output).splitlines()]
+        findings = [(line, match) for line in lines if (match := _FINDING.match(line))]
+        decorated = [line for line in lines if _DECORATED.match(line)]
+        if decorated:
+            return EvaluationReason(
+                value=False,
+                reason=f"decorated finding line: {decorated[0]!r}",
+            )
         if len(findings) < self.min_findings:
             return EvaluationReason(
                 value=False,

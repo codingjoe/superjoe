@@ -125,7 +125,7 @@ Prompt = the envelope, nothing else:
 - `Phase:` `triage` to map, `prove` to investigate, `report` for one-shot work
 - `Shard:` `1/2 src/money.py` for a sharded map, omitted otherwise
 - `Ledger:` `.joe/ledger.md`, or `none`
-- `Note:` `.claude/skills/joe-deps/<subject>.md` for `researchJoe`, `none` when read-only
+- `Note:` `.joe/deps/<subject>.md` for `researchJoe`, `none` when read-only
 - `Mode:` the user's mode, to `builderJoe` and `lazyJoe` in every prompt
 - `User said:` the user's own words, verbatim
 
@@ -167,11 +167,11 @@ task -> agent
 | find, vet, and note packages  | `researchJoe`  | `deps`                |
 | orchestrate the loops         | main thread    | —                     |
 
-Rule: main thread loops; each agent does one step. Spawn `researchJoe` from any step when a dependency or fact needs checking; it never edits code, but it does write the reference note under `.claude/skills/joe-deps/`, so the next lane reads a note instead of re-running the lookup.
+Rule: main thread loops; each agent does one step. Spawn `researchJoe` from any step when a dependency or fact needs checking; it never edits code, but it does write the reference note under `.joe/deps/`, so the next lane reads a note instead of re-running the lookup.
 
 One agent, many shards: the same joe runs once per chunk, so a 12-file patch maps as 12 small contexts instead of four whole-patch loads.
 
-One research, many readers: a `deps` verdict lands as `.claude/skills/joe-deps/<subject>.md` plus its index line, and `builderJoe` and `inspectorJoe` read that note instead of re-asking. Pass `Note: .claude/skills/joe-deps/<subject>.md` in every `researchJoe` prompt; `Note: none` only where the workspace is read-only.
+One research, many readers: a `deps` verdict lands as `.joe/deps/<subject>.md` plus its index line, and `builderJoe` and `inspectorJoe` read that note instead of re-asking. Pass `Note: .joe/deps/<subject>.md` in every `researchJoe` prompt; `Note: none` only where the workspace is read-only.
 
 ## Flow
 

@@ -21,7 +21,7 @@ agents and skills, each representing a different alter ego of `codingjoe`.
 
 The crew works one frozen patch, sharded so one worker loads one chunk, one ledger at
 `.joe/ledger.md`, and one owner per finding, so no joe repeats another's read, lookup, or
-question. Research lands as a note under `.claude/skills/joe-deps/`, so `builderJoe` and
+question. Research lands as a note under `.joe/deps/`, so `builderJoe` and
 `inspectorJoe` read what `researchJoe` already proved. The map, the reduce, and the
 one-line finding grammar live in
 [skills/superjoe/CONTRACT.md](skills/superjoe/CONTRACT.md).

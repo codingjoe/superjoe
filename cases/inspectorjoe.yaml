@@ -30,7 +30,7 @@ cases:
       - ForbiddenCalls:
           patterns:
             - '\b(pytest|unittest|pre-commit|prek|ruff|mypy|tox|nox)\b'
-            - '\brm -[rf]|\bchmod\b|\btruncate\b|sed -i|git (commit|push|checkout|reset|clean|stash)|(uv|poetry) add\b'
+            - '\brm\s+\S|\bgit rm\b|-delete\b|\bchmod\b|\btruncate\b|sed -i|git (commit|push|checkout|reset|clean|stash)|(uv|poetry) add\b'
       - MaxToolCalls:
           max_calls: 15
       - MaxDuration:
@@ -91,7 +91,7 @@ cases:
       - ForbiddenCalls:
           patterns:
             - '\b(pytest|unittest|pre-commit|prek|ruff|mypy|tox|nox)\b'
-            - '\brm -[rf]|\bchmod\b|\btruncate\b|sed -i|git (commit|push|checkout|reset|clean|stash)|(uv|poetry) add\b'
+            - '\brm\s+\S|\bgit rm\b|-delete\b|\bchmod\b|\btruncate\b|sed -i|git (commit|push|checkout|reset|clean|stash)|(uv|poetry) add\b'
       - MaxToolCalls:
           max_calls: 15
       - MaxDuration:
@@ -151,7 +151,7 @@ cases:
       - ForbiddenCalls:
           patterns:
             - '\b(pytest|unittest|pre-commit|prek|ruff|mypy|tox|nox)\b'
-            - '\brm -[rf]|\bchmod\b|\btruncate\b|sed -i|git (commit|push|checkout|reset|clean|stash)|(uv|poetry) add\b'
+            - '\brm\s+\S|\bgit rm\b|-delete\b|\bchmod\b|\btruncate\b|sed -i|git (commit|push|checkout|reset|clean|stash)|(uv|poetry) add\b'
       - MaxToolCalls:
           max_calls: 12
       - MaxDuration:

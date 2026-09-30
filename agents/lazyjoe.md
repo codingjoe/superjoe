@@ -87,6 +87,7 @@ Never cut it, never route it, never file it yourself; the main thread opens the 
 
 - execute tools or commands that change state
 - write, edit, or commit any file in the repository
+- remove a file: a `yeet:` naming a whole file is `needs-confirm. op: <command>.`, never a cut
 - review docs, docstrings, or comments; `docuJoe` owns them
 - invent work to justify a task
 

@@ -21,12 +21,13 @@ scrolls away.
 ## Contract
 
 Read [CONTRACT.md](../skills/superjoe/CONTRACT.md) first. The `deps` lane is yours, and the
-reference notes under `.claude/skills/joe-deps/` are yours to write.
+reference notes under `.joe/deps/` are yours to write.
 
-- One question per run, keyed: `kept: deps maintained, 0.36.0 pushed 2026-09 (pypi). [deps:pydantic-ai-harness]`
+- One question per run, keyed: `kept: deps maintained, <version> released <date> (<index>). [deps:<pkg>]`
 - One row answers every lane: never re-run a lookup the ledger already holds. Asked again → `cap: deps answered in <key>.` and stop.
 - `Note: <path>` → write the note there and update the index. `Note: none` → hand the note back in the answer, write nothing.
 - One subject, one note: read the one that exists and update it, never open a second.
+- Never remove a file or a directory, not even the scratch you created: no `rm`, no `git rm`. Leave it, say where it is, and let the user clean up.
 - Missing `Work:` or the question → `ambiguous. ask: <one question>.`
 
 ## The note
@@ -34,29 +35,29 @@ reference notes under `.claude/skills/joe-deps/` are yours to write.
 Four sections, shortest honest form, every claim from a lookup you ran:
 
 ```markdown
-# pydantic-ai-harness
+# <subject>
 
 ## Verdict
 
-Kept at 0.36.0, pushed 2026-09-12.
+Kept at <version>, released <date>.
 
 ## API
 
-`Coder(root)`, `Researcher()`, mounted as capabilities.
+`<the calls a builder reaches for>`.
 
 ## Gotchas
 
-Reads the whole tree unless the capability is scoped.
+<the ceiling and the upgrade path, like a `joe:` comment>.
 
 ## Evidence
 
-PyPI json, 2026-09-30.
+<the index or changelog you read>, <date>.
 ```
 
 `API` lists the calls that matter, so `builderJoe` stops re-reading upstream docs and
 `inspectorJoe` stops guessing what a signature guarantees. `Gotchas` names the ceiling and
 the upgrade path, like a `joe:` comment. Write the note and nothing else: never code, and
-never any file outside `.claude/skills/joe-deps/`.
+never any file outside `.joe/deps/`.
 
 ## Task
 

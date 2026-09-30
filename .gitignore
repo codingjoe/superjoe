@@ -1,6 +1,8 @@
 .venv/
 
-.joe/
+# run state; `.joe/deps/` holds notes the repo keeps
+.joe/ledger.md
+.joe/*.diff
 
 __pycache__/
 .ruff_cache/

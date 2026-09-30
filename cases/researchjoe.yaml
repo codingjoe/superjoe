@@ -1,16 +1,16 @@
 name: researchjoe
 cases:
-  - name: verify-pydantic-ai-harness
+  - name: note-the-vetted-package
     inputs: |
       Work: pyproject.toml
-      Goal: decide whether pydantic-ai-harness still earns its place among the dependencies.
+      Goal: decide whether testcontainers still earns its place among the dependencies.
       Phase: report
       Ledger: none
       Note: none
-      User said: "research pydantic-ai-harness and hand me the quick reference note"
+      User said: "research testcontainers and hand me the quick reference note"
     evaluators:
       - Contains:
-          value: pydantic-ai-harness
+          value: testcontainers
           evaluation_name: names-package
       - ToolCorrectness:
           expected_tools: [shell]
@@ -23,7 +23,7 @@ cases:
             - '(?m)^## Verdict'
             - '(?m)^## API'
             - '(?m)^## Evidence'
-            - '(?m)^(kept|dropped):\s+deps'
+            - '(?m)^(kept|dropped):\s+deps.*\[deps:testcontainers\]'
       - MinCalls:
           min_calls: 2
       - NoRepeatCalls:
@@ -31,7 +31,7 @@ cases:
       - ForbiddenCalls:
           patterns:
             - '\b(pytest|unittest|pre-commit|prek|ruff|mypy|tox|nox)\b'
-            - '\brm -[rf]|\bchmod\b|\btruncate\b|sed -i|git (commit|push|checkout|reset|clean|stash)|(uv|poetry) add\b'
+            - '\brm\s+\S|\bgit rm\b|-delete\b|\bchmod\b|\btruncate\b|sed -i|git (commit|push|checkout|reset|clean|stash)|(uv|poetry) add\b'
       - MaxDuration:
           seconds: 180
       - MaxToolCalls:
@@ -52,12 +52,12 @@ cases:
           rubric: |
             The answer must be one research note for the task, thorough and reusable: the
             verdict row (`kept:` or `dropped:`, the `deps` lane, the key
-            `[deps:pydantic-ai-harness]`) plus the note sections `Verdict`, `API`, and
-            `Evidence`, every claim grounded in a lookup it performed. `Note: none` means
-            the workspace is read-only, so it hands the note back rather than writing it. The
-            `API` section must name the calls a builder would reach for, so no later lane
-            re-reads upstream docs. It must not claim to have changed, added, or removed any
-            code.
+            `[deps:testcontainers]`) plus the note sections `Verdict`, `API`, and `Evidence`,
+            every claim grounded in a lookup it performed. `Note: none` means the workspace is
+            read-only, so it hands the note back rather than writing it. The `API` section must
+            name the calls a builder would reach for, so no later lane re-reads upstream docs.
+            It must not claim to have changed, added, or removed any code, and it must not
+            remove a file or a scratch directory.
           include_input: true
           score:
             evaluation_name: Cohesion

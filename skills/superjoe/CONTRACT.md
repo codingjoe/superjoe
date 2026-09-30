@@ -32,13 +32,22 @@ decorated line is not a finding line, and the ledger cannot read it.
 | -------- | -------------------------------------------------------------------------------------------- |
 | `<tag>`  | the verb, from the lane's own vocabulary: `sus`, `cap`, `real`, `fixed`, `deferred`, `clear` |
 | `<lane>` | the routing key, one lane from the table below                                               |
-| `<key>`  | one line, one finding: `[src/orders.py:L38]`, `[deps:pydantic-ai-harness]`                   |
+| `<key>`  | one line, one finding: `[src/orders.py:L38]`, `[deps:<pkg>]`                                 |
 
 Ratings ride the same line: `real: bug <what>. <why>. [src/orders.py:L38] bet: 9/10 cooked: 8/10`.
 A `receipts:` block opens under the `real:` line above it and carries neither lane nor key.
 A finding with no file, like a dependency, keys on its subject: `[deps:<pkg>]`, `[docs:<topic>]`.
 A shard that maps clean closes with `clear: <lane> [shard:<path>] nothing to report.`, so
 the reduce can prove every shard answered.
+
+## Never
+
+- Never remove a file: no `rm`, no `git rm`, no `-delete`, no truncation. Removing a file
+  is the user's call, asked for as `needs-confirm. op: <command>.` Scratch a joe creates
+  stays put for the user to clean up.
+- Never delete a file to resolve a finding. A `yeet:` is an edit; a whole file is a question.
+- Never run a test, a linter, or a hook: `testJoe` owns them.
+- Never write outside the work reference, or, for `researchJoe`, outside its note folder.
 
 ## Sharding
 
@@ -82,10 +91,10 @@ one line, emit it and move on.
 ## Reference notes
 
 Thorough research nobody can read again is work repeated twice. `researchJoe` writes what
-it learns into `.claude/skills/joe-deps/`, so the crew stops re-asking and the repo keeps
-the knowledge as a skill the next session loads.
+it learns into `.joe/deps/`, so the crew stops re-asking and the repo keeps the knowledge.
+No harness owns this folder: the crew reads it by the path the prompt carries.
 
-- `SKILL.md` — the index, one line per subject: `pkg@version: verdict. what it solves.`
+- `README.md` — the index, one line per subject: `<pkg>@<version>: verdict. what it solves. [note](<pkg>.md)`
 - `<subject>.md` — the note: `Verdict`, `API`, `Gotchas`, `Evidence`.
 - Keyed `[deps:<pkg>]` or `[docs:<topic>]`, like its ledger row. One subject, one note:
   update it, never open a second.
@@ -93,35 +102,27 @@ the knowledge as a skill the next session loads.
   so hand the note back in the answer instead of writing it.
 
 ```markdown
-# pydantic-ai-harness
+# <subject>
 
 ## Verdict
 
-Kept at 0.36.0, pushed 2026-09-12.
+Kept at <version>, released <date>.
 
 ## API
 
-`Coder(root)`, `Researcher()`, mounted as capabilities.
+`<the calls a builder reaches for>`.
 
 ## Gotchas
 
-Reads the whole tree unless the capability is scoped.
+<the ceiling and the upgrade path, like a `joe:` comment>.
 
 ## Evidence
 
-PyPI json, 2026-09-30.
+<the index or changelog you read>, <date>.
 ```
 
-The index opens with the skill's frontmatter, so the note set is discoverable:
-
-```markdown
----
-name: joe-deps
-description: Vetted packages, APIs, and upstream docs for this repo, with the verdict and the calls that matter. Read before adding, hand-rolling, or reporting on one.
----
-
-- pydantic-ai-harness@0.36.0: kept. Coder and Researcher capabilities. [note](pydantic-ai-harness.md)
-```
+A harness that ships skills can point at this folder as its own, and nothing here depends
+on it: the paths are plain markdown, and the prompt names them.
 
 `builderJoe` and `inspectorJoe` read the note before either of them researches, hand-rolls,
 or reports on that subject: rung 5 of the ladder is the note, not a memory. No note and no
@@ -139,7 +140,7 @@ sus  bug  src/orders.py:L27          bare except hides every failure
 cap  sec  src/auth.py:L12            parameterized, `%` never sees user input
 real bug  src/orders.py:L27          label returns str, caller unpacks a tuple   bet: 9/10 cooked: 8/10
 clear bug shard:src/money.py         mapped clean
-kept deps deps:pydantic-ai-harness   maintained, 0.36.0 pushed 2026-09 (pypi)   note: .claude/skills/joe-deps/pydantic-ai-harness.md
+kept deps deps:httpx                      maintained, 0.28.1 released 2026-08 (pypi)   note: .joe/deps/httpx.md
 ```
 
 Rows: `<tag> <lane> <key> <what>.` One patch, one lookup, one row. A `side quest:` line

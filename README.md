@@ -8,7 +8,7 @@ agents and skills, each representing a different alter ego of `codingjoe`.
 
 - **superjoe** — orchestrates two loops: architecture (build, simplify, document, review, harden), then testing
 - **joe-audit** — audits the whole repo for over-engineering and hands back a ranked delete-list
-- **joe-debt** — harvests `joe:` shortcut comments into a tracked ledger, so "later" doesn't become "never"
+- **joe-debt** — harvests `todo:`/`@todo` shortcut comments into a tracked ledger, so "later" doesn't become "never"
 - **builderjoe** — writes code faster than `codingjoe` can say "it worked on my machine"
 - **lazyjoe** — flags over-engineering and bloat, then delegates the cutting back
 - **docujoe** — documents the public surface, and deletes the docstrings nobody asked for

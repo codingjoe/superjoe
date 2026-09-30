@@ -1,23 +1,23 @@
 ---
 name: joe-debt
 description: >-
-  Harvest every `joe:` comment in the codebase into a debt ledger, so the
-  deliberate shortcuts and deferrals get tracked instead of rotting into
+  Harvest every `todo:` or `@todo` comment in the codebase into a debt ledger,
+  so the deliberate shortcuts and deferrals get tracked instead of rotting into
   "later means never". Use when the user says "joe debt", "joe-debt", "what
   did we defer", "list the shortcuts", or "joe ledger". One-shot report,
   changes nothing.
 ---
 
-Every deliberate shortcut is marked with a `joe:` comment naming its ceiling
-and upgrade path. This collects them into one ledger so a deferral can't
-quietly become permanent.
+Every deliberate shortcut is marked with a plain `todo:` or `@todo` comment
+naming its ceiling and upgrade path. This collects them into one ledger so a
+deferral can't quietly become permanent.
 
 ## Scan
 
 Grep the repo for comment markers, skipping `node_modules`, `.git`, and build
 output:
 
-`grep -rnE '(#|//) ?joe:' .` (add other comment prefixes if your stack uses them)
+`grep -rnE '(#|//) ?@?todo:' .` (add other comment prefixes if your stack uses them)
 
 Each hit is one ledger row. The comment prefix keeps prose that merely
 mentions the convention out of the ledger.
@@ -28,14 +28,16 @@ One row per marker, grouped by file:
 
 `<file>:<line>, <what was simplified>. ceiling: <the limit named>. upgrade: <the trigger to revisit>.`
 
-The convention is `joe: <ceiling>, <upgrade path>`, so pull the ceiling and
+The convention is `todo: <ceiling>, <upgrade path>`, so pull the ceiling and
 the trigger straight from the comment. Want an owner per row? Add
 `git blame -L<line>,<line>`.
 
-Flag the rot risk: any `joe:` comment that names no upgrade path or trigger
-gets a `rot:` tag; those are the ones that silently rot.
+Flag the rot risk: any `todo:` comment that names no upgrade path or trigger
+gets a `rot:` tag; those are the ones that silently rot. A bare reminder with
+no named ceiling is rot for the same reason; record it, don't invent a ceiling
+for it.
 
-End with `<N> markers, <M> tagged rot.` Nothing found: `No joe: debt. Clean ledger.`
+End with `<N> markers, <M> tagged rot.` Nothing found: `No debt. Clean ledger.`
 
 ## Boundaries
 

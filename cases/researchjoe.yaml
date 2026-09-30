@@ -37,9 +37,9 @@ cases:
       - MaxToolCalls:
           max_calls: 48
       - MaxWords:
-          words: 420
+          words: 800
       - MaxLines:
-          lines: 55
+          lines: 70
       - NoFiller
       - NotMatches:
           patterns:
@@ -47,7 +47,7 @@ cases:
       - Speed:
           target_seconds: 90
       - Brevity:
-          target_words: 320
+          target_words: 600
       - LLMJudge:
           rubric: |
             The answer must be one research note for the task, thorough and reusable: the

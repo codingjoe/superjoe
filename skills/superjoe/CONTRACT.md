@@ -96,6 +96,10 @@ kept deps deps:pydantic-ai-harness   maintained, 0.36.0 pushed 2026-09 (pypi)
 Rows: `<tag> <lane> <key> <what>.` One patch, one lookup, one row. A `side quest:` line
 becomes a `deferred` row; a fix flips its row to `fixed`.
 
+The main thread folds a line as it writes the row: strip a leading bullet, number, or
+backtick, and bracket a bare `path:L<line>`. The wire format stays the agent's job and the
+evals score it, but a decorated line costs a normalization, never a re-run.
+
 ## Dedupe
 
 - Key = `[path:L<line>]`. Two lanes, one key, one finding: the first claim holds.

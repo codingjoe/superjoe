@@ -91,10 +91,11 @@ one line, emit it and move on.
 ## Reference notes
 
 Thorough research nobody can read again is work repeated twice. `researchJoe` writes what
-it learns into `.joe/deps/`, so the crew stops re-asking and the repo keeps the knowledge.
-No harness owns this folder: the crew reads it by the path the prompt carries.
+it learns into `.cache/joe/deps/`, so the crew stops re-asking and the next session reads
+the answer instead of re-running the lookup. No harness owns this folder: the crew reads it
+by the path the prompt carries.
 
-- `README.md` — the index, one line per subject: `<pkg>@<version>: verdict. what it solves. [note](<pkg>.md)`
+- `index.md` — the index, one line per subject: `<pkg>@<version>: verdict. what it solves. [note](<pkg>.md)`
 - `<subject>.md` — the note: `Verdict`, `API`, `Gotchas`, `Evidence`.
 - Keyed `[deps:<pkg>]` or `[docs:<topic>]`, like its ledger row. One subject, one note:
   update it, never open a second.
@@ -103,7 +104,8 @@ No harness owns this folder: the crew reads it by the path the prompt carries.
 - `Note: <path>` carries the subject's path. `Note: none` means the workspace is read-only,
   so hand the note back in the answer instead of writing it.
 - The folder may not exist yet. An absent note is not an error, and probing for one is not
-  work: it means nobody has vetted that subject, so ask `researchJoe` once.
+  work: it means nobody has vetted that subject, so ask `researchJoe` once. `researchJoe`
+  creates the folder and `index.md` on its first note.
 
 ```markdown
 # <subject>
@@ -126,7 +128,9 @@ Kept at <version>, released <date>.
 ```
 
 A harness that ships skills can point at this folder as its own, and nothing here depends
-on it: the paths are plain markdown, and the prompt names them.
+on it: the paths are plain markdown, and the prompt names them. Because the folder
+lives under `.cache/`, the notes stay local to the machine; commit them only if the
+user asks for them.
 
 `builderJoe` and `inspectorJoe` read the note before either of them researches, hand-rolls,
 or reports on that subject: rung 5 of the ladder is the note, not a memory. No note and no
@@ -134,8 +138,10 @@ verdict? One `deps` request to `researchJoe`, once.
 
 ## The ledger
 
-The main thread owns `.joe/ledger.md`, gitignored, one per run. Every joe reads it, no
-joe but the main thread writes it.
+The main thread owns `.cache/joe/ledger.md`, one per run, under the cache directory most
+repos already ignore, so the crew needs no gitignore edit of its own. Every joe reads it, no
+joe but the main thread writes it. A repo that tracks `.cache/` gets one question, not a
+silent edit: `needs-confirm. op: echo .cache/ >> .gitignore`.
 
 ```text
 # work: main...feat base: 4f2a1b head: 9c3d2e patch: 2 files, +38
@@ -144,7 +150,7 @@ sus  bug  src/orders.py:L27          bare except hides every failure
 cap  sec  src/auth.py:L12            parameterized, `%` never sees user input
 real bug  src/orders.py:L27          label returns str, caller unpacks a tuple   bet: 9/10 cooked: 8/10
 clear bug shard:src/money.py         mapped clean
-kept deps deps:httpx                      maintained, 0.28.1 released 2026-08 (pypi)   note: .joe/deps/httpx.md
+kept deps deps:httpx                      maintained, 0.28.1 released 2026-08 (pypi)   note: .cache/joe/deps/httpx.md
 ```
 
 Rows: `<tag> <lane> <key> <what>.` One patch, one lookup, one row. A `side quest:` line

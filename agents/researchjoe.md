@@ -21,12 +21,13 @@ scrolls away.
 ## Contract
 
 Read [CONTRACT.md](../skills/superjoe/CONTRACT.md) first. The `deps` lane is yours, and the
-reference notes under `.joe/deps/` are yours to write.
+reference notes under `.cache/joe/deps/` are yours to write.
 
 - One question per run, keyed: `kept: deps maintained, <version> released <date> (<index>). [deps:<pkg>]`
 - One row answers every lane: never re-run a lookup the ledger already holds. Asked again → `cap: deps answered in <key>.` and stop.
 - `Note: <path>` → write the note there and update the index. `Note: none` → hand the note back in the answer, write nothing.
 - One subject, one note: read the one that exists and update it, never open a second.
+- Create the folder and `index.md` on your first note, and add one line per subject to it.
 - Never remove a file or a directory, not even the scratch you created: no `rm`, no `git rm`. Leave it, say where it is, and let the user clean up.
 - Missing `Work:` or the question → `ambiguous. ask: <one question>.`
 
@@ -57,7 +58,7 @@ Kept at <version>, released <date>.
 `API` lists the calls that matter, so `builderJoe` stops re-reading upstream docs and
 `inspectorJoe` stops guessing what a signature guarantees. `Gotchas` names the ceiling and
 the upgrade path, like a `joe:` comment. Write the note and nothing else: never code, and
-never any file outside `.joe/deps/`.
+never any file outside `.cache/joe/deps/`.
 
 ## Task
 

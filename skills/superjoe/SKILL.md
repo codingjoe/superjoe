@@ -21,7 +21,7 @@ Fan out LLM work; serialize CPU work. Workers run in parallel up to the budget, 
 
 A map over lane x shard, then a reduce over the keys.
 
-1. **Freeze** — pin the work once, as one diff per shard: `git diff <ref> -- <paths> > .joe/shard-1.diff`, or `gh pr diff <n>` split the same way. Open `.joe/ledger.md` with the run header and the shard map. Every later prompt points at its own shard diff, so no joe re-derives the patch and no two workers load the same chunk.
+1. **Freeze** — pin the work once, as one diff per shard: `mkdir -p .cache/joe` then `git diff <ref> -- <paths> > .cache/joe/shard-1.diff`, or `gh pr diff <n>` split the same way. Open `.cache/joe/ledger.md` with the run header and the shard map. Every later prompt points at its own shard diff, so no joe re-derives the patch and no two workers load the same chunk.
 1. **Plan shards** — one file per shard, bundled under ~40 changed lines and split past ~200, inside the budget: 4 shards per lane, 6 workers in flight. Under 2 files or ~150 changed lines, skip sharding and hand the whole patch to one worker per lane.
 1. **Map** — hand each (lane, shard) one prompt, in parallel: `inspectorJoe` (`bug`, `perf`, `naming`), `secretJoe` (`sec`), `lazyJoe` (`bloat`), `docuJoe` (`doc`). A mapper emits `sus:` lines only, keyed inside its shard: it proves nothing, fixes nothing, traces nothing.
 1. **Reduce** — merge on the key, shards first, then lanes. One key, one owner, the highest lane wins. Write the rows to the ledger, then ask the user once for the whole map with `AskUserQuestion`: one option per merged key, `none` always present.
@@ -124,31 +124,31 @@ Prompt = the envelope, nothing else:
 - `Goal:` one user story sentence, or `Steps:` QED for a bug
 - `Phase:` `triage` to map, `prove` to investigate, `report` for one-shot work
 - `Shard:` `1/2 src/money.py` for a sharded map, omitted otherwise
-- `Ledger:` `.joe/ledger.md`, or `none`
-- `Note:` `.joe/deps/<subject>.md` for `researchJoe`, `none` when read-only
+- `Ledger:` `.cache/joe/ledger.md`, or `none`
+- `Note:` `.cache/joe/deps/<subject>.md` for `researchJoe`, `none` when read-only
 - `Mode:` the user's mode, to `builderJoe` and `lazyJoe` in every prompt
 - `User said:` the user's own words, verbatim
 
 No task lists, no step-by-step, no restating the output contract: it lives in the agent's own file. The work reference bounds the scope, and anything outside it gets a `side quest:` line.
 
 ```text
-Work: .joe/shard-1.diff
+Work: .cache/joe/shard-1.diff
 Goal: As a <role>, I want <capability>, so that <benefit>.
 Phase: triage
 Shard: 1/2 src/money.py
-Ledger: .joe/ledger.md
+Ledger: .cache/joe/ledger.md
 User said: <explicit instruction, verbatim>
 ```
 
 or
 
 ```text
-Work: .joe/shard-1.diff
+Work: .cache/joe/shard-1.diff
 Goal: Should return boolean
 Steps: 1. click this 2. click that 3. boom! QED
 Phase: prove
 Shard: 1/2 src/money.py
-Ledger: .joe/ledger.md
+Ledger: .cache/joe/ledger.md
 User said: <explicit instruction, verbatim>
 ```
 
@@ -167,11 +167,11 @@ task -> agent
 | find, vet, and note packages  | `researchJoe`  | `deps`                |
 | orchestrate the loops         | main thread    | —                     |
 
-Rule: main thread loops; each agent does one step. Spawn `researchJoe` from any step when a dependency or fact needs checking; it never edits code, but it does write the reference note under `.joe/deps/`, so the next lane reads a note instead of re-running the lookup.
+Rule: main thread loops; each agent does one step. Spawn `researchJoe` from any step when a dependency or fact needs checking; it never edits code, but it does write the reference note under `.cache/joe/deps/`, so the next lane reads a note instead of re-running the lookup.
 
 One agent, many shards: the same joe runs once per chunk, so a 12-file patch maps as 12 small contexts instead of four whole-patch loads.
 
-One research, many readers: a `deps` verdict lands as `.joe/deps/<subject>.md` plus its index line, and `builderJoe` and `inspectorJoe` read that note instead of re-asking. Pass `Note: .joe/deps/<subject>.md` in every `researchJoe` prompt; `Note: none` only where the workspace is read-only.
+One research, many readers: a `deps` verdict lands as `.cache/joe/deps/<subject>.md` plus its index line, and `builderJoe` and `inspectorJoe` read that note instead of re-asking. Pass `Note: .cache/joe/deps/<subject>.md` in every `researchJoe` prompt; `Note: none` only where the workspace is read-only.
 
 ## Flow
 

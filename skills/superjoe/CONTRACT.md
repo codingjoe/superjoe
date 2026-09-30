@@ -98,7 +98,8 @@ No harness owns this folder: the crew reads it by the path the prompt carries.
 - `<subject>.md` — the note: `Verdict`, `API`, `Gotchas`, `Evidence`.
 - Keyed `[deps:<pkg>]` or `[docs:<topic>]`, like its ledger row. One subject, one note:
   update it, never open a second.
-- Length is fine here: a note is read once and reused, unlike the answer it replaces.
+- Length is fine here: a note is read once and reused, unlike the answer it replaces. Its
+  length tracks the subject's surface, so the line count bounds it, not a word budget.
 - `Note: <path>` carries the subject's path. `Note: none` means the workspace is read-only,
   so hand the note back in the answer instead of writing it.
 - The folder may not exist yet. An absent note is not an error, and probing for one is not

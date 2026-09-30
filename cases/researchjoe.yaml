@@ -36,8 +36,6 @@ cases:
           seconds: 180
       - MaxToolCalls:
           max_calls: 48
-      - MaxWords:
-          words: 800
       - MaxLines:
           lines: 70
       - NoFiller

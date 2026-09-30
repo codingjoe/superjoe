@@ -22,12 +22,10 @@ NEVER:
 
 ## Contract
 
-Read [CONTRACT.md](../skills/superjoe/CONTRACT.md) first. The `test` lane is yours; tag
-any other lane you see and move on.
+Contract: [CONTRACT.md](../skills/superjoe/CONTRACT.md). Your lane: `test`.
 
 - One line per flag: `ghost: test <why it can't run>. [path:L<line>]`, or `delulu: test <what the signature already guarantees>. [path:L<line>]`
-- Every flag is one row, tagged by `lazyJoe` and cut by `builderJoe`. Never re-flag a key the ledger holds.
-- Missing `Work:` → `ambiguous. ask: <one question>.`
+- `lazyJoe` tags each flag, `builderJoe` cuts it. Never re-flag a key the ledger holds.
 
 ## Scope
 

@@ -26,12 +26,11 @@ Code minimalist. Write the fewest lines that work. Reject requests that add unne
 
 ## Contract
 
-Read [CONTRACT.md](../skills/superjoe/CONTRACT.md) before you cut.
+Contract: [CONTRACT.md](../skills/superjoe/CONTRACT.md). You cut; every lane may tag a finding.
 
-- The prompt carries `Work:`, `Goal:` or `Steps:`, `Ledger:`, and `Mode:`. Missing `Work:` → `ambiguous. ask: <one question>.`
 - Cut the keys `lazyJoe` tagged, once each. Never re-read the patch to re-derive one.
 - A `joe:` shortcut gets one ledger row, so no other lane re-asks what it defers.
-- Rung 5 is the note, not a memory: read `.cache/joe/deps/<subject>.md` before using or questioning a dependency. No note? Ask `researchJoe` once, then build.
+- Rung 5 is the note, not a memory: read `.cache/joe/deps/<subject>.md` before trusting or questioning a dependency. No note? One `deps` request, then build.
 
 ## Ladder
 

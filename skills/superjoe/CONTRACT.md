@@ -25,14 +25,9 @@ One line per finding. No preamble, no summary, no prose between lines.
 
 `<tag>: <lane> <what>. [<key>]`
 
-The tag opens the line. No bullet, no number, no bold, no backtick around it: a
-decorated line is not a finding line, and the ledger cannot read it.
-
-| Field    | Carries                                                                                      |
-| -------- | -------------------------------------------------------------------------------------------- |
-| `<tag>`  | the verb, from the lane's own vocabulary: `sus`, `cap`, `real`, `fixed`, `deferred`, `clear` |
-| `<lane>` | the routing key, one lane from the table below                                               |
-| `<key>`  | one line, one finding: `[src/orders.py:L38]`, `[deps:<pkg>]`                                 |
+The tag is a verb from your lane's vocabulary (Lanes below), the lane routes it, and the
+key is one line, one finding. The tag opens the line: no bullet, no number, no bold, no
+backtick around it. A decorated line is not a finding line, and the ledger cannot read it.
 
 Ratings ride the same line: `real: bug <what>. <why>. [src/orders.py:L38] bet: 9/10 cooked: 8/10`.
 A `receipts:` block opens under the `real:` line above it and carries neither lane nor key.
@@ -67,8 +62,8 @@ signatures you call are enough to judge your own lines.
 - Triage stays in the shard: every `sus:`, `yeet:`, and `ghost:` line keys on a line the
   shard owns. Found something outside it? That is the neighbour's row, so leave it.
 - Prove may leave it: a confirmed key may follow a call into another shard, and the
-  reduce routes that finding to the shard that owns its key.
-- A key outside every shard is out of scope: `side quest:`.
+  reduce routes that finding to the shard that owns its key. Outside every shard is out
+  of scope: `side quest:`.
 - A worker who must read three files to judge one line is in the wrong shard: move the
   boundary, or hand that key to the shard that owns it.
 
@@ -95,7 +90,7 @@ it learns into `.cache/joe/deps/`, so the crew stops re-asking and the next sess
 the answer instead of re-running the lookup. No harness owns this folder: the crew reads it
 by the path the prompt carries.
 
-- `index.md` — the index, one line per subject: `<pkg>@<version>: verdict. what it solves. [note](<pkg>.md)`
+- `index.md` — the index, one line per subject: `<pkg>@<version>: verdict. what it solves. See <pkg>.md.`
 - `<subject>.md` — the note: `Verdict`, `API`, `Gotchas`, `Evidence`.
 - Keyed `[deps:<pkg>]` or `[docs:<topic>]`, like its ledger row. One subject, one note:
   update it, never open a second.
@@ -112,11 +107,11 @@ by the path the prompt carries.
 
 ## Verdict
 
-Kept at <version>, released <date>.
+<kept|dropped> at <version>, released <date>.
 
 ## API
 
-`<the calls a builder reaches for>`.
+<the calls a builder reaches for>.
 
 ## Gotchas
 
@@ -127,10 +122,9 @@ Kept at <version>, released <date>.
 <the index or changelog you read>, <date>.
 ```
 
-A harness that ships skills can point at this folder as its own, and nothing here depends
-on it: the paths are plain markdown, and the prompt names them. Because the folder
-lives under `.cache/`, the notes stay local to the machine; commit them only if the
-user asks for them.
+A harness that ships skills can point at this folder; nothing here depends on it, since
+the paths are plain markdown that the prompt names. The notes stay local to the machine
+under `.cache/`; commit them only if the user asks.
 
 `builderJoe` and `inspectorJoe` read the note before either of them researches, hand-rolls,
 or reports on that subject: rung 5 of the ladder is the note, not a memory. No note and no
@@ -164,8 +158,8 @@ evals score it, but a decorated line costs a normalization, never a re-run.
 
 - Key = `[path:L<line>]`. Two lanes, one key, one finding: the first claim holds.
 - One key, two lanes: the highest lane wins, `sec` > `bug` > `perf` > `bloat` > `doc` > `test` > `deps` > `naming`.
-- A key the ledger holds is claimed: emit `cap: <lane> duplicate of [<key>].` and stop.
-- Never emit the same key twice in a run.
+- Never emit a key twice, and never re-report one the ledger holds: emit
+  `cap: <lane> duplicate of [<key>].` and stop.
 
 ## No repeat work
 

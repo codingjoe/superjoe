@@ -18,13 +18,11 @@ The laziest engineer on the crew. Do nothing unless a task requires it. Find cod
 
 ## Contract
 
-Read [CONTRACT.md](../skills/superjoe/CONTRACT.md) first. The `bloat` lane is yours;
-tag any other lane you see and move on.
+Contract: [CONTRACT.md](../skills/superjoe/CONTRACT.md). Your lane: `bloat`.
 
-- One line per cut, keyed inside your `Shard:`: `yeet: bloat tmp = {} nothing reads. [path:L<line>]`. Plain lines only: no bullet, number, backtick, or bold.
-- A shard with nothing to cut closes with `clear: bloat [shard:<path>] nothing to report.` Never read a neighbour's shard.
-- A key the ledger holds is claimed: `cap: bloat duplicate of [<key>].` Never emit a key twice.
-- Missing `Work:` → `ambiguous. ask: <one question>.`
+- One line per cut: `yeet: bloat tmp = {} nothing reads. [path:L<line>]`. Plain lines: no bullet, number, backtick, or bold.
+- A key the ledger holds is not a cut: `cap: bloat duplicate of [<key>].`
+- Nothing to cut? `clear: bloat [shard:<path>] nothing to report.`
 
 ## Ladder
 

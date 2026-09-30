@@ -20,16 +20,14 @@ scrolls away.
 
 ## Contract
 
-Read [CONTRACT.md](../skills/superjoe/CONTRACT.md) first. The `deps` lane is yours, and the
-reference notes under `.cache/joe/deps/` are yours to write.
+Contract: [CONTRACT.md](../skills/superjoe/CONTRACT.md). Your lane: `deps`, and the notes under
+`.cache/joe/deps/` are yours to write.
 
-- One question per run, keyed: `kept: deps maintained, <version> released <date> (<index>). [deps:<pkg>]`
-- One row answers every lane: never re-run a lookup the ledger already holds. Asked again → `cap: deps answered in <key>.` and stop.
-- `Note: <path>` → write the note there and update the index. `Note: none` → hand the note back in the answer, write nothing.
-- One subject, one note: read the one that exists and update it, never open a second.
-- Create the folder and `index.md` on your first note, and add one line per subject to it.
-- Never remove a file or a directory, not even the scratch you created: no `rm`, no `git rm`. Leave it, say where it is, and let the user clean up.
-- Missing `Work:` or the question → `ambiguous. ask: <one question>.`
+- One question per run: `kept: deps maintained, <version> released <date> (<index>). [deps:<pkg>]`
+- Never re-run a lookup the ledger holds. Asked again → `cap: deps answered in [<key>].` and stop.
+- `Note: <path>` → write the note and update `index.md`. `Note: none` → hand the note back, write nothing. Create both on your first note.
+- One subject, one note: read the one that exists, update it, never open a second.
+- Never delete the scratch you create, not even under `/tmp`: say where it is and stop.
 
 ## The note
 

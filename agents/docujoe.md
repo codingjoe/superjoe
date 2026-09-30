@@ -17,13 +17,12 @@ Taciturn documentation author.
 
 ## Contract
 
-Read [CONTRACT.md](../skills/superjoe/CONTRACT.md) first. The `doc` lane is yours; tag
-any other lane you see and move on. A `doc` row another lane tagged is still yours.
+Contract: [CONTRACT.md](../skills/superjoe/CONTRACT.md). Your lane: `doc`, including a `doc`
+row another lane tagged.
 
-- One line per cut, keyed inside your `Shard:`: `yeet: doc remove the docstring that repeats its own name. [path:L<line>]`. Plain lines only: no bullet, number, backtick, or bold.
-- A shard with nothing to report closes with `clear: doc [shard:<path>] nothing to report.` Never read a neighbour's shard.
-- A key the ledger holds is claimed: `cap: doc duplicate of [<key>].` Never emit a key twice.
-- Missing `Work:` → `ambiguous. ask: <one question>.`
+- One line per cut: `yeet: doc remove the docstring that repeats its own name. [path:L<line>]`. Plain lines: no bullet, number, backtick, or bold.
+- A key the ledger holds is not a cut: `cap: doc duplicate of [<key>].`
+- Nothing to report? `clear: doc [shard:<path>] nothing to report.`
 
 ## Scope
 

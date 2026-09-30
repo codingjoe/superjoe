@@ -29,8 +29,6 @@ A map over lane x shard, then a reduce over the keys.
 1. **Route** — `>= 8` on both axes goes to its fixer. Everything else is reported, asked, or deferred.
 1. **Re-map** — a fix re-opens its line, its shard, and the lanes those lines open. Re-run those shards on the frozen diff plus the fix; rows outside them stay valid, and nothing else is re-read, re-asked, or re-researched.
 
-A shard with no candidates closes with `clear: <lane> [shard:<path>] nothing to report.`, so the reduce can prove every shard answered.
-
 ## Exit gates
 
 Ship only when both loops pass.
@@ -43,11 +41,8 @@ Only `8/10` or above on both `bet` and `cooked` blocks the gate. Everything else
 
 ## The confirmation gate
 
-The mappers triage without proving. The user sits between the map and the prove.
-
-1. **Map** — `sus:` lines only, inside the shard. `secretJoe` proves nothing here.
-1. **Reduce** — the main thread merges every shard and lane on the key and asks one question: which keys to prove. Nothing runs unconfirmed.
-1. **Prove** — the owner confirms or caps each of its keys, then rates the survivors.
+The mappers triage without proving, and the user sits between the map and the prove: one
+confirmation covers the whole patch, and nothing runs unconfirmed.
 
 | bet    | cooked | Action                                |
 | ------ | ------ | ------------------------------------- |
@@ -72,22 +67,17 @@ Its own loop, prompted once the architecture loop is green, never a step inside 
 
 Every agent reports a finding once, in the ledger. Route on the first line that matches:
 
-| Finding                       | Lane                  | Route                                                        |
-| ----------------------------- | --------------------- | ------------------------------------------------------------ |
-| `sus:`                        | any                   | map only; the user confirms before anything runs             |
-| capped `sus:` (`cap:`)        | any                   | route nothing                                                |
-| `8/10` or above on both axes  | any                   | fix it, re-map that lane                                     |
-| `bet` `>= 8`, `cooked` `< 8`  | any                   | fix if small, otherwise `side quest:`                        |
-| `bet` `< 8`                   | any                   | ask the user; never fix, never gate                          |
-| out of scope (`side quest:`)  | any                   | file a GitHub issue, change nothing                          |
-| exploitability                | `sec`                 | `secretJoe`; nobody else reports one                         |
-| bug, performance, naming      | `bug` `perf` `naming` | `inspectorJoe`; nobody else reports one                      |
-| over-engineering, dead code   | `bloat`               | `lazyJoe` tags, `builderJoe` cuts                            |
-| docs, docstrings, comments    | `doc`                 | `docuJoe`                                                    |
-| uncovered, ghost, delulu      | `test`                | `testJoe`; only its loop tests                               |
-| packages, APIs, upstream docs | `deps`                | `researchJoe`; one lookup per question, kept as a ledger row |
+| Finding                      | Lane | Route                                            |
+| ---------------------------- | ---- | ------------------------------------------------ |
+| `sus:`                       | any  | map only; the user confirms before anything runs |
+| capped `sus:` (`cap:`)       | any  | route nothing                                    |
+| `8/10` or above on both axes | any  | fix it, re-map that lane                         |
+| `bet` `>= 8`, `cooked` `< 8` | any  | fix if small, otherwise `side quest:`            |
+| `bet` `< 8`                  | any  | ask the user; never fix, never gate              |
+| out of scope (`side quest:`) | any  | file a GitHub issue, change nothing              |
 
-Two lanes claiming one key is a duplicate, not a finding: the highest lane keeps it, the other emits `cap:`.
+The lane picks the owner, one table for both loops: see [CONTRACT.md](CONTRACT.md). Two
+lanes claiming one key is a duplicate, not a finding: the highest lane keeps it.
 
 ## Out-of-scope findings
 
@@ -140,17 +130,8 @@ Ledger: .cache/joe/ledger.md
 User said: <explicit instruction, verbatim>
 ```
 
-or
-
-```text
-Work: .cache/joe/shard-1.diff
-Goal: Should return boolean
-Steps: 1. click this 2. click that 3. boom! QED
-Phase: prove
-Shard: 1/2 src/money.py
-Ledger: .cache/joe/ledger.md
-User said: <explicit instruction, verbatim>
-```
+For a bug, swap `Goal:` for `Steps:` with the QED repro. On the way back to a confirmed
+key, `Phase: prove`.
 
 ## Agents
 
@@ -171,7 +152,7 @@ Rule: main thread loops; each agent does one step. Spawn `researchJoe` from any 
 
 One agent, many shards: the same joe runs once per chunk, so a 12-file patch maps as 12 small contexts instead of four whole-patch loads.
 
-One research, many readers: a `deps` verdict lands as `.cache/joe/deps/<subject>.md` plus its index line, and `builderJoe` and `inspectorJoe` read that note instead of re-asking. Pass `Note: .cache/joe/deps/<subject>.md` in every `researchJoe` prompt; `Note: none` only where the workspace is read-only.
+One research, many readers: pass `Note: .cache/joe/deps/<subject>.md` to `researchJoe`, and `builderJoe` and `inspectorJoe` read that note instead of re-asking. `Note: none` only where the workspace is read-only.
 
 ## Flow
 
@@ -186,37 +167,28 @@ sequenceDiagram
     participant T as testJoe
     participant U as user
 
-    Main->>Main: freeze one diff per shard, open the ledger
-    par map shard 1
-        Main->>I: triage bug, perf, naming
-        Main->>S: triage sec
-        Main->>L: triage bloat
-        Main->>D: triage doc
-    and map shard 2
+    Main->>Main: freeze one diff per shard
+    par every lane, every shard
         Main->>I: triage bug, perf, naming
         Main->>S: triage sec
         Main->>L: triage bloat
         Main->>D: triage doc
     end
-    Main->>Main: reduce on key, shards then lanes, one owner per finding
     Main->>U: one question, every merged key
     U->>Main: confirm
     par prove
-        Main->>I: my keys, my lane
-    and prove
-        Main->>S: my keys, my lane
+        Main->>I: my keys only
+        Main->>S: my keys only
     end
-    Main->>Main: rate bet and cooked
-    alt 8/10 or above on both
-        Main->>B: fix, then re-map the shards the fix touches
+    Main->>Main: rate bet and cooked, route
+    alt 8/10 on both axes
+        Main->>B: fix, then re-map those shards
     else below, or out of scope
         Main->>U: ask, or file an issue
     end
-    Note over Main: architecture green, prompt testJoe
     Main->>T: test, coverage, ghost and delulu
     T-->>Main: flags
     Main->>L: yeet verdict
     Main->>B: cut
-    Main->>I: re-map the changed lines
     Note over Main: ship only when both loops pass
 ```

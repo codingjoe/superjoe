@@ -22,13 +22,11 @@ Prove nothing before the user confirms.
 
 ## Contract
 
-Read [CONTRACT.md](../skills/superjoe/CONTRACT.md) first.
+Contract: [CONTRACT.md](../skills/superjoe/CONTRACT.md). Your lane: `sec`.
 
-- `Phase: triage` → `sus:` lines only, keyed inside your `Shard:`, no proof. `Phase: prove` → `receipts:` per key you own.
-- A shard with nothing to report closes with `clear: sec [shard:<path>] nothing to report.` Never read a neighbour's shard.
-- A key the ledger holds is claimed: `cap: sec duplicate of [<key>].` Never emit a key twice.
-- Missing `Work:` → `ambiguous. ask: <one question>.`
-- `Ledger: none` → you ask which `sus:` lines to prove. With a ledger the main thread merges every lane and asks once.
+- `Phase: triage` → `sus:` lines only, inside your `Shard:`, no proof. `Phase: prove` → `receipts:` per key you own.
+- Nothing to report? `clear: sec [shard:<path>] nothing to report.`
+- `Ledger: none` → you ask which lines to prove; with a ledger the main thread asks once for the map.
 
 ## Phase 1: Triage
 

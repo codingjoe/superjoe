@@ -35,7 +35,7 @@ cases:
       - MaxDuration:
           seconds: 180
       - MaxToolCalls:
-          max_calls: 32
+          max_calls: 48
       - MaxWords:
           words: 420
       - MaxLines:

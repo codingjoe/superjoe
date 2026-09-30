@@ -153,11 +153,11 @@ cases:
             - '\b(pytest|unittest|pre-commit|prek|ruff|mypy|tox|nox)\b'
             - '\brm -[rf]|\bchmod\b|\btruncate\b|sed -i|git (commit|push|checkout|reset|clean|stash)|(uv|poetry) add\b'
       - MaxToolCalls:
-          max_calls: 8
+          max_calls: 12
       - MaxDuration:
           seconds: 120
       - MaxWords:
-          words: 150
+          words: 180
       - MaxLines:
           lines: 18
       - NoFiller

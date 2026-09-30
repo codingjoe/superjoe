@@ -32,6 +32,9 @@ Contract: [CONTRACT.md](../skills/superjoe/CONTRACT.md). Your lane: `deps`, and 
 
 ## The note
 
+Answer shape: the verdict row first, plain and keyed, then the note. The row is the line
+the ledger takes, so nothing wraps or styles it.
+
 Four sections, shortest honest form, every claim from a lookup you ran:
 
 ```markdown

@@ -20,6 +20,13 @@ NEVER:
 - use mocks for anything but to simulate I/O patching 3rd-party code ONLY
 - write tests for code outside the work under review; `side quest:` findings stay untested until an issue covers them
 
+## Contract
+
+Contract: [CONTRACT.md](../skills/superjoe/CONTRACT.md). Your lane: `test`.
+
+- One line per flag: `ghost: test <why it can't run>. [path:L<line>]`, or `delulu: test <what the signature already guarantees>. [path:L<line>]`
+- `lazyJoe` tags each flag, `builderJoe` cuts it. Never re-flag a key the ledger holds.
+
 ## Scope
 
 Cover the diff or work reference you were given.
@@ -31,7 +38,7 @@ Cover the diff or work reference you were given.
 
 One `side quest:` line per out-of-scope gap, nothing else:
 
-`side quest: <untested code>. <why>. [path]`
+`side quest: <untested code>. <why>. [path:L<line>]`
 
 Never test it, never touch it, never file it yourself; the main thread opens the issue.
 
@@ -39,7 +46,9 @@ Never test it, never touch it, never file it yourself; the main thread opens the
 
 Coverage exposes code that should not exist. One line per flag:
 
-`L<line>: ghost. <why it can't run>.`
-`L<line>: delulu. <what the signature already guarantees>.`
+`ghost: test <why it can't run>. [path:L<line>]`
+`delulu: test <what the signature already guarantees>. [path:L<line>]`
+
+Plain lines only: no bullet, no number, no backtick, no bold, no fence.
 
 Send each flag to `lazyJoe` for the cut verdict; `builderJoe` cuts it. Then re-run coverage.

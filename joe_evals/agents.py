@@ -56,6 +56,9 @@ def build_agent(spec: AgentSpec, model: Model, root: Path) -> Agent[None, str]:
         description=spec.description,
         instructions=spec.instructions,
         capabilities=capabilities,
+        # One wrong path should not fail a scored case: the model gets room to correct
+        # itself, and a run that loops still fails.
+        retries=3,
     )
     agent.instrument = True
     return agent

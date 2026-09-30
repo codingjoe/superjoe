@@ -49,6 +49,52 @@ _PROMPT_LINES = ("Work:", "User said:")
 
 _PROMPT_ALTERNATIVES = ("Goal:", "Steps:")
 
+# The lane table of skills/superjoe/CONTRACT.md: the lane on a finding routes it to its owner.
+_LANES = frozenset(("sec", "bug", "perf", "naming", "bloat", "doc", "test", "deps"))
+
+# The tags a finding line may open with, longest first so `glow up` wins over `glow`.
+_FINDING_TAGS = (
+    "glow up",
+    "deferred",
+    "dropped",
+    "delulu",
+    "cringe",
+    "fixed",
+    "clear",
+    "sus",
+    "cap",
+    "real",
+    "yeet",
+    "duh",
+    "npc",
+    "ghost",
+    "kept",
+)
+
+# The map outputs, which a shard keeps to its own lines. Proving may follow a call.
+_LOCAL_TAGS = frozenset(
+    ("sus", "clear", "yeet", "duh", "npc", "cringe", "glow up", "ghost", "delulu")
+)
+
+_SHARD = re.compile(r"(?m)^\s*Shard:\s*(?P<id>\d+\s*/\s*\d+)\s+(?P<path>\S+)")
+
+_FINDING = re.compile(
+    r"^(?P<tag>" + "|".join(_FINDING_TAGS) + r"):\s*(?P<lane>[A-Za-z]+)\b",
+    re.IGNORECASE,
+)
+
+# One atomic key per finding: `[src/orders.py:L38]`, `[deps:pydantic-ai-harness]`.
+# Key-shaped means a colon and no whitespace, so `list[dict]` in the prose is not one.
+_KEY = re.compile(r"\[(?P<key>[^\[\]\s:]+:[^\[\]\s]+)\]")
+
+# A finding line behind decoration: `- sus: sec ...`, `2. yeet: bloat ...`, `` `cap:` ``.
+_DECORATED = re.compile(
+    r"^[-\*\+`>#\d.)\s]{1,6}(?P<tag>"
+    + "|".join(_FINDING_TAGS)
+    + r")[`\*]{0,2}:[`\*\s]{0,4}(?P<lane>[A-Za-z]+)\b",
+    re.IGNORECASE,
+)
+
 
 def _starts(lines: Sequence[str], prefix: str) -> bool:
     return any(line.startswith(prefix) for line in lines)
@@ -102,14 +148,21 @@ class PromptContract(Evaluator[object, object, object]):
     Assert the case input carries the crew's prompt shape.
 
     Every prompt a joe receives is a work reference, a goal or QED steps, and the
-    user's own words. A case that skips one scores a prompt nobody would send.
+    user's own words. A case that skips one scores a prompt nobody would send. A
+    phase that maps or proves adds its own fields through `extra`.
     """
+
+    extra: Sequence[str] = ()
+
+    def __post_init__(self) -> None:
+        self.extra = _listed(self.extra) if self.extra else ()
 
     def evaluate(
         self, ctx: EvaluatorContext[object, object, object]
     ) -> EvaluationReason:
         lines = [line.strip() for line in str(ctx.inputs).splitlines()]
-        missing = [prefix for prefix in _PROMPT_LINES if not _starts(lines, prefix)]
+        wanted = (*_PROMPT_LINES, *(f"{field.rstrip(':')}:" for field in self.extra))
+        missing = [prefix for prefix in wanted if not _starts(lines, prefix)]
         if not any(_starts(lines, prefix) for prefix in _PROMPT_ALTERNATIVES):
             missing.append(" or ".join(_PROMPT_ALTERNATIVES))
         if missing:
@@ -117,6 +170,62 @@ class PromptContract(Evaluator[object, object, object]):
                 value=False, reason=f"prompt is missing {', '.join(missing)}"
             )
         return EvaluationReason(value=True)
+
+
+@dataclass(repr=False)
+class FindingContract(Evaluator[object, object, object]):
+    """
+    Assert every finding line carries a lane and its own key, undecorated.
+
+    A finding is one line: the lane routes it to an owner, the key keeps two
+    agents off the same line. A line that drops either one cannot join the ledger,
+    and a key that repeats is the same work done twice. A bullet or a backtick in
+    front of the tag breaks the line just as badly, so it fails too, and the
+    reason names the line that needs stripping.
+    """
+
+    min_findings: int = 1
+
+    def evaluate(
+        self, ctx: EvaluatorContext[object, object, object]
+    ) -> EvaluationReason:
+        lines = [line.strip() for line in str(ctx.output).splitlines()]
+        findings = [(line, match) for line in lines if (match := _FINDING.match(line))]
+        decorated = [line for line in lines if _DECORATED.match(line)]
+        if decorated:
+            return EvaluationReason(
+                value=False,
+                reason=f"decorated finding line: {decorated[0]!r}",
+            )
+        if len(findings) < self.min_findings:
+            return EvaluationReason(
+                value=False,
+                reason=f"{len(findings)} finding line(s), min={self.min_findings}",
+            )
+        stray = sorted(
+            {
+                match.group("lane").lower()
+                for _, match in findings
+                if match.group("lane").lower() not in _LANES
+            }
+        )
+        if stray:
+            return EvaluationReason(
+                value=False, reason=f"lanes off the table: {', '.join(stray)}"
+            )
+        keyed = [
+            (line, keys[-1]) for line, _ in findings if (keys := _KEY.findall(line))
+        ]
+        if len(keyed) != len(findings):
+            line = next(line for line, _ in findings if not _KEY.search(line))
+            return EvaluationReason(value=False, reason=f"no key: {line!r}")
+        counted = Counter(key for _, key in keyed)
+        repeated = sorted(key for key, count in counted.items() if count > 1)
+        if repeated:
+            return EvaluationReason(
+                value=False, reason=f"repeated key: {', '.join(repeated)}"
+            )
+        return EvaluationReason(value=True, reason=f"{len(keyed)} keyed finding(s)")
 
 
 @dataclass(repr=False)
@@ -272,8 +381,10 @@ class ForbiddenCalls(Evaluator[object, object, object]):
     Assert no tool call matches a forbidden pattern.
 
     Patterns are regular expressions, searched case-insensitively in each call's
-    JSON arguments: test runners, linters, and anything that mutates the repository.
-    Keep them tight, since a legitimate search for the same word would trip them.
+    JSON arguments: test runners, linters, and anything that removes a file or
+    mutates the repository. Keep them tight, since a legitimate search for the
+    same word would trip them. The reason quotes the matched text, so a trip says
+    what tripped it.
     """
 
     patterns: Sequence[str]
@@ -287,14 +398,21 @@ class ForbiddenCalls(Evaluator[object, object, object]):
         calls = _tool_calls(ctx)
         if calls is None:
             return EvaluationReason(value=False, reason=_NO_SPANS)
-        hits = [
-            f"{call.name}: {_argument_text(call.arguments)}"
-            for call in calls
-            if any(
-                re.search(pattern, call.arguments or "", re.IGNORECASE)
-                for pattern in self.patterns
+        hits = []
+        for call in calls:
+            text = call.arguments or ""
+            matched = next(
+                (
+                    match
+                    for pattern in self.patterns
+                    if (match := re.search(pattern, text, re.IGNORECASE))
+                ),
+                None,
             )
-        ]
+            if matched is not None:
+                hits.append(
+                    f"{call.name}: {matched.group(0)!r} in {_argument_text(text)}"
+                )
         if hits:
             return EvaluationReason(value=False, reason="; ".join(hits))
         return EvaluationReason(value=True)
@@ -349,8 +467,45 @@ class MinCalls(Evaluator[object, object, object]):
         )
 
 
+@dataclass(repr=False)
+class ShardScope(Evaluator[object, object, object]):
+    """
+    Assert a shard's map lines stay inside its own chunk.
+
+    A shard exists so one worker loads one chunk: candidates, cuts, and coverage
+    flags are local, and a line outside the shard means a worker read past its
+    boundary. Proving may follow a call, so `real:` and `cap:` lines are exempt.
+    """
+
+    def evaluate(
+        self, ctx: EvaluatorContext[object, object, object]
+    ) -> EvaluationReason:
+        shard = _SHARD.search(str(ctx.inputs))
+        if shard is None:
+            return EvaluationReason(value=False, reason="prompt carries no Shard: line")
+        path = shard.group("path").rsplit("/", 1)[-1]
+        outside: list[str] = []
+        for raw in str(ctx.output).splitlines():
+            line = raw.strip()
+            match = _FINDING.match(line)
+            if match is None or match.group("tag").lower() not in _LOCAL_TAGS:
+                continue
+            keys = _KEY.findall(line)
+            if not keys:
+                continue
+            key = keys[-1]
+            if ":L" in key and not key.rsplit("/", 1)[-1].startswith(f"{path}:"):
+                outside.append(key)
+        if outside:
+            return EvaluationReason(
+                value=False, reason=f"outside {path}: {', '.join(outside)}"
+            )
+        return EvaluationReason(value=True, reason=f"mapped inside {path}")
+
+
 RULES = (
     Brevity,
+    FindingContract,
     ForbiddenCalls,
     MaxLines,
     MaxWords,
@@ -360,6 +515,7 @@ RULES = (
     NoRepeatCalls,
     NotMatches,
     PromptContract,
+    ShardScope,
     Speed,
 )
 """Every rule the cases may use."""

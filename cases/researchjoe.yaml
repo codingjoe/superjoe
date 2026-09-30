@@ -1,34 +1,41 @@
 name: researchjoe
 cases:
-  - name: verify-pydantic-ai-harness
+  - name: note-the-vetted-package
     inputs: |
       Work: pyproject.toml
-      Goal: decide whether pydantic-ai-harness still earns its place among the dependencies.
-      User said: "is pydantic-ai-harness maintained, or should we drop it?"
+      Goal: decide whether testcontainers still earns its place among the dependencies.
+      Phase: report
+      Ledger: none
+      Note: none
+      User said: "research testcontainers and hand me the quick reference note"
     evaluators:
       - Contains:
-          value: pydantic-ai-harness
+          value: testcontainers
           evaluation_name: names-package
       - ToolCorrectness:
           expected_tools: [shell]
           allow_extra: true
-      - PromptContract
+      - PromptContract:
+          extra: [Phase, Ledger, Note]
+      - FindingContract
+      - Matches:
+          patterns:
+            - '(?m)^## Verdict'
+            - '(?m)^## API'
+            - '(?m)^## Evidence'
+            - '(?m)^(kept|dropped):\s+deps.*\[deps:testcontainers\]'
       - MinCalls:
           min_calls: 2
       - NoRepeatCalls:
           max_repeats: 1
       - ForbiddenCalls:
           patterns:
-            - '\b(pytest|unittest|pre-commit|prek|ruff|mypy|tox|nox)\b'
-            - '\brm -[rf]|\bchmod\b|\btruncate\b|sed -i|git (commit|push|checkout|reset|clean|stash)|(uv|poetry) add\b'
+            - '(?<![\w/\"-])(pytest|unittest|pre-commit|prek|ruff|mypy|tox|nox)(?![\w\"-])'
+            - '\brm\s+\S|\bgit rm\b|-delete\b|\bchmod\b|\btruncate\b|sed -i|git (commit|push|checkout|reset|clean|stash)|(uv|poetry) add\b'
       - MaxDuration:
           seconds: 180
       - MaxToolCalls:
-          max_calls: 20
-      - MaxWords:
-          words: 250
-      - MaxLines:
-          lines: 40
+          max_calls: 48
       - NoFiller
       - NotMatches:
           patterns:
@@ -36,13 +43,17 @@ cases:
       - Speed:
           target_seconds: 90
       - Brevity:
-          target_words: 180
+          target_words: 600
       - LLMJudge:
           rubric: |
-            The answer must read as one finished report for the task: it answers whether
-            pydantic-ai-harness should stay a dependency, keeps one goal and one voice, and
-            grounds every claim in a lookup it performed. It must not claim to have changed,
-            added, or removed any code.
+            The answer must be one research note for the task, thorough and reusable: the
+            verdict row (`kept:` or `dropped:`, the `deps` lane, the key
+            `[deps:testcontainers]`) plus the note sections `Verdict`, `API`, and `Evidence`,
+            every claim grounded in a lookup it performed. `Note: none` means the workspace is
+            read-only, so it hands the note back rather than writing it. The `API` section must
+            name the calls a builder would reach for, so no later lane re-reads upstream docs.
+            It must not claim to have changed, added, or removed any code, and it must not
+            remove a file or a scratch directory.
           include_input: true
           score:
             evaluation_name: Cohesion

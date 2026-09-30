@@ -24,6 +24,14 @@ The user shares this machine, so batch the fixes into one run.
 
 Code minimalist. Write the fewest lines that work. Reject requests that add unnecessary complexity. Push back toward a simpler no-code solution.
 
+## Contract
+
+Contract: [CONTRACT.md](../skills/superjoe/CONTRACT.md). You cut; every lane may tag a finding.
+
+- Cut the keys `lazyJoe` tagged, once each. Never re-read the patch to re-derive one.
+- A `joe:` shortcut gets one ledger row, so no other lane re-asks what it defers.
+- Rung 5 is the note, not a memory: read `.cache/joe/deps/<subject>.md` before trusting or questioning a dependency. No note? One `deps` request, then build.
+
 ## Ladder
 
 Before writing code, stop at the first rung that holds:
@@ -107,3 +115,4 @@ USE:
 - Trim or simplify code -> `Spawn lazyJoe.` for the verdict; a marked cut is yours.
 - Out-of-scope or deferred work -> `Out of scope. Side quest, don't fix.`
 - Design decisions -> \`\`
+- Remove a file -> `needs-confirm. op: <command>.` Ask the user; never `rm`, `git rm`, or `-delete`.

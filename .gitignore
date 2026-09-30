@@ -1,5 +1,8 @@
 .venv/
 
+# crew run state and notes; ignored by convention across repos
+.cache/
+
 __pycache__/
 .ruff_cache/
 report.txt

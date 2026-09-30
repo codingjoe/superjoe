@@ -17,6 +17,15 @@ agents and skills, each representing a different alter ego of `codingjoe`.
 - **secretjoe** — finds your vulnerabilities before the bad guys do (no cape required)
 - **researchjoe** — finds and evaluates packages so nobody re-implements one
 
+## The contract
+
+The crew works one frozen patch, sharded so one worker loads one chunk, one ledger at
+`.cache/joe/ledger.md`, and one owner per finding, so no joe repeats another's read, lookup, or
+question. Research lands as a note under `.cache/joe/deps/`, so `builderJoe` and
+`inspectorJoe` read what `researchJoe` already proved. The map, the reduce, and the
+one-line finding grammar live in
+[skills/superjoe/CONTRACT.md](skills/superjoe/CONTRACT.md).
+
 ## The crew, scored
 
 Build the image once with `uv run joe_evals_build`, then run the suite with

@@ -5,6 +5,8 @@ description: Orchestration for joe's agent crew.
 
 SuperJoe = a crew. Use it as two **iterative loops**, not a one-shot dispatch: architecture first, then testing. The main thread runs the loops; agents do one step each.
 
+Every joe reads [CONTRACT.md](CONTRACT.md), shipped in this skill: one patch, one ledger, one owner per finding.
+
 ## Tests
 
 NEVER run tests, a test runner, or the test suite from the main thread.
@@ -13,21 +15,25 @@ Route every test run to `testJoe`.
 Ask for the smallest selection that covers the change.
 The user shares this machine, and test runs eat CPU.
 
+Fan out LLM work; serialize CPU work. Workers run in parallel up to the budget, and no test run ever shares the machine with another.
+
 ## The architecture loop
 
-Run in order. Restart at step 1 whenever a later step fails.
+A map over lane x shard, then a reduce over the keys.
 
-1. **Build** — `builderJoe` produces minimal, working code.
-1. **Simplify** — `lazyJoe` flags over-engineering and bloat. Cut it, or route back to `builderJoe`.
-1. **Document** — `docuJoe` documents the public surface and deletes docstrings nobody asked for.
-1. **Review** — `inspectorJoe` triages to `sus:` lines, the user confirms, it rates `bet: N/10` and `cooked: N/10`. Fix both axes at `8/10` or above, then re-run.
-1. **Harden** — `secretJoe` triages to `sus:` lines, the user confirms, it brings receipts and rates them. Route both axes at `8/10` or above to `builderJoe`.
+1. **Freeze** — pin the work once, as one diff per shard: `mkdir -p .cache/joe` then `git diff <ref> -- <paths> > .cache/joe/shard-1.diff`, or `gh pr diff <n>` split the same way. Open `.cache/joe/ledger.md` with the run header and the shard map. Every later prompt points at its own shard diff, so no joe re-derives the patch and no two workers load the same chunk.
+1. **Plan shards** — one file per shard, bundled under ~40 changed lines and split past ~200, inside the budget: 4 shards per lane, 6 workers in flight. Under 2 files or ~150 changed lines, skip sharding and hand the whole patch to one worker per lane.
+1. **Map** — hand each (lane, shard) one prompt, in parallel: `inspectorJoe` (`bug`, `perf`, `naming`), `secretJoe` (`sec`), `lazyJoe` (`bloat`), `docuJoe` (`doc`). A mapper emits `sus:` lines only, keyed inside its shard: it proves nothing, fixes nothing, traces nothing.
+1. **Reduce** — merge on the key, shards first, then lanes. One key, one owner, the highest lane wins. Write the rows to the ledger, then ask the user once for the whole map with `AskUserQuestion`: one option per merged key, `none` always present.
+1. **Prove** — one parallel prompt per lane owner, carrying the keys it owns and nothing else. Every key comes back `real:` with `bet: N/10 cooked: N/10`, or `cap:`.
+1. **Route** — `>= 8` on both axes goes to its fixer. Everything else is reported, asked, or deferred.
+1. **Re-map** — a fix re-opens its line, its shard, and the lanes those lines open. Re-run those shards on the frozen diff plus the fix; rows outside them stay valid, and nothing else is re-read, re-asked, or re-researched.
 
 ## Exit gates
 
 Ship only when both loops pass.
 
-Architecture: no in-scope finding at `8/10` or above on both `bet` and `cooked`, nothing exploitable in scope.
+Architecture: no in-scope row at `8/10` or above on both `bet` and `cooked`, nothing exploitable in scope, every lane's rows closed.
 
 Testing: 100% coverage, every flagged branch cut.
 
@@ -35,11 +41,8 @@ Only `8/10` or above on both `bet` and `cooked` blocks the gate. Everything else
 
 ## The confirmation gate
 
-`inspectorJoe` and `secretJoe` run two phases. The user sits between them.
-
-1. **Triage** — emit `sus:` lines. `secretJoe` proves nothing here.
-1. **Confirm** — ask the user which to investigate. Nothing runs unconfirmed.
-1. **Investigation** — confirm or cap each one, then rate the survivors.
+The mappers triage without proving, and the user sits between the map and the prove: one
+confirmation covers the whole patch, and nothing runs unconfirmed.
 
 | bet    | cooked | Action                                |
 | ------ | ------ | ------------------------------------- |
@@ -47,6 +50,8 @@ Only `8/10` or above on both `bet` and `cooked` blocks the gate. Everything else
 | `>= 8` | `< 8`  | fix if small, otherwise `side quest:` |
 | `< 8`  | `>= 8` | ask the user                          |
 | `< 8`  | `< 8`  | report only                           |
+
+A joe prompted alone, `Ledger: none`, asks for itself.
 
 ## The testing loop
 
@@ -56,32 +61,30 @@ Its own loop, prompted once the architecture loop is green, never a step inside 
 1. `lazyJoe` tags each flag `yeet:`.
 1. `builderJoe` cuts it.
 
-`testJoe` re-runs coverage once per round of cuts, not per cut. Any production change reopens the review and harden gates.
+`testJoe` re-runs coverage once per round of cuts, not per cut. Any production change reopens the review and harden gates: the lanes that fix touches, never the whole map.
 
 ## Findings
 
-Every agent reports a finding once. Route on the first line that matches:
+Every agent reports a finding once, in the ledger. Route on the first line that matches:
 
-| Finding                      | Route                                              |
-| ---------------------------- | -------------------------------------------------- |
-| `sus:`                       | triage only; the user confirms first               |
-| capped `sus:` (`cap:`)       | route nothing                                      |
-| `8/10` or above on both axes | fix it, re-run the owning step                     |
-| `bet` `>= 8`, `cooked` `< 8` | fix if small, otherwise `side quest:`              |
-| `bet` `< 8`                  | ask the user; never fix, never gate                |
-| out of scope (`side quest:`) | file a GitHub issue, change nothing                |
-| vulnerability                | `secretJoe`; nobody else reports one               |
-| bug, performance, naming     | `inspectorJoe`; nobody else reports one            |
-| over-engineering, dead code  | `lazyJoe`; nobody else reports one                 |
-| uncovered lines              | `testJoe`; nobody else reports them                |
-| ghost or delulu branch       | `testJoe` flags, `lazyJoe` tags, `builderJoe` cuts |
+| Finding                      | Lane | Route                                            |
+| ---------------------------- | ---- | ------------------------------------------------ |
+| `sus:`                       | any  | map only; the user confirms before anything runs |
+| capped `sus:` (`cap:`)       | any  | route nothing                                    |
+| `8/10` or above on both axes | any  | fix it, re-map that lane                         |
+| `bet` `>= 8`, `cooked` `< 8` | any  | fix if small, otherwise `side quest:`            |
+| `bet` `< 8`                  | any  | ask the user; never fix, never gate              |
+| out of scope (`side quest:`) | any  | file a GitHub issue, change nothing              |
+
+The lane picks the owner, one table for both loops: see [CONTRACT.md](CONTRACT.md). Two
+lanes claiming one key is a duplicate, not a finding: the highest lane keeps it.
 
 ## Out-of-scope findings
 
 Deferred, never fixed:
 
-1. The reviewer emits one `side quest: <what>. <why>. [path]` line.
-1. The main thread files one `gh issue create`, quoting the line, the repo, and the work reference.
+1. The reviewer emits one `side quest: <what>. <why>. [path:L<line>]` line.
+1. The main thread writes one `deferred` row and files one `gh issue create`, quoting the line, the repo, and the work reference.
 1. No other agent touches it, or any out-of-scope code it notices.
 
 `joe-audit` and `joe-debt` are exempt: their repo-wide list is the deliverable.
@@ -105,49 +108,51 @@ Outside the loop, on request:
 
 ## Prompting agents
 
-Prompt = work reference + user story or QED + explicit user instructions for the task. Nothing else. No task lists, no step-by-step, no output contracts.
+Prompt = the envelope, nothing else:
 
-Include what grounds the agent:
+- `Work:` the shard's frozen diff, or the file, PR, or branch
+- `Goal:` one user story sentence, or `Steps:` QED for a bug
+- `Phase:` `triage` to map, `prove` to investigate, `report` for one-shot work
+- `Shard:` `1/2 src/money.py` for a sharded map, omitted otherwise
+- `Ledger:` `.cache/joe/ledger.md`, or `none`
+- `Note:` `.cache/joe/deps/<subject>.md` for `researchJoe`, `none` when read-only
+- `Mode:` the user's mode, to `builderJoe` and `lazyJoe` in every prompt
+- `User said:` the user's own words, verbatim
 
-- Minimal file refs: `src/auth.ts`
-- Scope: the work reference bounds the review; anything else gets a `side quest:` line
-- Prior review: `see review on PR #12` or `see <branch> diff: git diff main...branch`
-- Goal: one user story sentence, exception message or expected behaviour (bugs only)
-- Steps: QED, short, numbered bullets to reproduce the error
-- Phase: reviewer prompts ask for triage; investigation waits for user confirmation.
-- Explicit user instructions for the task, verbatim.
-
-Prompt shape:
+No task lists, no step-by-step, no restating the output contract: it lives in the agent's own file. The work reference bounds the scope, and anything outside it gets a `side quest:` line.
 
 ```text
-Work: <file(s)> or <PR/branch diff reference>
+Work: .cache/joe/shard-1.diff
 Goal: As a <role>, I want <capability>, so that <benefit>.
+Phase: triage
+Shard: 1/2 src/money.py
+Ledger: .cache/joe/ledger.md
 User said: <explicit instruction, verbatim>
 ```
 
-or
-
-```text
-Work: <file(s)> or <PR/branch diff reference>
-Goal: Should return boolean
-Steps: 1. click this 2. click that 3. boom! QED
-User said: <explicit instruction, verbatim>
-```
+For a bug, swap `Goal:` for `Steps:` with the QED repro. On the way back to a confirmed
+key, `Phase: prove`.
 
 ## Agents
 
 task -> agent
 
-write minimal surgical code -> `builderJoe`
-trim bloat / over-engineering -> `lazyJoe`
-concise goal-oriented docs -> `docuJoe`
-review minimalism/perf -> `inspectorJoe`
-security research -> `secretJoe`
-tests, coverage, ghost/delulu branches -> `testJoe`, in the testing loop after review
-find & evaluate packages -> `researchJoe`
-orchestrate the loops -> main thread
+| Task                          | Agent          | Lane                  |
+| ----------------------------- | -------------- | --------------------- |
+| write minimal surgical code   | `builderJoe`   | fix                   |
+| trim bloat / over-engineering | `lazyJoe`      | `bloat`               |
+| concise goal-oriented docs    | `docuJoe`      | `doc`                 |
+| review minimalism/perf        | `inspectorJoe` | `bug` `perf` `naming` |
+| security research             | `secretJoe`    | `sec`                 |
+| tests, coverage, ghost/delulu | `testJoe`      | `test`                |
+| find, vet, and note packages  | `researchJoe`  | `deps`                |
+| orchestrate the loops         | main thread    | —                     |
 
-Rule: main thread loops; each agent does one step. Spawn `researchJoe` from any step when a dependency or fact needs checking; it never edits.
+Rule: main thread loops; each agent does one step. Spawn `researchJoe` from any step when a dependency or fact needs checking; it never edits code, but it does write the reference note under `.cache/joe/deps/`, so the next lane reads a note instead of re-running the lookup.
+
+One agent, many shards: the same joe runs once per chunk, so a 12-file patch maps as 12 small contexts instead of four whole-patch loads.
+
+One research, many readers: pass `Note: .cache/joe/deps/<subject>.md` to `researchJoe`, and `builderJoe` and `inspectorJoe` read that note instead of re-asking. `Note: none` only where the workspace is read-only.
 
 ## Flow
 
@@ -155,39 +160,35 @@ Rule: main thread loops; each agent does one step. Spawn `researchJoe` from any 
 sequenceDiagram
     participant Main as main thread
     participant B as builderJoe
+    participant I as inspectorJoe
+    participant S as secretJoe
     participant L as lazyJoe
     participant D as docuJoe
     participant T as testJoe
-    participant I as inspectorJoe
-    participant S as secretJoe
     participant U as user
 
-    Main->>B: build
-    Main->>L: simplify
-    L-->>Main: flags bloat (cut or route back)
-    Main->>D: document
-    loop until review clean, no exploits
-        Main->>I: review
-        I->>U: sus lines
-        U->>I: confirm what to investigate
-        alt bet and cooked 8/10 or above
-            Main->>B: fix
-            Main->>I: re-review
-        else below 8/10 on either axis, or out of scope
-            Main->>U: ask the user or file an issue
-        end
-        Main->>S: harden
-        S->>U: sus lines
-        U->>S: confirm what to prove
-        S-->>Main: receipts (or none)
+    Main->>Main: freeze one diff per shard
+    par every lane, every shard
+        Main->>I: triage bug, perf, naming
+        Main->>S: triage sec
+        Main->>L: triage bloat
+        Main->>D: triage doc
     end
-    Note over Main: architecture green, prompt testJoe
-    loop until coverage 100%
-        Main->>T: test
-        T-->>Main: flags ghost and delulu branches
-        Main->>L: cut verdict
-        Main->>B: cut
-        Main->>I: re-review changed code
+    Main->>U: one question, every merged key
+    U->>Main: confirm
+    par prove
+        Main->>I: my keys only
+        Main->>S: my keys only
     end
+    Main->>Main: rate bet and cooked, route
+    alt 8/10 on both axes
+        Main->>B: fix, then re-map those shards
+    else below, or out of scope
+        Main->>U: ask, or file an issue
+    end
+    Main->>T: test, coverage, ghost and delulu
+    T-->>Main: flags
+    Main->>L: yeet verdict
+    Main->>B: cut
     Note over Main: ship only when both loops pass
 ```

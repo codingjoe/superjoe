@@ -1,0 +1,45 @@
+diff --git a/src/orders.py b/src/orders.py
+index e349e4c..f3a1c27 100644
+--- a/src/orders.py
++++ b/src/orders.py
+@@ -1,6 +1,7 @@
+ from decimal import Decimal
+ 
+ TAX = Decimal("0.19")
++tmp = {}
+ 
+ 
+ def total(lines: list[dict[str, int]]) -> Decimal:
+@@ -8,3 +9,32 @@ def total(lines: list[dict[str, int]]) -> Decimal:
+     for line in lines:
+         subtotal += Decimal(line["price"]) * line["quantity"]
+     return (subtotal * (1 + TAX)).quantize(Decimal("0.01"))
++
++
++def cheapest(orders: list[dict], country: str) -> dict:
++    result = None
++    for order in orders:
++        if order["country"] == country:
++            if result is None:
++                result = order
++            else:
++                if order["total"] < result["total"]:
++                    result = order
++    return result
++
++
++def pairs(orders: list[dict]) -> list[tuple[str, str]]:
++    out = []
++    for left in orders:
++        for right in orders:
++            if left["id"] < right["id"] and left["country"] == right["country"]:
++                out.append((left["id"], right["id"]))
++    return out
++
++
++def label(order: dict) -> str:
++    try:
++        return order["customer"]["name"]
++    except:
++        pass
++    return "unknown"

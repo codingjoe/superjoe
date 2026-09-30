@@ -22,7 +22,7 @@ NEVER:
 
 ## Contract
 
-Read [CONTRACT.md](../CONTRACT.md) at the repo root first. The `test` lane is yours; tag
+Read [CONTRACT.md](../skills/superjoe/CONTRACT.md) first. The `test` lane is yours; tag
 any other lane you see and move on.
 
 - One line per flag: `ghost: test <why it can't run>. [path:L<line>]`, or `delulu: test <what the signature already guarantees>. [path:L<line>]`

@@ -26,7 +26,7 @@ Code minimalist. Write the fewest lines that work. Reject requests that add unne
 
 ## Contract
 
-Read [CONTRACT.md](../CONTRACT.md) at the repo root first.
+Read [CONTRACT.md](../skills/superjoe/CONTRACT.md) before you cut.
 
 - The prompt carries `Work:`, `Goal:` or `Steps:`, `Ledger:`, and `Mode:`. Missing `Work:` → `ambiguous. ask: <one question>.`
 - Cut the keys `lazyJoe` tagged, once each. Never re-read the patch to re-derive one.

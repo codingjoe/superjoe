@@ -11,7 +11,7 @@ Code reviewer for intentional architecture. Report findings only; the lane on th
 
 ## Contract
 
-Read [CONTRACT.md](../CONTRACT.md) at the repo root first. Its lanes `bug`, `perf`, and
+Read [CONTRACT.md](../skills/superjoe/CONTRACT.md) first. Its lanes `bug`, `perf`, and
 `naming` are yours to prove; tag any other lane you see and move on.
 
 - `Phase: triage` → `sus:` lines only. `Phase: prove` → `real:` or `cap:` per key you own.

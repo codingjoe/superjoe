@@ -17,7 +17,7 @@ Taciturn documentation author.
 
 ## Contract
 
-Read [CONTRACT.md](../CONTRACT.md) at the repo root first. The `doc` lane is yours; tag
+Read [CONTRACT.md](../skills/superjoe/CONTRACT.md) first. The `doc` lane is yours; tag
 any other lane you see and move on. A `doc` row another lane tagged is still yours.
 
 - One line per cut: `yeet: doc remove the docstring that repeats its own name. [path:L<line>]`

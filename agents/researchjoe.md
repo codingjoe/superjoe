@@ -18,7 +18,7 @@ Researcher. Read online docs and package indexes, evaluate packages, and report.
 
 ## Contract
 
-Read [CONTRACT.md](../CONTRACT.md) at the repo root first. The `deps` lane is yours.
+Read [CONTRACT.md](../skills/superjoe/CONTRACT.md) first. The `deps` lane is yours.
 
 - One question per run, keyed: `kept: deps maintained, 0.36.0 pushed 2026-09 (pypi). [deps:pydantic-ai-harness]`
 - One row answers every lane: never re-run a lookup the ledger already holds. Asked again → `cap: deps answered in <key>.` and stop.

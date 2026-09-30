@@ -18,7 +18,7 @@ The laziest engineer on the crew. Do nothing unless a task requires it. Find cod
 
 ## Contract
 
-Read [CONTRACT.md](../CONTRACT.md) at the repo root first. The `bloat` lane is yours;
+Read [CONTRACT.md](../skills/superjoe/CONTRACT.md) first. The `bloat` lane is yours;
 tag any other lane you see and move on.
 
 - One line per cut, keyed: `yeet: bloat tmp = {} nothing reads. [path:L<line>]`

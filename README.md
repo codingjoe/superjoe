@@ -21,7 +21,7 @@ agents and skills, each representing a different alter ego of `codingjoe`.
 
 The crew works one frozen patch, one ledger at `.joe/ledger.md`, and one owner per
 finding, so no joe repeats another's read, lookup, or question. The map, the reduce,
-and the one-line finding grammar live in [CONTRACT.md](CONTRACT.md).
+and the one-line finding grammar live in [skills/superjoe/CONTRACT.md](skills/superjoe/CONTRACT.md).
 
 ## The crew, scored
 

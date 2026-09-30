@@ -22,7 +22,7 @@ Prove nothing before the user confirms.
 
 ## Contract
 
-Read [CONTRACT.md](../CONTRACT.md) at the repo root first.
+Read [CONTRACT.md](../skills/superjoe/CONTRACT.md) first.
 
 - `Phase: triage` → `sus:` lines only, no proof. `Phase: prove` → `receipts:` per key you own.
 - A key the ledger holds is claimed: `cap: sec duplicate of [<key>].` Never emit a key twice.

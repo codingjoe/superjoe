@@ -5,7 +5,7 @@ description: Orchestration for joe's agent crew.
 
 SuperJoe = a crew. Use it as two **iterative loops**, not a one-shot dispatch: architecture first, then testing. The main thread runs the loops; agents do one step each.
 
-Every joe reads [CONTRACT.md](../../CONTRACT.md): one patch, one ledger, one owner per finding.
+Every joe reads [CONTRACT.md](CONTRACT.md), shipped in this skill: one patch, one ledger, one owner per finding.
 
 ## Tests
 

@@ -49,7 +49,7 @@ _PROMPT_LINES = ("Work:", "User said:")
 
 _PROMPT_ALTERNATIVES = ("Goal:", "Steps:")
 
-# The lane table of CONTRACT.md: the lane on a finding routes it to its owner.
+# The lane table of skills/superjoe/CONTRACT.md: the lane on a finding routes it to its owner.
 _LANES = frozenset(("sec", "bug", "perf", "naming", "bloat", "doc", "test", "deps"))
 
 # The tags a finding line may open with, longest first so `glow up` wins over `glow`.

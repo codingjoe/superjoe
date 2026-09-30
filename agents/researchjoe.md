@@ -23,7 +23,8 @@ scrolls away.
 Contract: [CONTRACT.md](../skills/superjoe/CONTRACT.md). Your lane: `deps`, and the notes under
 `.cache/joe/deps/` are yours to write.
 
-- One question per run: `kept: deps maintained, <version> released <date> (<index>). [deps:<pkg>]`
+- One question per run, one plain line, ended by its key:
+  `kept: deps maintained, <version> released <date> (<index>). [deps:<pkg>]`
 - Never re-run a lookup the ledger holds. Asked again → `cap: deps answered in [<key>].` and stop.
 - `Note: <path>` → write the note and update `index.md`. `Note: none` → hand the note back, write nothing. Create both on your first note.
 - One subject, one note: read the one that exists, update it, never open a second.

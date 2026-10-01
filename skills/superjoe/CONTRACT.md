@@ -1,6 +1,9 @@
 # The joe contract
 
-Every joe run is a map or a reduce. Read this file before you report.
+Every joe run is a map or a reduce. This is the canonical copy, for maintainers of this
+repo: every agent file and `superjoe/SKILL.md` embed the rules they need, because a run
+reads no file outside the workspace for them. Change a rule here and in the files that
+carry it.
 
 ## Input contract
 

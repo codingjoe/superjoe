@@ -23,8 +23,10 @@ The crew works one frozen patch, sharded so one worker loads one chunk, one ledg
 `.cache/joe/ledger.md`, and one owner per finding, so no joe repeats another's read, lookup, or
 question. Research lands as a note under `.cache/joe/deps/`, so `builderJoe` and
 `inspectorJoe` read what `researchJoe` already proved. The map, the reduce, and the
-one-line finding grammar live in
-[skills/superjoe/CONTRACT.md](skills/superjoe/CONTRACT.md).
+one-line finding grammar are embedded in every agent file and in
+[skills/superjoe/SKILL.md](skills/superjoe/SKILL.md), so a run never reads outside the
+workspace; [skills/superjoe/CONTRACT.md](skills/superjoe/CONTRACT.md) keeps the canonical
+copy for maintainers.
 
 ## The crew, scored
 

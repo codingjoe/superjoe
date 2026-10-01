@@ -5,7 +5,59 @@ description: Orchestration for joe's agent crew.
 
 SuperJoe = a crew. Use it as two **iterative loops**, not a one-shot dispatch: architecture first, then testing. The main thread runs the loops; agents do one step each.
 
-Every joe reads [CONTRACT.md](CONTRACT.md), shipped in this skill: one patch, one ledger, one owner per finding.
+Every joe carries the contract in its own file: nothing at runtime reads a file for these rules. One patch, one ledger, one owner per finding.
+
+## The contract
+
+Embedded, so no joe — and no main thread — reads a file for its rules. Read no file for
+these rules either: this section and each agent's own file carry them.
+
+A prompt is an envelope, nothing else:
+
+| Field        | Carries                                           |
+| ------------ | ------------------------------------------------- |
+| `Work:`      | the diff, file, PR, or branch to work             |
+| `Goal:`      | one user story, or `Steps:` for a QED repro       |
+| `Phase:`     | `triage`, `prove`, or `report`                    |
+| `Shard:`     | the chunk this worker owns: `1/2 src/money.py`    |
+| `Ledger:`    | the run's ledger path, or `none`                  |
+| `Note:`      | where the reference note goes, or `none`          |
+| `Mode:`      | `lite`, `full`, `ultra` for builders and trimmers |
+| `User said:` | the user's own words, verbatim                    |
+
+A finding is one line, and the tag opens it: no bullet, number, bold, or backtick. A
+decorated line costs a normalization, never a re-run.
+
+`<tag>: <lane> <what>. [<key>]`
+
+| Lane     | Owner        | Tags                                  | Work                                |
+| -------- | ------------ | ------------------------------------- | ----------------------------------- |
+| `sec`    | secretJoe    | `sus` `cap` `real` `receipts`         | exploitability                      |
+| `bug`    | inspectorJoe | `sus` `cap` `real`                    | correctness                         |
+| `perf`   | inspectorJoe | `sus` `cap` `real`                    | speed and memory                    |
+| `naming` | inspectorJoe | `sus` `cap` `real`                    | names and readability               |
+| `bloat`  | lazyJoe      | `yeet` `duh` `NPC` `cringe` `glow up` | over-engineering and dead code      |
+| `doc`    | docuJoe      | `yeet` `real`                         | docstrings, comments, README        |
+| `test`   | testJoe      | `ghost` `delulu`                      | coverage, ghost and delulu branches |
+| `deps`   | researchJoe  | `kept` `dropped`                      | packages, APIs, upstream docs       |
+
+`[path:L<line>]` is the key. Two lanes on one key: the highest lane wins,
+`sec` > `bug` > `perf` > `bloat` > `doc` > `test` > `deps` > `naming`.
+
+Ledger rows read `<tag> <lane> <key> <what>.` — one patch, one lookup, one row, under the
+run header the freeze step writes. A `side quest:` line becomes a `deferred` row; a fix
+flips its row to `fixed`.
+
+Sharding: under 2 files or ~150 changed lines, one prompt holds the lot; split a file only
+past ~200 changed lines, by function or region; bundle files under ~40 changed lines.
+
+Reference notes live under `.cache/joe/deps/`: `researchJoe` writes `<subject>.md` and
+updates `index.md`, and the prompt carries `Note: <path>`, or `Note: none` where the
+workspace is read-only.
+
+Never, from the main thread either: no `rm`, `git rm`, `-delete`, or truncation, since
+removing a file is the user's call, asked for as `needs-confirm. op: <command>.`; no test,
+linter, or hook run outside `testJoe`; no write outside the work reference.
 
 ## Tests
 
@@ -76,7 +128,7 @@ Every agent reports a finding once, in the ledger. Route on the first line that 
 | `bet` `< 8`                  | any  | ask the user; never fix, never gate              |
 | out of scope (`side quest:`) | any  | file a GitHub issue, change nothing              |
 
-The lane picks the owner, one table for both loops: see [CONTRACT.md](CONTRACT.md). Two
+The lane picks the owner, one table for both loops: the lanes above. Two
 lanes claiming one key is a duplicate, not a finding: the highest lane keeps it.
 
 ## Out-of-scope findings

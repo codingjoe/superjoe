@@ -41,7 +41,7 @@ repos:
         verbose: true
         entry: bash -c 'write-good "$@" || true' --
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.9
+    rev: v0.16.10
     hooks:
       - id: ruff-check
       - id: ruff-format

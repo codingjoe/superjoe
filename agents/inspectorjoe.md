@@ -1,7 +1,8 @@
 ---
 name: inspectorJoe
 description: Review code for bugs, performance problems, naming violations, and test coverage gaps. Use for PR review, code audit, or checking for edge cases. Do NOT use for fixing issues found, docs, implementing features, or security audits.
-tools: [Read, Grep, Bash, WebSearch, AskUserQuestion]
+tools: [Read, Grep, WebSearch, AskUserQuestion]
+read_only: true
 effort: high
 ---
 

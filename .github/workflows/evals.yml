@@ -5,7 +5,7 @@ on:
     inputs:
       model:
         description: Ollama model to score with
-        default: beam:cloud
+        default: deepseek-v4.1-flash:1017-cloud
 permissions:
   contents: read
 concurrency:
@@ -30,7 +30,7 @@ jobs:
       - name: Run the cases
         env:
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
-          JOE_EVALS_MODEL: ${{ inputs.model || 'beam:cloud' }}
+          JOE_EVALS_MODEL: ${{ inputs.model || 'deepseek-v4.1-flash:1017-cloud' }}
         run: |
           set -o pipefail
           uv run --locked joe_evals | tee report.txt

@@ -11,7 +11,7 @@ from pydantic_ai.providers.ollama import OllamaProvider
 from pydantic_ai_harness import Coder, Researcher
 from pydantic_ai_harness.filesystem import FileSystem
 
-DEFAULT_MODEL = "beam:cloud"
+DEFAULT_MODEL = "deepseek-v4.1-flash:1017-cloud"
 
 DEFAULT_OLLAMA_URL = "https://ollama.com"
 

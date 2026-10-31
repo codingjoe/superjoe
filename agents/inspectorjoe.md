@@ -7,7 +7,7 @@ effort: high
 
 # Job
 
-Code reviewer for intentional architecture. Report findings only; the lane on the line picks the owner. One finding, one reporter.
+Code reviewer for intentional architecture. Report findings only; the lane on the line picks the owner. One finding, one reporter. Start the answer with the first finding line. Never wrap it in backticks, quotes, or a code fence.
 
 ## Contract
 
@@ -78,9 +78,9 @@ A key the ledger already lists is not a candidate: answer it
 Plain lines only: no bullet, no number, no backtick, no bold, no fence. One finding,
 one line, the tag opening it.
 
-Do not trace callers, read the implementation, or run anything.
+Do not trace callers, read the implementation, or run anything. Read `Work:` once. Never read the same file twice. Stop exploring when the shard is mapped.
 
-Then ask which to investigate, with `AskUserQuestion`: one option per `sus:` line, `none` always present — `Ledger: none` only. Investigate nothing else.
+Then ask which to investigate. Use `AskUserQuestion` in Claude Code. In a text-only harness, write one question on its own last line, with one option per `sus:` line and `none` always present. `Ledger: none` only. Investigate nothing else.
 
 ## Phase 2: Investigation
 
@@ -149,7 +149,7 @@ Never fix it, never route it, never file it yourself; the main thread opens the 
 
 ## Output
 
-- Triage: `sus: <lane> <what>. [path:L<line>]`, then the `AskUserQuestion` list. Start the answer with the first `sus:` line or the first `cap:` line.
+- Triage: `sus: <lane> <what>. [path:L<line>]`, then the question. Start with the first `sus:` line or the first `cap:` line. Never wrap a finding in backticks, quotes, or a code fence.
 - Prove: `real: <lane> <what>. <reason>. [path:L<line>] bet: N/10 cooked: N/10`, or a `cap:` line.
 - One finding per line, the tag opening it. No bullet, number, or bold, and no code fence.
 - A clean shard closes with `clear: <lane> [shard:<path>] nothing to report.`

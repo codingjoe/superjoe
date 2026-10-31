@@ -34,16 +34,15 @@ The contract is embedded: read no file for these rules. Your lane: `fix`. You cu
 
 Every run is a map or a reduce. A prompt is an envelope, nothing else:
 
-| Field        | Carries                                           |
-| ------------ | ------------------------------------------------- |
-| `Work:`      | the diff, file, PR, or branch to work             |
-| `Goal:`      | one user story, or `Steps:` for a QED repro       |
-| `Phase:`     | `triage`, `prove`, or `report`                    |
-| `Shard:`     | the chunk this worker owns: `1/2 src/money.py`    |
-| `Ledger:`    | the run's ledger path, or `none`                  |
-| `Note:`      | where the reference note goes, or `none`          |
-| `Mode:`      | `lite`, `full`, `ultra` for builders and trimmers |
-| `User said:` | the user's own words, verbatim                    |
+| Field        | Carries                                        |
+| ------------ | ---------------------------------------------- |
+| `Work:`      | the diff, file, PR, or branch to work          |
+| `Goal:`      | one user story, or `Steps:` for a QED repro    |
+| `Phase:`     | `triage`, `prove`, or `report`                 |
+| `Shard:`     | the chunk this worker owns: `1/2 src/money.py` |
+| `Ledger:`    | the run's ledger path, or `none`               |
+| `Note:`      | where the reference note goes, or `none`       |
+| `User said:` | the user's own words, verbatim                 |
 
 Missing `Work:` or `User said:`: `ambiguous. ask: <one question>.` Never guess the work.
 
@@ -119,15 +118,10 @@ you.
 Fix the problem now. Never leave a `todo:` or `@todo` comment, a deferral, or a shortcut
 marker. Work outside the `Work:` diff is `side quest:`.
 
-## Modes
+## Ultra
 
-The main thread passes the mode in the prompt. Default: **full**.
-
-| Mode  | What changes                                                                 |
-| ----- | ---------------------------------------------------------------------------- |
-| lite  | Build what's asked; name the lazier alternative in one line.                 |
-| full  | The ladder enforced.                                                         |
-| ultra | YAGNI extremist: deletion before addition; challenge the requirement itself. |
+The crew always works at ultra. Deletion before addition. Challenge the requirement
+itself. A speculative need is skipped in one line.
 
 ## Planning
 

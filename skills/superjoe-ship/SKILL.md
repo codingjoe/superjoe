@@ -13,16 +13,15 @@ Every joe carries the rules it needs. Read no file for them.
 
 A prompt is an envelope, nothing else:
 
-| Field        | Carries                                           |
-| ------------ | ------------------------------------------------- |
-| `Work:`      | the reviewed branch, diff, file, or PR            |
-| `Goal:`      | one user story, or `Steps:` for a QED repro       |
-| `Phase:`     | `report` or `prove`                               |
-| `Shard:`     | the chunk this worker owns: `1/2 src/money.py`    |
-| `Ledger:`    | `.cache/joe/ship-ledger.md`, or `none`            |
-| `Note:`      | `.cache/joe/deps/<subject>.md`, or `none`         |
-| `Mode:`      | `lite`, `full`, `ultra` for builders and trimmers |
-| `User said:` | the user's own words, verbatim                    |
+| Field        | Carries                                        |
+| ------------ | ---------------------------------------------- |
+| `Work:`      | the reviewed branch, diff, file, or PR         |
+| `Goal:`      | one user story, or `Steps:` for a QED repro    |
+| `Phase:`     | `report` or `prove`                            |
+| `Shard:`     | the chunk this worker owns: `1/2 src/money.py` |
+| `Ledger:`    | `.cache/joe/ship-ledger.md`, or `none`         |
+| `Note:`      | `.cache/joe/deps/<subject>.md`, or `none`      |
+| `User said:` | the user's own words, verbatim                 |
 
 Missing `Work:` or `User said:`: `ambiguous. ask: <one question>.` Never guess the work.
 
@@ -94,10 +93,10 @@ Deferred, never fixed:
 1. The main thread writes one `deferred` row and files one `gh issue create`, quoting the line, the repo, and the work reference.
 1. No other agent touches it, or any out-of-scope code it notices.
 
-## Modes
+## Ultra
 
-Pass the user's `lite`, `full`, or `ultra` mode to `builderJoe` and `lazyJoe`. Default:
-`full`.
+The crew always works at ultra. `builderJoe` deletes before it adds. `lazyJoe` flags
+speculative anything, including tests beyond one check.
 
 ## Agents
 
@@ -124,7 +123,6 @@ Prompt = the envelope, nothing else:
 - `Shard:` `1/2 src/money.py` for a sharded pass, omitted otherwise
 - `Ledger:` `.cache/joe/ship-ledger.md`, or `none`
 - `Note:` `.cache/joe/deps/<subject>.md` for `researchJoe`, `none` when read-only
-- `Mode:` the user's mode, to `builderJoe` and `lazyJoe` in every prompt
 - `User said:` the user's own words, verbatim
 
 For `killJoe`, `Phase: report`, and `Work:` is the diff `builderJoe` just wrote.

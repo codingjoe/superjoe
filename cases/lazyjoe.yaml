@@ -4,7 +4,6 @@ cases:
     inputs: |
       Work: fixtures/bloat.diff
       Goal: keep the reporting patch from landing as more code than the job needs.
-      Mode: full
       Phase: triage
       Ledger: none
       User said: "review this patch and tell me what to cut"

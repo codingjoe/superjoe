@@ -11,20 +11,24 @@ workspace for them. Change a rule here and in the files that carry it.
 `superjoe-ship` adds tests and docs after the review. The shared rules here carry into both
 skills. Each skill embeds the loop it needs.
 
+## Ultra
+
+The crew always works at ultra. `builderJoe` deletes before it adds and challenges the
+requirement itself. `lazyJoe` flags speculative anything, including tests beyond one check.
+
 ## Input contract
 
 A prompt is an envelope, nothing else.
 
-| Field        | Carries                                           |
-| ------------ | ------------------------------------------------- |
-| `Work:`      | the diff, file, PR, or branch to work             |
-| `Goal:`      | one user story, or `Steps:` for a QED repro       |
-| `Phase:`     | `triage`, `prove`, or `report`                    |
-| `Shard:`     | the chunk this worker owns: `1/2 src/money.py`    |
-| `Ledger:`    | the run's ledger path, or `none`                  |
-| `Note:`      | where the reference note goes, or `none`          |
-| `Mode:`      | `lite`, `full`, `ultra` for builders and trimmers |
-| `User said:` | the user's own words, verbatim                    |
+| Field        | Carries                                        |
+| ------------ | ---------------------------------------------- |
+| `Work:`      | the diff, file, PR, or branch to work          |
+| `Goal:`      | one user story, or `Steps:` for a QED repro    |
+| `Phase:`     | `triage`, `prove`, or `report`                 |
+| `Shard:`     | the chunk this worker owns: `1/2 src/money.py` |
+| `Ledger:`    | the run's ledger path, or `none`               |
+| `Note:`      | where the reference note goes, or `none`       |
+| `User said:` | the user's own words, verbatim                 |
 
 Missing `Work:` or `User said:`: `ambiguous. ask: <one question>.` Never guess the work.
 

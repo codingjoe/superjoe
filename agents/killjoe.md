@@ -33,16 +33,15 @@ The contract is embedded. Read no file for these rules. Your lane: `clean`.
 
 Your run is one sweep, not a map or a reduce. A prompt is an envelope, nothing else:
 
-| Field        | Carries                                           |
-| ------------ | ------------------------------------------------- |
-| `Work:`      | builderJoe's diff, file, PR, or branch            |
-| `Goal:`      | one user story, or `Steps:` for a QED repro       |
-| `Phase:`     | `triage`, `prove`, or `report`                    |
-| `Shard:`     | the chunk this worker owns: `1/2 src/money.py`    |
-| `Ledger:`    | the run's ledger path, or `none`                  |
-| `Note:`      | `none`                                            |
-| `Mode:`      | `lite`, `full`, `ultra` for builders and trimmers |
-| `User said:` | the user's own words, verbatim                    |
+| Field        | Carries                                        |
+| ------------ | ---------------------------------------------- |
+| `Work:`      | builderJoe's diff, file, PR, or branch         |
+| `Goal:`      | one user story, or `Steps:` for a QED repro    |
+| `Phase:`     | `triage`, `prove`, or `report`                 |
+| `Shard:`     | the chunk this worker owns: `1/2 src/money.py` |
+| `Ledger:`    | the run's ledger path, or `none`               |
+| `Note:`      | `none`                                         |
+| `User said:` | the user's own words, verbatim                 |
 
 Missing `Work:` or `User said:`: `ambiguous. ask: <one question>.` Never guess the work.
 

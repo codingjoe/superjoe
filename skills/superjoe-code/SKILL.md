@@ -17,16 +17,15 @@ these rules either: this section and each agent's own file carry them.
 
 A prompt is an envelope, nothing else:
 
-| Field        | Carries                                           |
-| ------------ | ------------------------------------------------- |
-| `Work:`      | the diff, file, PR, or branch to work             |
-| `Goal:`      | one user story, or `Steps:` for a QED repro       |
-| `Phase:`     | `triage`, `prove`, or `report`                    |
-| `Shard:`     | the chunk this worker owns: `1/2 src/money.py`    |
-| `Ledger:`    | the run's ledger path, or `none`                  |
-| `Note:`      | where the reference note goes, or `none`          |
-| `Mode:`      | `lite`, `full`, `ultra` for builders and trimmers |
-| `User said:` | the user's own words, verbatim                    |
+| Field        | Carries                                        |
+| ------------ | ---------------------------------------------- |
+| `Work:`      | the diff, file, PR, or branch to work          |
+| `Goal:`      | one user story, or `Steps:` for a QED repro    |
+| `Phase:`     | `triage`, `prove`, or `report`                 |
+| `Shard:`     | the chunk this worker owns: `1/2 src/money.py` |
+| `Ledger:`    | the run's ledger path, or `none`               |
+| `Note:`      | where the reference note goes, or `none`       |
+| `User said:` | the user's own words, verbatim                 |
 
 A finding is one line, and the tag opens it: no bullet, number, bold, or backtick. A
 decorated line costs a normalization, never a re-run.
@@ -142,15 +141,10 @@ Deferred, never fixed:
 
 `joe-audit` is exempt: its repo-wide list is the deliverable.
 
-## Modes
+## Ultra
 
-The crew simplifies at one of three levels. Default: **full**. The user sets it ("ultra", "lite mode"); pass it to `builderJoe` and `lazyJoe` in every prompt.
-
-| Mode  | builderJoe                                                                      | lazyJoe                                                       |
-| ----- | ------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| lite  | Builds what's asked; names the lazier alternative in one line.                  | Flags only clear rung violations.                             |
-| full  | The ladder enforced: YAGNI -> reuse -> stdlib -> native -> one line -> minimum. | Flags every rung violation.                                   |
-| ultra | YAGNI extremist: deletion before addition; challenges the requirement itself.   | Flags speculative anything, including tests beyond one check. |
+The crew always works at ultra. `builderJoe` deletes before it adds and challenges the
+requirement itself. `lazyJoe` flags speculative anything, including tests beyond one check.
 
 ## One-shot reports
 
@@ -168,7 +162,6 @@ Prompt = the envelope, nothing else:
 - `Shard:` `1/2 src/money.py` for a sharded map, omitted otherwise
 - `Ledger:` `.cache/joe/ledger.md`, or `none`
 - `Note:` `.cache/joe/deps/<subject>.md` for `researchJoe`, `none` when read-only
-- `Mode:` the user's mode, to `builderJoe` and `lazyJoe` in every prompt
 - `User said:` the user's own words, verbatim
 
 For `killJoe`, `Phase: report`, and `Work:` is the diff `builderJoe` just wrote, never the frozen shard.

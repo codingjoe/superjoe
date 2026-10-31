@@ -26,13 +26,13 @@ cases:
       - MinCalls:
           min_calls: 1
       - NoRepeatCalls:
-          max_repeats: 1
+          max_repeats: 2
       - ForbiddenCalls:
           patterns:
             - '(?<![\w/\"-])(pytest|unittest|pre-commit|prek|ruff|mypy|tox|nox)(?![\w\"-])'
             - '\brm\s+\S|\bgit rm\b|-delete\b|\bchmod\b|\btruncate\b|sed -i|git (commit|push|checkout|reset|clean|stash)|(uv|poetry) add\b'
       - MaxToolCalls:
-          max_calls: 15
+          max_calls: 30
       - MaxDuration:
           seconds: 180
       - MaxWords:

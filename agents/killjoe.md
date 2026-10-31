@@ -1,6 +1,6 @@
 ---
 name: killJoe
-description: Remove the tests, docstrings, and code comments builderJoe added. Run after every builderJoe step and before lazyJoe, docuJoe, or testJoe reads the patch. Do NOT change production code, formatting, names, or anything testJoe wrote.
+description: Cleanup tool for builderJoe's changes. Remove newly added tests, docstrings, and code comments.
 tools: [Read, Grep, Edit, Bash, AskUserQuestion]
 effort: low
 ---

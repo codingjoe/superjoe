@@ -6,8 +6,6 @@ from typing import Any
 
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.trace import get_tracer_provider, set_tracer_provider
-from pydantic_ai import Agent
-from pydantic_ai.models import Model
 from pydantic_evals import Dataset
 from pydantic_evals.evaluators.llm_as_a_judge import set_default_judge_model
 from pydantic_evals.reporting import EvaluationReport
@@ -37,18 +35,26 @@ def build() -> None:
     sys.stdout.write(f"{build_image(ROOT)}\n")
 
 
-def task(agent: Agent[None, str]) -> Callable[[str], str]:
+def task(spec: AgentSpec, model_name: str) -> Callable[[str], str]:
     def run(prompt: str) -> str:
+        # Each run gets its own agent and model. Reusing them across event loops
+        # binds asyncio state to a loop that is already gone.
+        agent = build_agent(spec, build_model(model_name), ROOT)
         return agent.run_sync(prompt).output
 
     return run
 
 
-def evaluate(path: Path, model: Model, repeats: int) -> EvaluationReport[str, str, Any]:
+def evaluate(
+    path: Path, model_name: str, repeats: int
+) -> EvaluationReport[str, str, Any]:
     dataset = Dataset[str, str, Any].from_file(path, custom_evaluator_types=RULES)
-    agent = build_agent(AgentSpec.read(AGENTS_DIR / f"{path.stem}.md"), model, ROOT)
+    spec = AgentSpec.read(AGENTS_DIR / f"{path.stem}.md")
     return dataset.evaluate_sync(
-        task(agent), repeat=repeats, max_concurrency=MAX_CONCURRENCY, progress=False
+        task(spec, model_name),
+        repeat=repeats,
+        max_concurrency=MAX_CONCURRENCY,
+        progress=False,
     )
 
 
@@ -64,9 +70,8 @@ def main() -> None:
         set_tracer_provider(TracerProvider())
     model_name, judge_name, repeats = model_settings()
     set_default_judge_model(build_model(judge_name))
-    model = build_model(model_name)
     reports = [
-        evaluate(path, model, repeats) for path in sorted(CASES_DIR.glob("*.yaml"))
+        evaluate(path, model_name, repeats) for path in sorted(CASES_DIR.glob("*.yaml"))
     ]
     for report in reports:
         report.print(width=100, include_output=False, include_reasons=True)

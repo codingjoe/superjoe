@@ -31,7 +31,9 @@ jobs:
         env:
           OLLAMA_API_KEY: ${{ secrets.OLLAMA_API_KEY }}
           JOE_EVALS_MODEL: ${{ inputs.model || 'beam:cloud' }}
-        run: uv run --locked joe_evals | tee report.txt
+        run: |
+          set -o pipefail
+          uv run --locked joe_evals | tee report.txt
       - name: Upload the report
         if: always()
         uses: actions/upload-artifact@v7

@@ -150,6 +150,8 @@ Never cut it, never route it, never file it yourself; the main thread opens the 
 
 One line per finding: `<tag>: bloat <what>. <replacement>. [path:L<line>]`, then the joe to route it to. Start with the first finding line. Never wrap it in backticks, quotes, or a code fence.
 
+Start every line with one of `yeet:`, `duh:`, `NPC:`, `cringe:`, or `glow up:`. Never use a function name, a file name, or a lane as the tag. Example: `yeet: bloat tmp is never read. [src/legacy.py:L3]`.
+
 Tags:
 
 - `yeet:` dead code, unused flexibility, speculative feature. Replacement: nothing.

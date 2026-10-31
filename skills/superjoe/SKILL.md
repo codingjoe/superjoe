@@ -56,8 +56,9 @@ updates `index.md`, and the prompt carries `Note: <path>`, or `Note: none` where
 workspace is read-only.
 
 Never, from the main thread either: no `rm`, `git rm`, `-delete`, or truncation, since
-removing a file is the user's call, asked for as `needs-confirm. op: <command>.`; no test,
-linter, or hook run outside `testJoe`; no write outside the work reference.
+removing a file is the user's call, asked for as `needs-confirm. op: <command>.` The one
+exception is `killJoe`, which may delete a test file that `builderJoe` created. No test,
+linter, or hook run outside `testJoe`. No write outside the work reference.
 
 ## Tests
 
@@ -79,6 +80,7 @@ A map over lane x shard, then a reduce over the keys.
 1. **Reduce** — merge on the key, shards first, then lanes. One key, one owner, the highest lane wins. Write the rows to the ledger, then ask the user once for the whole map with `AskUserQuestion`: one option per merged key, `none` always present.
 1. **Prove** — one parallel prompt per lane owner, carrying the keys it owns and nothing else. Every key comes back `real:` with `bet: N/10 cooked: N/10`, or `cap:`.
 1. **Route** — `>= 8` on both axes goes to its fixer. Everything else is reported, asked, or deferred.
+1. **Sweep**: after every `builderJoe` run, `killJoe` removes the tests, docstrings, and code comments that run added. It changes nothing else. This runs before `lazyJoe`, `docuJoe`, or `testJoe` reads the patch. When `builderJoe` builds before the map, freeze after this sweep.
 1. **Re-map** — a fix re-opens its line, its shard, and the lanes those lines open. Re-run those shards on the frozen diff plus the fix; rows outside them stay valid, and nothing else is re-read, re-asked, or re-researched.
 
 ## Exit gates
@@ -112,6 +114,7 @@ Its own loop, prompted once the architecture loop is green, never a step inside 
 1. `testJoe` writes tests, hits 100% coverage, flags ghost branches and delulu checks the signature already guarantees. It runs the hooks with `prek` and reports every finding back; an autofix still counts as a finding. It edits no production code.
 1. `lazyJoe` tags each flag `yeet:`.
 1. `builderJoe` cuts it.
+1. `killJoe` sweeps the run. The tests, docstrings, and comments `builderJoe` added go. The tests `testJoe` wrote stay.
 
 `testJoe` re-runs coverage once per round of cuts, not per cut. Any production change reopens the review and harden gates: the lanes that fix touches, never the whole map.
 
@@ -139,7 +142,7 @@ Deferred, never fixed:
 1. The main thread writes one `deferred` row and files one `gh issue create`, quoting the line, the repo, and the work reference.
 1. No other agent touches it, or any out-of-scope code it notices.
 
-`joe-audit` and `joe-debt` are exempt: their repo-wide list is the deliverable.
+`joe-audit` is exempt: its repo-wide list is the deliverable.
 
 ## Modes
 
@@ -156,7 +159,6 @@ The crew simplifies at one of three levels. Default: **full**. The user sets it 
 Outside the loop, on request:
 
 - `joe-audit` — whole-repo over-engineering audit, ranked list of what to delete.
-- `joe-debt` — harvest `todo:` shortcut comments into a tracked ledger.
 
 ## Prompting agents
 
@@ -170,6 +172,8 @@ Prompt = the envelope, nothing else:
 - `Note:` `.cache/joe/deps/<subject>.md` for `researchJoe`, `none` when read-only
 - `Mode:` the user's mode, to `builderJoe` and `lazyJoe` in every prompt
 - `User said:` the user's own words, verbatim
+
+For `killJoe`, `Phase: report`, and `Work:` is the diff `builderJoe` just wrote, never the frozen shard.
 
 No task lists, no step-by-step, no restating the output contract: it lives in the agent's own file. The work reference bounds the scope, and anything outside it gets a `side quest:` line.
 
@@ -192,6 +196,7 @@ task -> agent
 | Task                          | Agent          | Lane                  |
 | ----------------------------- | -------------- | --------------------- |
 | write minimal surgical code   | `builderJoe`   | fix                   |
+| strip builderJoe's extras     | `killJoe`      | `clean`               |
 | trim bloat / over-engineering | `lazyJoe`      | `bloat`               |
 | concise goal-oriented docs    | `docuJoe`      | `doc`                 |
 | review minimalism/perf        | `inspectorJoe` | `bug` `perf` `naming` |
@@ -212,6 +217,7 @@ One research, many readers: pass `Note: .cache/joe/deps/<subject>.md` to `resear
 sequenceDiagram
     participant Main as main thread
     participant B as builderJoe
+    participant K as killJoe
     participant I as inspectorJoe
     participant S as secretJoe
     participant L as lazyJoe
@@ -234,7 +240,9 @@ sequenceDiagram
     end
     Main->>Main: rate bet and cooked, route
     alt 8/10 on both axes
-        Main->>B: fix, then re-map those shards
+        Main->>B: fix
+        Main->>K: sweep builderJoe's additions
+        Main->>Main: re-map those shards
     else below, or out of scope
         Main->>U: ask, or file an issue
     end
@@ -242,5 +250,6 @@ sequenceDiagram
     T-->>Main: flags
     Main->>L: yeet verdict
     Main->>B: cut
+    Main->>K: sweep builderJoe's additions
     Note over Main: ship only when both loops pass
 ```

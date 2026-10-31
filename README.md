@@ -6,10 +6,10 @@ agents and skills, each representing a different alter ego of `codingjoe`.
 
 ## The crew
 
-- **superjoe** — orchestrates two loops: architecture (build, simplify, document, review, harden), then testing
+- **superjoe** — orchestrates two loops: architecture (build, sweep, simplify, document, review, harden), then testing
 - **joe-audit** — audits the whole repo for over-engineering and hands back a ranked delete-list
-- **joe-debt** — harvests `todo:`/`@todo` shortcut comments into a tracked ledger, so "later" doesn't become "never"
 - **builderjoe** — writes code faster than `codingjoe` can say "it worked on my machine"
+- **killjoe**: sweeps the tests, docstrings, and comments builderjoe adds, before lazyjoe, docujoe, or testjoe reads the patch
 - **lazyjoe** — flags over-engineering and bloat, then delegates the cutting back
 - **docujoe** — documents the public surface, and deletes the docstrings nobody asked for
 - **testjoe** — covers every branch, 100%, and flags unreachable or defensive code for builderjoe to cut
@@ -22,8 +22,10 @@ agents and skills, each representing a different alter ego of `codingjoe`.
 The crew works one frozen patch, sharded so one worker loads one chunk, one ledger at
 `.cache/joe/ledger.md`, and one owner per finding, so no joe repeats another's read, lookup, or
 question. Research lands as a note under `.cache/joe/deps/`, so `builderJoe` and
-`inspectorJoe` read what `researchJoe` already proved. The map, the reduce, and the
-one-line finding grammar are embedded in every agent file and in
+`inspectorJoe` read what `researchJoe` already proved. `killJoe` runs after every
+`builderJoe` step and removes the tests, docstrings, and comments that step added, before
+the rest of the crew reads the patch. The map, the reduce, and the one-line finding grammar
+are embedded in every agent file and in
 [skills/superjoe/SKILL.md](skills/superjoe/SKILL.md), so a run never reads outside the
 workspace; [skills/superjoe/CONTRACT.md](skills/superjoe/CONTRACT.md) keeps the canonical
 copy for maintainers.
@@ -36,8 +38,8 @@ Build the image once with `uv run joe_evals_build`, then run the suite with
 
 ## Credits
 
-The ladder, the strict review notation, and the debt-ledger concept are
-adapted from [ponytail](https://github.com/DietrichGebert/ponytail) (MIT).
+The ladder and the strict review notation are adapted from
+[ponytail](https://github.com/DietrichGebert/ponytail) (MIT).
 
 ## Installation
 

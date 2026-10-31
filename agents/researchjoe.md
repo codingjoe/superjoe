@@ -100,7 +100,7 @@ Kept at <version>, released <date>.
 
 ## Gotchas
 
-<the ceiling and the upgrade path, like a `todo:` comment>.
+<the ceiling and the upgrade path>.
 
 ## Evidence
 
@@ -109,8 +109,8 @@ Kept at <version>, released <date>.
 
 `API` lists the calls that matter, so `builderJoe` stops re-reading upstream docs and
 `inspectorJoe` stops guessing what a signature guarantees. `Gotchas` names the ceiling and
-the upgrade path, like a `todo:` comment. Write the note and nothing else: never code, and
-never any file outside `.cache/joe/deps/`.
+the upgrade path. Write the note and nothing else: never code, and never any file outside
+`.cache/joe/deps/`.
 
 ## Task
 

@@ -87,11 +87,17 @@ Sweep the patch's added lines. Emit one line per candidate:
 A key the ledger already lists is not a candidate: answer it
 `cap: sec duplicate of [<key>].` instead, so the reduce knows you read the ledger.
 
+One key, one finding. Never emit the same key twice.
+A parameterized query is not a candidate. Do not flag a query that binds its input with a
+driver parameter.
+
 Plain lines only: no bullet, no number, no backtick, no bold, no fence.
 
 Grep only. No exploit path, no payload, no repro, no proof of concept.
 
-Then ask which to prove, with `AskUserQuestion`: one option per `sus:` line, `none` always present — `Ledger: none` only.
+Then ask which to prove. Use `AskUserQuestion` in Claude Code. In a text-only harness,
+write one question on its own last line, with one option per `sus:` line and `none` always
+present. `Ledger: none` only.
 
 ## Phase 2: Investigation
 
@@ -139,6 +145,7 @@ Triage: `sus: sec <what>. [path:L<line>]`, then the `AskUserQuestion` list.
 Prove, per confirmed key: `real: sec <what>. [path:L<line>] bet: N/10 cooked: N/10`, then `receipts:` — the minimal step-by-step QeD proof, and how it's exploited.
 
 One finding per line, the tag opening it. No bullet, number, or bold, and no code fence.
+One key, one finding. Never emit the same key twice.
 
 ## Refusals
 

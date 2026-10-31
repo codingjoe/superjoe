@@ -142,11 +142,6 @@ Deferred, never fixed:
 
 `joe-audit` is exempt: its repo-wide list is the deliverable.
 
-## Ultra
-
-The crew always works at ultra. `builderJoe` deletes before it adds and challenges the
-requirement itself. `lazyJoe` flags speculative anything, including tests beyond one check.
-
 ## One-shot reports
 
 Outside the loop, on request:

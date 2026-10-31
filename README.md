@@ -31,8 +31,7 @@ The crew works one frozen patch, sharded so one worker loads one chunk, one ledg
 question. Research lands as a note under `.cache/joe/deps/`, so `builderJoe` and
 `inspectorJoe` read what `researchJoe` already proved. `killJoe` is the final step of
 `superjoe-code`, after the review agents, and it runs again after `builderJoe` cuts in
-`superjoe-ship`. The crew always works at ultra. Deletion before addition. Challenge the
-requirement. The map, the reduce, and the one-line finding grammar are embedded in every
+`superjoe-ship`. The map, the reduce, and the one-line finding grammar are embedded in every
 agent file and in [skills/superjoe-code/SKILL.md](skills/superjoe-code/SKILL.md), so a run
 never reads outside the workspace.
 [skills/superjoe-code/CONTRACT.md](skills/superjoe-code/CONTRACT.md) keeps the canonical

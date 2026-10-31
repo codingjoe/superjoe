@@ -93,11 +93,6 @@ Deferred, never fixed:
 1. The main thread writes one `deferred` row and files one `gh issue create`, quoting the line, the repo, and the work reference.
 1. No other agent touches it, or any out-of-scope code it notices.
 
-## Ultra
-
-The crew always works at ultra. `builderJoe` deletes before it adds. `lazyJoe` flags
-speculative anything, including tests beyond one check.
-
 ## Agents
 
 | Task                          | Agent         | Lane    |

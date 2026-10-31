@@ -11,11 +11,6 @@ workspace for them. Change a rule here and in the files that carry it.
 `superjoe-ship` adds tests and docs after the review. The shared rules here carry into both
 skills. Each skill embeds the loop it needs.
 
-## Ultra
-
-The crew always works at ultra. `builderJoe` deletes before it adds and challenges the
-requirement itself. `lazyJoe` flags speculative anything, including tests beyond one check.
-
 ## Input contract
 
 A prompt is an envelope, nothing else.

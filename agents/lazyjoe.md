@@ -109,6 +109,7 @@ Never cut it, never route it, never file it yourself; the main thread opens the 
 ## Look out for
 
 - code nobody asked for: features, abstractions, and edge cases without a requirement
+- speculative tests beyond one check, when the code needs none
 - ghost branches and delulu checks the signature already guarantees, from `testJoe`; tag them `yeet:`
 - premature optimization and new dependencies not strictly required
 - code that duplicates a library or framework feature
@@ -167,8 +168,3 @@ Nothing to cut: `No notes. Ship it.`
 Out-of-scope findings stay on their own `side quest:` lines, apart from the cut list.
 
 Do not do the work yourself. When builderjoe re-implements something, have researchjoe find the package or API that already solves it before cutting it.
-
-## Ultra
-
-The crew always works at ultra. Flag speculative anything, including tests beyond one
-check.

@@ -4,13 +4,14 @@ from pathlib import Path
 
 import yaml
 from pydantic_ai import Agent
-from pydantic_ai.capabilities import AbstractCapability
+from pydantic_ai.capabilities import AbstractCapability, LocalWorkspace
 from pydantic_ai.models import Model
 from pydantic_ai.models.ollama import OllamaModel
 from pydantic_ai.providers.ollama import OllamaProvider
 from pydantic_ai_harness import Coder, Researcher
+from pydantic_ai_harness.filesystem import FileSystem
 
-DEFAULT_MODEL = "beam:cloud"
+DEFAULT_MODEL = "deepseek-v4.1-flash:1017-cloud"
 
 DEFAULT_OLLAMA_URL = "https://ollama.com"
 
@@ -26,6 +27,7 @@ class AgentSpec:
     description: str
     instructions: str
     tools: tuple[str, ...] | None = None
+    read_only: bool = False
 
     @classmethod
     def read(cls, path: Path) -> AgentSpec:
@@ -36,6 +38,7 @@ class AgentSpec:
             description=data["description"],
             instructions=instructions.strip(),
             tools=tuple(data["tools"]) if data.get("tools") is not None else None,
+            read_only=bool(data.get("read_only", False)),
         )
 
 
@@ -47,7 +50,11 @@ def build_model(model_name: str) -> Model:
 
 
 def build_agent(spec: AgentSpec, model: Model, root: Path) -> Agent[None, str]:
-    capabilities: list[AbstractCapability[None]] = [Coder(root)]
+    capabilities: list[AbstractCapability[None]] = [LocalWorkspace(root)]
+    if spec.read_only:
+        capabilities.append(FileSystem(root, read_only=True))
+    else:
+        capabilities.append(Coder())
     if "WebSearch" in (spec.tools or ()):
         capabilities.append(Researcher())
     agent = Agent(

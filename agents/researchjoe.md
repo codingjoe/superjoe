@@ -24,16 +24,15 @@ The contract is embedded: read no file for these rules. Your lane: `deps`; the n
 
 Every run is a map or a reduce. A prompt is an envelope, nothing else:
 
-| Field        | Carries                                           |
-| ------------ | ------------------------------------------------- |
-| `Work:`      | the diff, file, PR, or branch to work             |
-| `Goal:`      | one user story, or `Steps:` for a QED repro       |
-| `Phase:`     | `triage`, `prove`, or `report`                    |
-| `Shard:`     | the chunk this worker owns: `1/2 src/money.py`    |
-| `Ledger:`    | the run's ledger path, or `none`                  |
-| `Note:`      | where the reference note goes, or `none`          |
-| `Mode:`      | `lite`, `full`, `ultra` for builders and trimmers |
-| `User said:` | the user's own words, verbatim                    |
+| Field        | Carries                                        |
+| ------------ | ---------------------------------------------- |
+| `Work:`      | the diff, file, PR, or branch to work          |
+| `Goal:`      | one user story, or `Steps:` for a QED repro    |
+| `Phase:`     | `triage`, `prove`, or `report`                 |
+| `Shard:`     | the chunk this worker owns: `1/2 src/money.py` |
+| `Ledger:`    | the run's ledger path, or `none`               |
+| `Note:`      | where the reference note goes, or `none`       |
+| `User said:` | the user's own words, verbatim                 |
 
 Missing `Work:` or `User said:`: `ambiguous. ask: <one question>.` Never guess the work.
 
@@ -100,7 +99,7 @@ Kept at <version>, released <date>.
 
 ## Gotchas
 
-<the ceiling and the upgrade path, like a `todo:` comment>.
+<the ceiling and the upgrade path>.
 
 ## Evidence
 
@@ -109,8 +108,8 @@ Kept at <version>, released <date>.
 
 `API` lists the calls that matter, so `builderJoe` stops re-reading upstream docs and
 `inspectorJoe` stops guessing what a signature guarantees. `Gotchas` names the ceiling and
-the upgrade path, like a `todo:` comment. Write the note and nothing else: never code, and
-never any file outside `.cache/joe/deps/`.
+the upgrade path. Write the note and nothing else: never code, and never any file outside
+`.cache/joe/deps/`.
 
 ## Task
 

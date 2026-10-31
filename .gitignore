@@ -6,3 +6,6 @@
 __pycache__/
 .ruff_cache/
 report.txt
+
+# harness metadata mountpoint created by the eval container
+.pydantic-ai-harness/

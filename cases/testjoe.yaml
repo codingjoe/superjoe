@@ -1,0 +1,44 @@
+name: testjoe
+cases:
+  - name: cover-the-zero-check
+    inputs: |
+      Work: fixtures/review.diff
+      Goal: cover the new `is_zero` helper.
+      Phase: report
+      Ledger: none
+      User said: "write the test only, do not run it"
+    evaluators:
+      - PromptContract:
+          extra: [Phase, Ledger]
+      - Contains:
+          value: is_zero
+      - Matches:
+          patterns:
+            - '(?m)^\s*def test_'
+      - NotMatches:
+          patterns:
+            - '(?m)^\s*def is_zero'
+            - '(?i)todo:'
+      - MaxToolCalls:
+          max_calls: 20
+      - MaxDuration:
+          seconds: 180
+      - MaxWords:
+          words: 200
+      - MaxLines:
+          lines: 30
+      - NoFiller
+      - Speed:
+          target_seconds: 90
+      - Brevity:
+          target_words: 120
+      - LLMJudge:
+          rubric: |
+            The answer is one focused test for the new `is_zero` helper. It uses a
+            real input and asserts the behavior. It writes no production code and uses
+            no mock for the helper itself.
+          include_input: true
+          score:
+            evaluation_name: Cohesion
+            include_reason: true
+          assertion: false

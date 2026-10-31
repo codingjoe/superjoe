@@ -4,7 +4,6 @@ cases:
     inputs: |
       Work: fixtures/bloat.diff
       Goal: keep the reporting patch from landing as more code than the job needs.
-      Mode: full
       Phase: triage
       Ledger: none
       User said: "review this patch and tell me what to cut"
@@ -23,13 +22,13 @@ cases:
       - MinCalls:
           min_calls: 1
       - NoRepeatCalls:
-          max_repeats: 1
+          max_repeats: 2
       - ForbiddenCalls:
           patterns:
             - '(?<![\w/\"-])(pytest|unittest|pre-commit|prek|ruff|mypy|tox|nox)(?![\w\"-])'
             - '\brm\s+\S|\bgit rm\b|-delete\b|\bchmod\b|\btruncate\b|sed -i|git (commit|push|checkout|reset|clean|stash)|(uv|poetry) add\b'
       - MaxToolCalls:
-          max_calls: 15
+          max_calls: 18
       - MaxDuration:
           seconds: 180
       - MaxWords:

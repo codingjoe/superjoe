@@ -1,24 +1,29 @@
 # The joe contract
 
-Every joe run is a map or a reduce. This is the canonical copy, for maintainers of this
-repo: every agent file and `superjoe/SKILL.md` embed the rules they need, because a run
-reads no file outside the workspace for them. Change a rule here and in the files that
-carry it.
+The reviewer runs are a map or a reduce. `builderJoe` fixes and `killJoe` sweeps. This is
+the canonical copy, for maintainers of this repo: every agent file and
+`superjoe-code/SKILL.md` embed the rules they need, because a run reads no file outside the
+workspace for them. Change a rule here and in the files that carry it.
+
+## Two skills
+
+`superjoe-code` writes and reviews minimal code. It ends with `killJoe` and a human review.
+`superjoe-ship` adds tests and docs after the review. The shared rules here carry into both
+skills. Each skill embeds the loop it needs.
 
 ## Input contract
 
 A prompt is an envelope, nothing else.
 
-| Field        | Carries                                           |
-| ------------ | ------------------------------------------------- |
-| `Work:`      | the diff, file, PR, or branch to work             |
-| `Goal:`      | one user story, or `Steps:` for a QED repro       |
-| `Phase:`     | `triage`, `prove`, or `report`                    |
-| `Shard:`     | the chunk this worker owns: `1/2 src/money.py`    |
-| `Ledger:`    | the run's ledger path, or `none`                  |
-| `Note:`      | where the reference note goes, or `none`          |
-| `Mode:`      | `lite`, `full`, `ultra` for builders and trimmers |
-| `User said:` | the user's own words, verbatim                    |
+| Field        | Carries                                        |
+| ------------ | ---------------------------------------------- |
+| `Work:`      | the diff, file, PR, or branch to work          |
+| `Goal:`      | one user story, or `Steps:` for a QED repro    |
+| `Phase:`     | `triage`, `prove`, or `report`                 |
+| `Shard:`     | the chunk this worker owns: `1/2 src/money.py` |
+| `Ledger:`    | the run's ledger path, or `none`               |
+| `Note:`      | where the reference note goes, or `none`       |
+| `User said:` | the user's own words, verbatim                 |
 
 Missing `Work:` or `User said:`: `ambiguous. ask: <one question>.` Never guess the work.
 
@@ -40,9 +45,14 @@ the reduce can prove every shard answered.
 
 ## Never
 
-- Never remove a file: no `rm`, no `git rm`, no `-delete`, no truncation. Removing a file
-  is the user's call, asked for as `needs-confirm. op: <command>.` Scratch a joe creates
-  stays put for the user to clean up.
+- Never remove a file: no `rm`, no `rm -rf`, no `git rm`, no `-delete`, no truncation, not
+  even in `/tmp` or a scratch directory. Removing a file is the user's call, asked for as
+  `needs-confirm. op: <command>.` Scratch a joe creates stays put for the user to clean up.
+  The one exception is `killJoe`, which may delete a test file that `builderJoe` created in
+  its sweep.
+- Never run a git command that writes history: `git init`, `git add`, `git commit`,
+  `git push`, `git checkout`, `git reset`, `git clean`, `git stash`. Not in the workspace,
+  and not in `/tmp` or a scratch directory.
 - Never delete a file to resolve a finding. A `yeet:` is an edit; a whole file is a question.
 - Never run a test, a linter, or a hook: `testJoe` owns them.
 - Never write outside the work reference, or, for `researchJoe`, outside its note folder.
@@ -86,6 +96,19 @@ one line, emit it and move on.
 | `test`   | testJoe      | `ghost` `delulu`                      | coverage, ghost and delulu branches |
 | `deps`   | researchJoe  | `kept` `dropped`                      | packages, APIs, upstream docs       |
 
+## The sweep
+
+`killJoe` is the final step of `superjoe-code`. It runs after `lazyJoe` and `inspectorJoe`
+finish, before the human review. It removes the tests, docstrings, and code comments that
+`builderJoe` added. Nothing else changes. Only newly written lines are in scope. Tests
+`testJoe` wrote stay.
+
+In `superjoe-ship`, `killJoe` also runs after `builderJoe` cuts a flagged branch. It never
+runs after `docuJoe`, so the docs survive.
+
+The fixer lanes sit outside the reviewer table: `builderJoe` is `fix`, `killJoe` is
+`clean`. `killJoe` reports each removal as `strip: clean <what>. [path:L<line>]`.
+
 ## Reference notes
 
 Thorough research nobody can read again is work repeated twice. `researchJoe` writes what
@@ -118,7 +141,7 @@ by the path the prompt carries.
 
 ## Gotchas
 
-<the ceiling and the upgrade path, like a `todo:` comment>.
+<the ceiling and the upgrade path>.
 
 ## Evidence
 

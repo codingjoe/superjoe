@@ -1,0 +1,44 @@
+name: docujoe
+cases:
+  - name: document-the-helper
+    inputs: |
+      Work: fixtures/review.diff
+      Goal: document the public `is_zero` helper.
+      Phase: report
+      Ledger: none
+      User said: "write the docstring, nothing else"
+    evaluators:
+      - PromptContract:
+          extra: [Phase, Ledger]
+      - Contains:
+          value: is_zero
+      - Matches:
+          patterns:
+            - '(?m)^\s*"""'
+      - NotMatches:
+          patterns:
+            - '(?m)^\s*def test_'
+            - '(?i)todo:'
+      - MaxToolCalls:
+          max_calls: 15
+      - MaxDuration:
+          seconds: 180
+      - MaxWords:
+          words: 200
+      - MaxLines:
+          lines: 24
+      - NoFiller
+      - Speed:
+          target_seconds: 90
+      - Brevity:
+          target_words: 120
+      - LLMJudge:
+          rubric: |
+            The answer is one concise docstring for the public `is_zero` helper. It
+            describes behavior, not the implementation, and does not repeat the name.
+            It makes no code change.
+          include_input: true
+          score:
+            evaluation_name: Cohesion
+            include_reason: true
+          assertion: false

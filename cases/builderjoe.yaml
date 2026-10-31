@@ -1,0 +1,44 @@
+name: builderjoe
+cases:
+  - name: add-the-smallest-helper
+    inputs: |
+      Work: fixtures/review.diff
+      Goal: add a helper that returns the total for one order.
+      Phase: report
+      Ledger: none
+      User said: "add the helper, no tests, docs, or comments"
+    evaluators:
+      - PromptContract:
+          extra: [Phase, Ledger]
+      - NotMatches:
+          patterns:
+            - '(?m)^\s*def test_'
+            - '(?m)^\s*"""'
+            - '(?i)todo:'
+            - '(?i)\b(lite|full|ultra) mode\b'
+      - ForbiddenCalls:
+          patterns:
+            - '\brm\s+\S|\bgit rm\b|-delete\b|\bchmod\b|\btruncate\b|sed -i|git (commit|push|checkout|reset|clean|stash)|(uv|poetry) add\b'
+      - MaxToolCalls:
+          max_calls: 15
+      - MaxDuration:
+          seconds: 180
+      - MaxWords:
+          words: 160
+      - MaxLines:
+          lines: 20
+      - NoFiller
+      - Speed:
+          target_seconds: 90
+      - Brevity:
+          target_words: 100
+      - LLMJudge:
+          rubric: |
+            The answer is the smallest code change that adds the helper. It contains
+            no tests, docstrings, comments, or todo markers. It does not mention a
+            mode and does not change unrelated code.
+          include_input: true
+          score:
+            evaluation_name: Cohesion
+            include_reason: true
+          assertion: false

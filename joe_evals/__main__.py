@@ -13,6 +13,7 @@ from pydantic_evals.reporting import EvaluationReport
 from .agents import DEFAULT_MODEL, AgentSpec, build_agent, build_model
 from .container import build_image, in_container, launch
 from .evaluators import RULES
+from .skills import check_skills
 
 ROOT = Path(os.environ.get("JOE_EVALS_ROOT") or Path(__file__).resolve().parent.parent)
 
@@ -77,7 +78,11 @@ def main() -> None:
         report.print(width=100, include_output=False, include_reasons=True)
         for failure in report.failures:
             sys.stdout.write(f"{failure.name}: {failure.error_message}\n")
-    if any(report.failures for report in reports):
+    skill_failures = check_skills(ROOT)
+    for failure in skill_failures:
+        sys.stdout.write(f"skill: {failure}\n")
+    sys.stdout.write(f"skills: {'fail' if skill_failures else 'pass'}\n")
+    if skill_failures or any(report.failures for report in reports):
         raise SystemExit(1)
 
 

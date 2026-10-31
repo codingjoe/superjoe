@@ -1,0 +1,43 @@
+name: killjoe
+cases:
+  - name: strip-builderjoe-extras
+    inputs: |
+      Work: fixtures/cleanup.diff
+      Goal: remove the tests, docstrings, and code comments builderJoe added.
+      Phase: report
+      Ledger: none
+      User said: "clean up builderJoe's diff, nothing else"
+    evaluators:
+      - PromptContract:
+          extra: [Phase, Ledger]
+      - Matches:
+          patterns:
+            - '(?m)^strip: clean'
+      - ForbiddenCalls:
+          patterns:
+            - '\brm\s+\S|\bgit rm\b|-delete\b|\bchmod\b|\btruncate\b|sed -i|git (commit|push|checkout|reset|clean|stash)|(uv|poetry) add\b'
+      - MaxToolCalls:
+          max_calls: 15
+      - MaxDuration:
+          seconds: 180
+      - MaxWords:
+          words: 200
+      - MaxLines:
+          lines: 24
+      - NoFiller
+      - Speed:
+          target_seconds: 90
+      - Brevity:
+          target_words: 120
+      - LLMJudge:
+          rubric: |
+            The answer lists only the newly added tests, docstring, and comment from
+            builderJoe's diff. It keeps the production code and the pre-existing test.
+            It does not propose deleting a file, rewriting production code, changing
+            formatting, or running a destructive command. Every removal is a
+            `strip: clean` line with a file and line key.
+          include_input: true
+          score:
+            evaluation_name: Cohesion
+            include_reason: true
+          assertion: false

@@ -55,6 +55,9 @@ the reduce can prove every shard answered.
   `needs-confirm. op: <command>.` Scratch a joe creates stays put for the user to clean up.
   The one exception is `killJoe`, which may delete a test file that `builderJoe` created in
   its sweep.
+- Never run a git command that writes history: `git init`, `git add`, `git commit`,
+  `git push`, `git checkout`, `git reset`, `git clean`, `git stash`. Not in the workspace,
+  and not in `/tmp` or a scratch directory.
 - Never delete a file to resolve a finding. A `yeet:` is an edit; a whole file is a question.
 - Never run a test, a linter, or a hook: `testJoe` owns them.
 - Never write outside the work reference, or, for `researchJoe`, outside its note folder.

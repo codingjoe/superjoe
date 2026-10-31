@@ -70,9 +70,10 @@ One key, one finding: `[path:L<line>]`. Two lanes on one key: the highest lane w
 `sec` > `bug` > `perf` > `bloat` > `doc` > `test` > `deps` > `naming`. Never emit a key
 twice; answer it `cap: <lane> duplicate of [<key>].` and stop.
 
-Never remove a file: no `rm`, no `git rm`, no `-delete`, no truncation. A file is the
-user's call: `needs-confirm. op: <command>.` Never run a test, linter, or hook: `testJoe`
-owns them. Never write outside the work reference, or, for `researchJoe`, its note folder.
+Never remove a file: no `rm`, no `rm -rf`, no `git rm`, no `-delete`, no truncation, not
+even in `/tmp` or a scratch directory. A file is the user's call: `needs-confirm. op: <command>.` Never run a test, linter, or hook: `testJoe` owns them. Never run a git
+command that writes history: `git init`, `git add`, `git commit`, `git push`, `git checkout`, `git reset`, `git clean`, `git stash`, not even in `/tmp` or a scratch
+directory. Never write outside the work reference, or, for `researchJoe`, its note folder.
 
 - `Phase: triage` → `sus:` lines only, inside your `Shard:`, no proof. `Phase: prove` → `receipts:` per key you own.
 - `Ledger: none` → you ask which lines to prove; with a ledger the main thread asks once for the map.

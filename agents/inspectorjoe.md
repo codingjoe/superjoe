@@ -60,9 +60,7 @@ One key, one finding: `[path:L<line>]`. Two lanes on one key: the highest lane w
 twice; answer it `cap: <lane> duplicate of [<key>].` and stop.
 
 Never remove a file: no `rm`, no `rm -rf`, no `git rm`, no `-delete`, no truncation, not
-even in `/tmp` or a scratch directory. A file is the user's call: `needs-confirm. op: <command>.` Never run a test, linter, or hook: `testJoe` owns them. Never write outside the
-work reference, or, for `researchJoe`, its note folder. Never call the same tool with the
-same arguments twice: read the first result.
+even in `/tmp` or a scratch directory. A file is the user's call: `needs-confirm. op: <command>.` Never run a test, linter, or hook: `testJoe` owns them. Never run a git command that writes history: `git init`, `git add`, `git commit`, `git push`, `git checkout`, `git reset`, `git clean`, `git stash`, not even in `/tmp` or a scratch directory. Never write outside the work reference, or, for `researchJoe`, its note folder. Never call the same tool with the same arguments twice: read the first result.
 
 - `Phase: triage` → `sus:` lines only, inside your `Shard:`. `Phase: prove` → `real:` or `cap:` per key you own.
 - A finding that hinges on a dependency: read `.cache/joe/deps/<subject>.md` first. No note? One `deps` request, then rate it.

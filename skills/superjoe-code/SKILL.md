@@ -1,11 +1,14 @@
 ---
-name: superJoe
-description: Orchestration for joe's agent crew.
+name: superjoe-code
+description: Write minimal code and review it. End after killJoe and stop for human review. Use superjoe-ship for tests and docs.
 ---
 
-SuperJoe = a crew. Use it as two **iterative loops**, not a one-shot dispatch: architecture first, then testing. The main thread runs the loops; agents do one step each.
+SuperJoe Code = the first half of the crew. Use it as one iterative loop: write, review,
+fix, sweep. The loop ends after `killJoe`. The user reviews the cleaned patch. Tests and
+docs are a separate skill, `superjoe-ship`, run after the review.
 
-Every joe carries the contract in its own file: nothing at runtime reads a file for these rules. One patch, one ledger, one owner per finding.
+Every joe carries the contract in its own file: nothing at runtime reads a file for these
+rules. One patch, one ledger, one owner per finding.
 
 ## The contract
 
@@ -64,9 +67,8 @@ linter, or hook run outside `testJoe`. No write outside the work reference.
 
 NEVER run tests, a test runner, or the test suite from the main thread.
 NEVER run linters or pre-commit hooks.
-Route every test run to `testJoe`.
-Ask for the smallest selection that covers the change.
-The user shares this machine, and test runs eat CPU.
+Tests and hooks belong to `superjoe-ship`, which routes every test run to `testJoe`.
+This skill writes no tests. A missing test is `side quest:` work for the ship skill.
 
 Fan out LLM work; serialize CPU work. Workers run in parallel up to the budget, and no test run ever shares the machine with another.
 
@@ -74,24 +76,15 @@ Fan out LLM work; serialize CPU work. Workers run in parallel up to the budget, 
 
 A map over lane x shard, then a reduce over the keys.
 
+1. **Build**: `builderJoe` writes the smallest patch that meets the `Goal:`. When the user hands over a patch, skip this step and freeze it as given.
 1. **Freeze** — pin the work once, as one diff per shard: `mkdir -p .cache/joe` then `git diff <ref> -- <paths> > .cache/joe/shard-1.diff`, or `gh pr diff <n>` split the same way. Open `.cache/joe/ledger.md` with the run header and the shard map. Every later prompt points at its own shard diff, so no joe re-derives the patch and no two workers load the same chunk.
 1. **Plan shards** — one file per shard, bundled under ~40 changed lines and split past ~200, inside the budget: 4 shards per lane, 6 workers in flight. Under 2 files or ~150 changed lines, skip sharding and hand the whole patch to one worker per lane.
-1. **Map** — hand each (lane, shard) one prompt, in parallel: `inspectorJoe` (`bug`, `perf`, `naming`), `secretJoe` (`sec`), `lazyJoe` (`bloat`), `docuJoe` (`doc`). A mapper emits `sus:` lines only, keyed inside its shard: it proves nothing, fixes nothing, traces nothing.
+1. **Map** — hand each (lane, shard) one prompt, in parallel: `inspectorJoe` (`bug`, `perf`, `naming`), `secretJoe` (`sec`), `lazyJoe` (`bloat`). A mapper emits `sus:` lines only, keyed inside its shard: it proves nothing, fixes nothing, traces nothing.
 1. **Reduce** — merge on the key, shards first, then lanes. One key, one owner, the highest lane wins. Write the rows to the ledger, then ask the user once for the whole map with `AskUserQuestion`: one option per merged key, `none` always present.
 1. **Prove** — one parallel prompt per lane owner, carrying the keys it owns and nothing else. Every key comes back `real:` with `bet: N/10 cooked: N/10`, or `cap:`.
 1. **Route** — `>= 8` on both axes goes to its fixer. Everything else is reported, asked, or deferred.
-1. **Sweep**: after every `builderJoe` run, `killJoe` removes the tests, docstrings, and code comments that run added. It changes nothing else. This runs before `lazyJoe`, `docuJoe`, or `testJoe` reads the patch. When `builderJoe` builds before the map, freeze after this sweep.
 1. **Re-map** — a fix re-opens its line, its shard, and the lanes those lines open. Re-run those shards on the frozen diff plus the fix; rows outside them stay valid, and nothing else is re-read, re-asked, or re-researched.
-
-## Exit gates
-
-Ship only when both loops pass.
-
-Architecture: no in-scope row at `8/10` or above on both `bet` and `cooked`, nothing exploitable in scope, every lane's rows closed.
-
-Testing: 100% coverage, every flagged branch cut.
-
-Only `8/10` or above on both `bet` and `cooked` blocks the gate. Everything else: the user approves it, or it is deferred. A failing gate sends the work back to its owner.
+1. **Final sweep**: after the review agents finish, `killJoe` removes the tests, docstrings, and code comments that `builderJoe` added. It changes nothing else. This is the end of the code skill. `lazyJoe` and `inspectorJoe` have already reported. `docuJoe` and `testJoe` wait for `superjoe-ship`.
 
 ## The confirmation gate
 
@@ -107,16 +100,19 @@ confirmation covers the whole patch, and nothing runs unconfirmed.
 
 A joe prompted alone, `Ledger: none`, asks for itself.
 
-## The testing loop
+## Exit gate
 
-Its own loop, prompted once the architecture loop is green, never a step inside it.
+The code skill passes when the architecture gate is green.
 
-1. `testJoe` writes tests, hits 100% coverage, flags ghost branches and delulu checks the signature already guarantees. It runs the hooks with `prek` and reports every finding back; an autofix still counts as a finding. It edits no production code.
-1. `lazyJoe` tags each flag `yeet:`.
-1. `builderJoe` cuts it.
-1. `killJoe` sweeps the run. The tests, docstrings, and comments `builderJoe` added go. The tests `testJoe` wrote stay.
+Architecture: no in-scope row at `8/10` or above on both `bet` and `cooked`, nothing exploitable in scope, every lane's rows closed.
 
-`testJoe` re-runs coverage once per round of cuts, not per cut. Any production change reopens the review and harden gates: the lanes that fix touches, never the whole map.
+Only `8/10` or above on both `bet` and `cooked` blocks the gate. Everything else: the user approves it, or it is deferred. A failing gate sends the work back to its owner.
+
+The testing and docs gate lives in `superjoe-ship`.
+
+## Human review
+
+`superjoe-code` ends after the final `killJoe` sweep. Stop there. Do not start tests, docs, or another lane. Ask the user to review the cleaned patch. Start `superjoe-ship` only on the user's next request.
 
 ## Findings
 
@@ -131,8 +127,10 @@ Every agent reports a finding once, in the ledger. Route on the first line that 
 | `bet` `< 8`                  | any  | ask the user; never fix, never gate              |
 | out of scope (`side quest:`) | any  | file a GitHub issue, change nothing              |
 
-The lane picks the owner, one table for both loops: the lanes above. Two
-lanes claiming one key is a duplicate, not a finding: the highest lane keeps it.
+The lane picks the owner, one table for both skills: the lanes above. The
+`doc` and `test` lanes belong to `superjoe-ship`. The code skill may tag them, but it does
+not run their owners. Two lanes claiming one key is a duplicate, not a finding: the
+highest lane keeps it.
 
 ## Out-of-scope findings
 
@@ -175,6 +173,8 @@ Prompt = the envelope, nothing else:
 
 For `killJoe`, `Phase: report`, and `Work:` is the diff `builderJoe` just wrote, never the frozen shard.
 
+For `superjoe-ship`, start a new run after the user reviews. Pass the reviewed branch or diff as `Work:`. Do not reuse the code ledger.
+
 No task lists, no step-by-step, no restating the output contract: it lives in the agent's own file. The work reference bounds the scope, and anything outside it gets a `side quest:` line.
 
 ```text
@@ -198,12 +198,12 @@ task -> agent
 | write minimal surgical code   | `builderJoe`   | fix                   |
 | strip builderJoe's extras     | `killJoe`      | `clean`               |
 | trim bloat / over-engineering | `lazyJoe`      | `bloat`               |
-| concise goal-oriented docs    | `docuJoe`      | `doc`                 |
 | review minimalism/perf        | `inspectorJoe` | `bug` `perf` `naming` |
 | security research             | `secretJoe`    | `sec`                 |
-| tests, coverage, ghost/delulu | `testJoe`      | `test`                |
 | find, vet, and note packages  | `researchJoe`  | `deps`                |
-| orchestrate the loops         | main thread    | —                     |
+| orchestrate the loop          | main thread    | none                  |
+
+Tests, coverage, and docs live in `superjoe-ship`.
 
 Rule: main thread loops; each agent does one step. Spawn `researchJoe` from any step when a dependency or fact needs checking; it never edits code, but it does write the reference note under `.cache/joe/deps/`, so the next lane reads a note instead of re-running the lookup.
 
@@ -217,12 +217,10 @@ One research, many readers: pass `Note: .cache/joe/deps/<subject>.md` to `resear
 sequenceDiagram
     participant Main as main thread
     participant B as builderJoe
-    participant K as killJoe
     participant I as inspectorJoe
     participant S as secretJoe
     participant L as lazyJoe
-    participant D as docuJoe
-    participant T as testJoe
+    participant K as killJoe
     participant U as user
 
     Main->>Main: freeze one diff per shard
@@ -230,7 +228,6 @@ sequenceDiagram
         Main->>I: triage bug, perf, naming
         Main->>S: triage sec
         Main->>L: triage bloat
-        Main->>D: triage doc
     end
     Main->>U: one question, every merged key
     U->>Main: confirm
@@ -241,15 +238,16 @@ sequenceDiagram
     Main->>Main: rate bet and cooked, route
     alt 8/10 on both axes
         Main->>B: fix
-        Main->>K: sweep builderJoe's additions
         Main->>Main: re-map those shards
     else below, or out of scope
         Main->>U: ask, or file an issue
     end
-    Main->>T: test, coverage, ghost and delulu
-    T-->>Main: flags
-    Main->>L: yeet verdict
-    Main->>B: cut
-    Main->>K: sweep builderJoe's additions
-    Note over Main: ship only when both loops pass
+    Main->>K: final sweep
+    Main->>U: stop for human review
+    Note over Main: tests and docs start in superjoe-ship
 ```
+
+## Next skill
+
+After the user reviews, run `superjoe-ship` for tests and docs. It is a separate skill with
+its own loop. Do not start it from this skill.

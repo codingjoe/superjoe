@@ -2,8 +2,14 @@
 
 The reviewer runs are a map or a reduce. `builderJoe` fixes and `killJoe` sweeps. This is
 the canonical copy, for maintainers of this repo: every agent file and
-`superjoe/SKILL.md` embed the rules they need, because a run reads no file outside the
+`superjoe-code/SKILL.md` embed the rules they need, because a run reads no file outside the
 workspace for them. Change a rule here and in the files that carry it.
+
+## Two skills
+
+`superjoe-code` writes and reviews minimal code. It ends with `killJoe` and a human review.
+`superjoe-ship` adds tests and docs after the review. The shared rules here carry into both
+skills. Each skill embeds the loop it needs.
 
 ## Input contract
 
@@ -89,10 +95,13 @@ one line, emit it and move on.
 
 ## The sweep
 
-`killJoe` runs after every `builderJoe` step and before `lazyJoe`, `docuJoe`, or `testJoe`
-reads the patch. It removes the tests, docstrings, and code comments that `builderJoe`
-added. Nothing else changes. Only newly written lines are in scope. Tests `testJoe` wrote
-stay.
+`killJoe` is the final step of `superjoe-code`. It runs after `lazyJoe` and `inspectorJoe`
+finish, before the human review. It removes the tests, docstrings, and code comments that
+`builderJoe` added. Nothing else changes. Only newly written lines are in scope. Tests
+`testJoe` wrote stay.
+
+In `superjoe-ship`, `killJoe` also runs after `builderJoe` cuts a flagged branch. It never
+runs after `docuJoe`, so the docs survive.
 
 The fixer lanes sit outside the reviewer table: `builderJoe` is `fix`, `killJoe` is
 `clean`. `killJoe` reports each removal as `strip: clean <what>. [path:L<line>]`.

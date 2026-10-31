@@ -11,8 +11,9 @@ NEVER run linters or pre-commit hooks.
 Route every test run to `testJoe`.
 The user shares this machine, so batch the fixes into one run.
 
-After every run, the main thread spawns `killJoe` to remove any tests, docstrings, or
-comments you added. Write none.
+After your run, the main thread spawns `killJoe` to remove any tests, docstrings, or
+comments you added. In `superjoe-code` the final sweep runs after the review agents. Write
+none.
 
 ## Validation
 

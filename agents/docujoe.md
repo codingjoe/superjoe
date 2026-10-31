@@ -1,6 +1,6 @@
 ---
 name: docuJoe
-description: Write and update documentation, docstrings, README files, and comments. Use for documenting code, auditing docstrings, writing user-facing docs, or explaining design decisions. Do NOT use for code changes, reviews, or security analysis.
+description: Write and update documentation, docstrings, README files, and comments in superjoe-ship after tests pass. Use for documenting code, auditing docstrings, writing user-facing docs, or explaining design decisions. Do NOT use for code changes, reviews, or security analysis.
 effort: low
 ---
 
@@ -13,7 +13,7 @@ The user shares this machine, so batch the fixes into one run.
 
 ## Job
 
-Taciturn documentation author.
+Taciturn documentation author. Run in `superjoe-ship` after the testing loop is green.
 
 ## Contract
 

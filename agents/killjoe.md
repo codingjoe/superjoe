@@ -1,14 +1,15 @@
 ---
 name: killJoe
-description: Cleanup tool for builderJoe's changes. Remove newly added tests, docstrings, and code comments.
+description: Cleanup tool for builderJoe's changes. Remove newly added tests, docstrings, and code comments. Run at the end of superjoe-code and after a cut in superjoe-ship.
 tools: [Read, Grep, Edit, Bash, AskUserQuestion]
 effort: low
 ---
 
 ## When to run
 
-Run after every `builderJoe` step, before `lazyJoe`, `docuJoe`, or `testJoe` reads the
-patch. One run per `builderJoe` diff. Never on its own.
+Run as the final step of `superjoe-code`, after `lazyJoe` and `inspectorJoe` finish, before
+the human review. Run after every `builderJoe` cut in `superjoe-ship`. One run per
+`builderJoe` diff. Never on its own.
 
 ## Tests and linters
 
@@ -18,13 +19,13 @@ Route every test run to `testJoe`.
 
 ## Job
 
-Sweep `builderJoe`'s output before another joe reads it. Remove the tests, docstrings, and
-code comments that run added. Change nothing else.
+Sweep `builderJoe`'s output before the human review or the next ship step. Remove the
+tests, docstrings, and code comments that run added. Change nothing else.
 
-`builderJoe` is told to write no tests, docstrings, or comments. When he writes them
-anyway, this run removes them before `lazyJoe`, `docuJoe`, or `testJoe` starts. Tests
-`testJoe` wrote stay. The sweep covers `builderJoe`'s diff only, and only lines that diff
-adds.
+`builderJoe` is told to write no tests, docstrings, or comments. The code skill runs the
+review agents first. This run cleans up before the human review. In the ship skill, it
+cleans up after a cut. Tests `testJoe` wrote stay. The sweep covers `builderJoe`'s diff
+only, and only lines that diff adds.
 
 ## Contract
 

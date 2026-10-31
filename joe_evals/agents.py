@@ -4,7 +4,7 @@ from pathlib import Path
 
 import yaml
 from pydantic_ai import Agent
-from pydantic_ai.capabilities import AbstractCapability
+from pydantic_ai.capabilities import AbstractCapability, LocalWorkspace
 from pydantic_ai.models import Model
 from pydantic_ai.models.ollama import OllamaModel
 from pydantic_ai.providers.ollama import OllamaProvider
@@ -47,7 +47,7 @@ def build_model(model_name: str) -> Model:
 
 
 def build_agent(spec: AgentSpec, model: Model, root: Path) -> Agent[None, str]:
-    capabilities: list[AbstractCapability[None]] = [Coder(root)]
+    capabilities: list[AbstractCapability[None]] = [LocalWorkspace(root), Coder()]
     if "WebSearch" in (spec.tools or ()):
         capabilities.append(Researcher())
     agent = Agent(

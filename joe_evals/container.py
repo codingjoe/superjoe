@@ -87,7 +87,8 @@ def launch(root: Path) -> int:
             user=container_user(),
             env=passed_env(),
         )
-        container.with_tmpfs_mount(f"{WORKSPACE}/{HARNESS_DIR}")
+        # The container runs as the host user, so the tmpfs needs a writable mode.
+        container.tmpfs[f"{WORKSPACE}/{HARNESS_DIR}"] = "rw,mode=1777"
         try:
             container.start()
             running = container.get_wrapped_container()

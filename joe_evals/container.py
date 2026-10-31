@@ -12,6 +12,8 @@ IMAGE = "joe-evals:latest"
 
 WORKSPACE = "/work"
 
+HARNESS_DIR = ".pydantic-ai-harness"
+
 CONTAINER_MARKER = "JOE_EVALS_CONTAINER"
 
 PASSTHROUGH = (
@@ -62,8 +64,22 @@ def build_image(root: Path) -> str:
     return IMAGE
 
 
+@contextmanager
+def harness_mountpoint(root: Path) -> Iterator[None]:
+    # A nested mount needs its mountpoint to exist in the read-only bind source.
+    path = root / HARNESS_DIR
+    created = not path.exists()
+    if created:
+        path.mkdir()
+    try:
+        yield
+    finally:
+        if created:
+            path.rmdir()
+
+
 def launch(root: Path) -> int:
-    with docker_failure():
+    with harness_mountpoint(root), docker_failure():
         container = DockerContainer(
             IMAGE,
             volumes=[(str(root), WORKSPACE, "ro")],
@@ -71,6 +87,8 @@ def launch(root: Path) -> int:
             user=container_user(),
             env=passed_env(),
         )
+        # The container runs as the host user, so the tmpfs needs a writable mode.
+        container.tmpfs[f"{WORKSPACE}/{HARNESS_DIR}"] = "rw,mode=1777"
         try:
             container.start()
             running = container.get_wrapped_container()

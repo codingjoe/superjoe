@@ -50,10 +50,11 @@ the reduce can prove every shard answered.
 
 ## Never
 
-- Never remove a file: no `rm`, no `git rm`, no `-delete`, no truncation. Removing a file
-  is the user's call, asked for as `needs-confirm. op: <command>.` Scratch a joe creates
-  stays put for the user to clean up. The one exception is `killJoe`, which may delete a
-  test file that `builderJoe` created in its sweep.
+- Never remove a file: no `rm`, no `rm -rf`, no `git rm`, no `-delete`, no truncation, not
+  even in `/tmp` or a scratch directory. Removing a file is the user's call, asked for as
+  `needs-confirm. op: <command>.` Scratch a joe creates stays put for the user to clean up.
+  The one exception is `killJoe`, which may delete a test file that `builderJoe` created in
+  its sweep.
 - Never delete a file to resolve a finding. A `yeet:` is an edit; a whole file is a question.
 - Never run a test, a linter, or a hook: `testJoe` owns them.
 - Never write outside the work reference, or, for `researchJoe`, outside its note folder.

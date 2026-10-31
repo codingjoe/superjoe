@@ -57,10 +57,11 @@ Reference notes live under `.cache/joe/deps/`: `researchJoe` writes `<subject>.m
 updates `index.md`, and the prompt carries `Note: <path>`, or `Note: none` where the
 workspace is read-only.
 
-Never, from the main thread either: no `rm`, `git rm`, `-delete`, or truncation, since
-removing a file is the user's call, asked for as `needs-confirm. op: <command>.` The one
-exception is `killJoe`, which may delete a test file that `builderJoe` created. No test,
-linter, or hook run outside `testJoe`. No write outside the work reference.
+Never, from the main thread either: no `rm`, `rm -rf`, `git rm`, `-delete`, or truncation,
+not even in `/tmp` or a scratch directory. Removing a file is the user's call, asked for as
+`needs-confirm. op: <command>.` The one exception is `killJoe`, which may delete a test
+file that `builderJoe` created. No test, linter, or hook run outside `testJoe`. No write
+outside the work reference.
 
 ## Tests
 

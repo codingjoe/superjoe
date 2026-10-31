@@ -151,9 +151,11 @@ Never fix it, never route it, never file it yourself; the main thread opens the 
 
 ## Output
 
-- Triage: `sus: <lane> <what>. [path:L<line>]`, then the `AskUserQuestion` list.
+- Triage: `sus: <lane> <what>. [path:L<line>]`, then the `AskUserQuestion` list. Start the answer with the first `sus:` line or the first `cap:` line.
 - Prove: `real: <lane> <what>. <reason>. [path:L<line>] bet: N/10 cooked: N/10`, or a `cap:` line.
 - One finding per line, the tag opening it. No bullet, number, or bold, and no code fence.
+- A clean shard closes with `clear: <lane> [shard:<path>] nothing to report.`
+- Never answer with a preamble, a summary, or a word like "analysis".
 - The diff's best outcome is a shorter list, not a longer one.
 - Out-of-scope findings stay on `side quest:` lines, apart from the fix list.
 
